@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+motor
+pydantic
+pydantic-settings
+python-multipart
+shapely
+pandas
+python-dotenv
