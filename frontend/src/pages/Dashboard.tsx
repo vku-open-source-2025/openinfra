@@ -8,7 +8,9 @@ import Sidebar from '../components/Sidebar';
 import StatsCard from '../components/StatsCard';
 import CalendarView from '../components/CalendarView';
 import { useIoT } from '../hooks/useIoT';
-import { Zap, AlertTriangle, CheckCircle, Activity } from 'lucide-react';
+import QRCodeModal from '../components/QRCodeModal';
+import NFCWriteModal from '../components/NFCWriteModal';
+import { Zap, AlertTriangle, CheckCircle, Activity, QrCode, Radio } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -21,6 +23,9 @@ const Dashboard: React.FC = () => {
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
     const [filteredAssets, setFilteredAssets] = useState<Asset[] | null>(null);
     const [routePoints, setRoutePoints] = useState<Asset[]>([]);
+
+    const [showQRModal, setShowQRModal] = useState(false);
+    const [showNFCModal, setShowNFCModal] = useState(false);
 
     // Use filtered assets if available, otherwise use live IoT assets
     const displayAssets = filteredAssets || assetsWithStatus || [];
@@ -159,17 +164,18 @@ const Dashboard: React.FC = () => {
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
                                 {/* Left Column: Map & List */}
-                                <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                                    <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 h-fit">
+                                <div className="lg:col-span-2 flex flex-col gap-6 h-full overflow-hidden">
+                                    <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 h-[60%] shrink-0">
                                         <MapComponent
                                             assets={displayAssets}
                                             onAssetSelect={setSelectedAsset}
                                             onFilterByShape={setFilteredAssets}
                                             routePoints={routePoints}
+                                            className="h-full"
                                         />
                                     </div>
 
-                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col">
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-0">
                                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                                             <h3 className="font-bold text-lg">
                                                 {filteredAssets ? `Filtered Assets (${filteredAssets.length})` : 'Recent Assets'}
@@ -240,8 +246,24 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="p-4 border-t border-slate-100 bg-slate-50">
-                                                <button className="w-full py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                                            <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-col gap-2">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => setShowQRModal(true)}
+                                                        className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
+                                                    >
+                                                        <QrCode size={16} />
+                                                        QR Code
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowNFCModal(true)}
+                                                        className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
+                                                    >
+                                                        <Radio size={16} />
+                                                        Write NFC
+                                                    </button>
+                                                </div>
+                                                <button className="w-full py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 shadow-sm">
                                                     Schedule Maintenance
                                                 </button>
                                             </div>
@@ -260,6 +282,18 @@ const Dashboard: React.FC = () => {
                         </>
                     )}
                 </div>
+
+                <QRCodeModal
+                    isOpen={showQRModal}
+                    onClose={() => setShowQRModal(false)}
+                    asset={selectedAsset}
+                />
+
+                <NFCWriteModal
+                    isOpen={showNFCModal}
+                    onClose={() => setShowNFCModal(false)}
+                    asset={selectedAsset}
+                />
             </main>
         </div>
     );

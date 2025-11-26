@@ -6,8 +6,10 @@ import MapComponent from '../components/Map';
 import AssetTable from '../components/AssetTable';
 import MaintenanceLogList from '../components/MaintenanceLog';
 import { useIoT } from '../hooks/useIoT';
-import { AlertTriangle, Activity } from 'lucide-react';
+import { AlertTriangle, Activity, QrCode, Radio } from 'lucide-react';
 import Header from '../components/Header';
+import QRCodeModal from '../components/QRCodeModal';
+import NFCWriteModal from '../components/NFCWriteModal';
 
 const PublicMap: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -20,6 +22,9 @@ const PublicMap: React.FC = () => {
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
     const [filteredAssets, setFilteredAssets] = useState<Asset[] | null>(null);
     const [routePoints, setRoutePoints] = useState<Asset[]>([]);
+
+    const [showQRModal, setShowQRModal] = useState(false);
+    const [showNFCModal, setShowNFCModal] = useState(false);
 
     // Use filtered assets if available, otherwise use live IoT assets
     const displayAssets = filteredAssets || assetsWithStatus || [];
@@ -180,6 +185,23 @@ const PublicMap: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
+                                        <button
+                                            onClick={() => setShowQRModal(true)}
+                                            className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
+                                        >
+                                            <QrCode size={16} />
+                                            QR Code
+                                        </button>
+                                        <button
+                                            onClick={() => setShowNFCModal(true)}
+                                            className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
+                                        >
+                                            <Radio size={16} />
+                                            Write NFC
+                                        </button>
+                                    </div>
                                 </>
                             ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
@@ -193,6 +215,18 @@ const PublicMap: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                <QRCodeModal
+                    isOpen={showQRModal}
+                    onClose={() => setShowQRModal(false)}
+                    asset={selectedAsset}
+                />
+
+                <NFCWriteModal
+                    isOpen={showNFCModal}
+                    onClose={() => setShowNFCModal(false)}
+                    asset={selectedAsset}
+                />
             </main>
         </div>
     );
