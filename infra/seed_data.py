@@ -7,7 +7,7 @@ import random
 from datetime import datetime, timedelta
 
 # Configuration
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = "http://localhost:8001/api"
 CSV_FILE_PATH = "../sample_data.csv"
 
 def upload_csv():
