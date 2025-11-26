@@ -15,32 +15,33 @@ const iconMapping: Record<string, { icon: React.ElementType, color: string }> = 
     'duong_ong_dien': { icon: Activity, color: '#8b5cf6' }, // Violet
 };
 
-export const getIconForAsset = (featureCode: string) => {
+export const getIconForAsset = (featureCode: string, isSelected: boolean = false) => {
     const config = iconMapping[featureCode] || { icon: Activity, color: '#94a3b8' };
     const IconComponent = config.icon;
 
     const iconHtml = ReactDOMServer.renderToString(
         <div style={{
-            backgroundColor: config.color,
-            width: '32px',
-            height: '32px',
+            backgroundColor: isSelected ? '#ffffff' : config.color, // White background if selected
+            width: isSelected ? '40px' : '32px', // Larger if selected
+            height: isSelected ? '40px' : '32px',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'white',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-            border: '2px solid white'
+            color: isSelected ? config.color : 'white', // Colored icon if selected
+            boxShadow: isSelected ? `0 0 15px ${config.color}, 0 0 5px ${config.color}` : '0 2px 5px rgba(0,0,0,0.2)', // Glow effect
+            border: isSelected ? `3px solid ${config.color}` : '2px solid white',
+            transition: 'all 0.3s ease'
         }}>
-            <IconComponent size={18} />
+            <IconComponent size={isSelected ? 24 : 18} />
         </div>
     );
 
     return L.divIcon({
         html: iconHtml,
         className: 'custom-marker-icon',
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32]
+        iconSize: isSelected ? [40, 40] : [32, 32],
+        iconAnchor: isSelected ? [20, 40] : [16, 32],
+        popupAnchor: [0, isSelected ? -40 : -32]
     });
 };

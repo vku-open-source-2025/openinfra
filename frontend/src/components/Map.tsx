@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { EditControl } from 'react-leaflet-draw';
@@ -9,6 +9,7 @@ import HeatmapLayer from './HeatmapLayer';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import * as turf from '@turf/turf';
+import L from 'leaflet';
 
 interface MapProps {
     assets: Asset[];
@@ -19,18 +20,29 @@ interface MapProps {
     className?: string;
 }
 
-const MapUpdater: React.FC<{ selectedAsset: Asset | null }> = ({ selectedAsset }) => {
+const MapUpdater: React.FC<{ selectedAsset: Asset | null; markerRefs: React.MutableRefObject<{ [key: string]: L.Marker | null }> }> = ({ selectedAsset, markerRefs }) => {
     const map = useMap();
 
     useEffect(() => {
         if (selectedAsset && selectedAsset.geometry.type === 'Point') {
             const [lng, lat] = selectedAsset.geometry.coordinates;
-            map.flyTo([lat, lng], 16, {
+
+            // Fly to the asset
+            map.flyTo([lat, lng], 18, {
                 animate: true,
                 duration: 1.5
             });
+
+            // Open popup if marker exists
+            const marker = markerRefs.current[selectedAsset._id];
+            if (marker) {
+                // Small timeout to ensure flyTo starts/completes or just to be safe with UI updates
+                setTimeout(() => {
+                    marker.openPopup();
+                }, 500);
+            }
         }
-    }, [selectedAsset, map]);
+    }, [selectedAsset, map, markerRefs]);
 
     return null;
 };
@@ -38,6 +50,7 @@ const MapUpdater: React.FC<{ selectedAsset: Asset | null }> = ({ selectedAsset }
 const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterByShape, routePoints, selectedAsset, className }) => {
     const [mapMode, setMapMode] = useState<'markers' | 'heatmap'>('markers');
     const center: [number, number] = [16.047079, 108.206230];
+    const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
 
     // Prepare heatmap data
     const heatmapPoints = assets
@@ -85,7 +98,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
             </div>
 
             <MapContainer center={center} zoom={13} scrollWheelZoom={true} className="h-full w-full rounded-xl shadow-sm border border-slate-200">
-                <MapUpdater selectedAsset={selectedAsset || null} />
+                <MapUpdater selectedAsset={selectedAsset || null} markerRefs={markerRefs} />
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -115,13 +128,19 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
                         {assets.map((asset) => {
                             if (asset.geometry.type === 'Point') {
                                 const position: [number, number] = [asset.geometry.coordinates[1], asset.geometry.coordinates[0]];
+                                const isSelected = selectedAsset?._id === asset._id;
                                 return (
                                     <Marker
                                         key={asset._id}
                                         position={position}
-                                        icon={getIconForAsset(asset.feature_code)}
+                                        icon={getIconForAsset(asset.feature_code, isSelected)}
                                         eventHandlers={{
                                             click: () => onAssetSelect(asset),
+                                        }}
+                                        ref={(el) => {
+                                            if (el) {
+                                                markerRefs.current[asset._id] = el;
+                                            }
                                         }}
                                     >
                                         <Popup className="custom-popup">
@@ -158,6 +177,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
         </div>
     );
 };
+
 
 export default MapComponent;
 
