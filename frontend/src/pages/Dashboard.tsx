@@ -8,7 +8,7 @@ import Sidebar from '../components/Sidebar';
 import StatsCard from '../components/StatsCard';
 import CalendarView from '../components/CalendarView';
 import { useIoT } from '../hooks/useIoT';
-import { Zap, AlertTriangle, CheckCircle, Activity, Bell } from 'lucide-react';
+import { Zap, AlertTriangle, CheckCircle, Activity } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -160,7 +160,7 @@ const Dashboard: React.FC = () => {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
                                 {/* Left Column: Map & List */}
                                 <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-                                    <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex-1 min-h-[300px]">
+                                    <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 h-fit">
                                         <MapComponent
                                             assets={displayAssets}
                                             onAssetSelect={setSelectedAsset}

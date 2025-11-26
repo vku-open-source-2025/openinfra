@@ -7,3 +7,7 @@ python-multipart
 shapely
 pandas
 python-dotenv
+celery
+redis
+requests
+pymongo

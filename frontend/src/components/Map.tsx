@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { EditControl } from 'react-leaflet-draw';
 import type { Asset } from '../api';
@@ -15,10 +15,27 @@ interface MapProps {
     onAssetSelect: (asset: Asset) => void;
     onFilterByShape?: (filteredAssets: Asset[]) => void;
     routePoints?: Asset[]; // For routing feature
+    selectedAsset?: Asset | null;
+    className?: string;
 }
 
+const MapUpdater: React.FC<{ selectedAsset: Asset | null }> = ({ selectedAsset }) => {
+    const map = useMap();
 
-const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterByShape, routePoints }) => {
+    useEffect(() => {
+        if (selectedAsset && selectedAsset.geometry.type === 'Point') {
+            const [lng, lat] = selectedAsset.geometry.coordinates;
+            map.flyTo([lat, lng], 16, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+    }, [selectedAsset, map]);
+
+    return null;
+};
+
+const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterByShape, routePoints, selectedAsset, className }) => {
     const [mapMode, setMapMode] = useState<'markers' | 'heatmap'>('markers');
     const center: [number, number] = [16.047079, 108.206230];
 
@@ -48,7 +65,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
     };
 
     return (
-        <div className="h-full w-full relative group">
+        <div className={`w-full relative group ${className || 'h-[calc(100vh-250px)]'}`}>
             {/* Map Controls Overlay */}
             <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-md border border-slate-200 p-1 flex flex-col gap-1">
                 <button
@@ -68,6 +85,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
             </div>
 
             <MapContainer center={center} zoom={13} scrollWheelZoom={true} className="h-full w-full rounded-xl shadow-sm border border-slate-200">
+                <MapUpdater selectedAsset={selectedAsset || null} />
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
