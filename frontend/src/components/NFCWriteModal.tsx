@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Smartphone, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import type { Asset } from '../api';
 
+type NDEFReadingEvent = any;
+
+
 interface NFCWriteModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -48,7 +51,7 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({ isOpen, onClose, asset })
             const ndef = new NDEFReader();
             await ndef.scan({ signal: abortControllerRef.current.signal });
 
-            ndef.onreading = async (event: NDEFReadingEvent) => {
+            ndef.onreading = async (_event: NDEFReadingEvent) => {
                 setStatus('writing');
                 setMessage('Tag detected. Writing data...');
 

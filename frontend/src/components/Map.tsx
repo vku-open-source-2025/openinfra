@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline, useMap 
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { EditControl } from 'react-leaflet-draw';
 import type { Asset } from '../api';
-import { getIconForAsset } from '../utils/mapIcons';
+import { getIconForAsset, getColorForFeatureCode } from '../utils/mapIcons';
 import HeatmapLayer from './HeatmapLayer';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -54,7 +54,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
 
     // Prepare heatmap data
     const heatmapPoints = assets
-        .filter(a => a.geometry.type === 'Point')
+        .filter(a => a.geometry.type === 'Point' && Array.isArray(a.geometry.coordinates) && a.geometry.coordinates.length >= 2)
         .map(a => [a.geometry.coordinates[1], a.geometry.coordinates[0], 0.5] as [number, number, number]);
 
     const _onCreated = (e: any) => {
@@ -124,40 +124,71 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
                 </FeatureGroup>
 
                 {mapMode === 'markers' && (
-                    <MarkerClusterGroup chunkedLoading>
+                    <>
+                        <MarkerClusterGroup chunkedLoading>
+                            {assets.map((asset) => {
+                                if (asset.geometry.type === 'Point') {
+                                    const position: [number, number] = [asset.geometry.coordinates[1], asset.geometry.coordinates[0]];
+                                    const isSelected = selectedAsset?._id === asset._id;
+                                    return (
+                                        <Marker
+                                            key={asset._id}
+                                            position={position}
+                                            icon={getIconForAsset(asset.feature_code, isSelected)}
+                                            eventHandlers={{
+                                                click: () => onAssetSelect(asset),
+                                            }}
+                                            ref={(el) => {
+                                                if (el) {
+                                                    markerRefs.current[asset._id] = el;
+                                                }
+                                            }}
+                                        >
+                                            <Popup className="custom-popup">
+                                                <div className="font-semibold text-slate-900">{asset.feature_type}</div>
+                                                <div className="text-xs text-slate-500">{asset.feature_code}</div>
+                                                <div className="mt-2 text-xs">
+                                                    <span className={`px-2 py-0.5 rounded-full ${Math.random() > 0.1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {Math.random() > 0.1 ? 'Online' : 'Offline'}
+                                                    </span>
+                                                </div>
+                                            </Popup>
+                                        </Marker>
+                                    );
+                                }
+                                return null;
+                            })}
+                        </MarkerClusterGroup>
                         {assets.map((asset) => {
-                            if (asset.geometry.type === 'Point') {
-                                const position: [number, number] = [asset.geometry.coordinates[1], asset.geometry.coordinates[0]];
-                                const isSelected = selectedAsset?._id === asset._id;
+                            if (asset.geometry.type === 'LineString') {
+                                const positions = asset.geometry.coordinates.map((coord: any) => [coord[1], coord[0]] as [number, number]);
+                                const color = getColorForFeatureCode(asset.feature_code);
                                 return (
-                                    <Marker
+                                    <Polyline
                                         key={asset._id}
-                                        position={position}
-                                        icon={getIconForAsset(asset.feature_code, isSelected)}
+                                        positions={positions}
+                                        color={color}
+                                        weight={4}
+                                        opacity={0.8}
                                         eventHandlers={{
-                                            click: () => onAssetSelect(asset),
-                                        }}
-                                        ref={(el) => {
-                                            if (el) {
-                                                markerRefs.current[asset._id] = el;
-                                            }
+                                            click: () => {
+                                                console.log('LineString clicked:', asset);
+                                                console.log('Geometry type:', asset.geometry.type);
+                                                console.log('Coordinates:', asset.geometry.coordinates);
+                                                onAssetSelect(asset);
+                                            },
                                         }}
                                     >
                                         <Popup className="custom-popup">
                                             <div className="font-semibold text-slate-900">{asset.feature_type}</div>
                                             <div className="text-xs text-slate-500">{asset.feature_code}</div>
-                                            <div className="mt-2 text-xs">
-                                                <span className={`px - 2 py - 0.5 rounded - full ${Math.random() > 0.1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} `}>
-                                                    {Math.random() > 0.1 ? 'Online' : 'Offline'}
-                                                </span>
-                                            </div>
                                         </Popup>
-                                    </Marker>
+                                    </Polyline>
                                 );
                             }
                             return null;
                         })}
-                    </MarkerClusterGroup>
+                    </>
                 )}
 
                 {mapMode === 'heatmap' && (

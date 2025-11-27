@@ -9,8 +9,8 @@ export interface Asset {
     feature_type: string;
     feature_code: string;
     geometry: {
-        type: string;
-        coordinates: number[];
+        type: 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon';
+        coordinates: any; // GeoJSON coordinates can be number[], number[][], or number[][][]
     };
     created_at: string;
 }

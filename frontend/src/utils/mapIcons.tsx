@@ -45,3 +45,8 @@ export const getIconForAsset = (featureCode: string, isSelected: boolean = false
         popupAnchor: [0, isSelected ? -40 : -32]
     });
 };
+
+export const getColorForFeatureCode = (featureCode: string): string => {
+    const config = iconMapping[featureCode];
+    return config ? config.color : '#94a3b8'; // Default slate color
+};

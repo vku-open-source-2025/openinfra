@@ -12,7 +12,7 @@ interface QRCodeModalProps {
 }
 
 const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => {
-    const qrRef = useRef<divElement>(null);
+    const qrRef = useRef<HTMLDivElement>(null);
 
     if (!isOpen || !asset) return null;
 

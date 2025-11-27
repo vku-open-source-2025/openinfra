@@ -166,16 +166,29 @@ const PublicMap: React.FC = () => {
                                             <div>
                                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Location</h4>
                                                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                                        <div>
-                                                            <p className="text-slate-500 text-xs">Latitude</p>
-                                                            <p className="font-mono font-medium">{selectedAsset.geometry.coordinates[1].toFixed(6)}</p>
+                                                    {selectedAsset.geometry.type === 'Point' ? (
+                                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                                            <div>
+                                                                <p className="text-slate-500 text-xs">Latitude</p>
+                                                                <p className="font-mono font-medium">{selectedAsset.geometry.coordinates[1].toFixed(6)}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-slate-500 text-xs">Longitude</p>
+                                                                <p className="font-mono font-medium">{selectedAsset.geometry.coordinates[0].toFixed(6)}</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-slate-500 text-xs">Longitude</p>
-                                                            <p className="font-mono font-medium">{selectedAsset.geometry.coordinates[0].toFixed(6)}</p>
+                                                    ) : (
+                                                        <div className="text-sm">
+                                                            <p className="text-slate-500 text-xs mb-1">Geometry Type</p>
+                                                            <p className="font-mono font-medium mb-2">{selectedAsset.geometry.type}</p>
+                                                            <p className="text-slate-500 text-xs mb-1">Details</p>
+                                                            <p className="font-mono font-medium">
+                                                                {selectedAsset.geometry.type === 'LineString'
+                                                                    ? `${selectedAsset.geometry.coordinates.length} points`
+                                                                    : 'Complex Geometry'}
+                                                            </p>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
 
