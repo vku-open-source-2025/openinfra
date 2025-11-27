@@ -100,8 +100,9 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
             <MapContainer center={center} zoom={13} scrollWheelZoom={true} className="h-full w-full rounded-xl shadow-sm border border-slate-200">
                 <MapUpdater selectedAsset={selectedAsset || null} markerRefs={markerRefs} />
                 <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
+                    url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                    subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
                 />
 
                 <FeatureGroup>
