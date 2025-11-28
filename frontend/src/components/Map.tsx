@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import { EditControl } from 'react-leaflet-draw';
 import type { Asset } from '../api';
@@ -20,31 +20,37 @@ interface MapProps {
     className?: string;
 }
 
+const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
+
+const geometryToLatLngs = (geometry: Asset['geometry']): [number, number][] => {
+    if (!geometry || !geometry.coordinates) return [];
+
+    switch (geometry.type) {
+        case 'Point':
+            return [toLatLng(geometry.coordinates as number[])];
+        case 'LineString':
+            return (geometry.coordinates as number[][]).map(toLatLng);
+        case 'MultiLineString':
+            return (geometry.coordinates as number[][][]).flatMap(line => line.map(toLatLng));
+        case 'Polygon':
+            return (geometry.coordinates as number[][][])[0].map(toLatLng); // outer ring is enough for bounds
+        case 'MultiPolygon':
+            return (geometry.coordinates as number[][][][]).flatMap(poly => poly[0].map(toLatLng));
+        case 'MultiPoint':
+            return (geometry.coordinates as number[][]).map(toLatLng);
+        default:
+            return [];
+    }
+};
+
+const latLngsToBounds = (latLngs: [number, number][]): L.LatLngBounds | null => {
+    if (!latLngs.length) return null;
+    const points = latLngs.map(([lat, lng]) => L.latLng(lat, lng));
+    return L.latLngBounds(points);
+};
+
 const MapUpdater: React.FC<{ selectedAsset: Asset | null; markerRefs: React.MutableRefObject<{ [key: string]: L.Marker | null }> }> = ({ selectedAsset, markerRefs }) => {
     const map = useMap();
-
-    const extractLatLngs = (geometry: Asset['geometry']): [number, number][] => {
-        if (!geometry || !geometry.coordinates) return [];
-
-        const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
-
-        switch (geometry.type) {
-            case 'Point':
-                return [toLatLng(geometry.coordinates as number[])];
-            case 'LineString':
-                return (geometry.coordinates as number[][]).map(toLatLng);
-            case 'MultiLineString':
-                return (geometry.coordinates as number[][][]).flatMap(line => line.map(toLatLng));
-            case 'Polygon':
-                return (geometry.coordinates as number[][][])[0].map(toLatLng); // outer ring is enough for bounds
-            case 'MultiPolygon':
-                return (geometry.coordinates as number[][][][]).flatMap(poly => poly[0].map(toLatLng));
-            case 'MultiPoint':
-                return (geometry.coordinates as number[][]).map(toLatLng);
-            default:
-                return [];
-        }
-    };
 
     useEffect(() => {
         if (!selectedAsset) return;
@@ -70,12 +76,28 @@ const MapUpdater: React.FC<{ selectedAsset: Asset | null; markerRefs: React.Muta
         }
 
         // For non-Point geometries, fit bounds to the shape
-        const latLngs = extractLatLngs(selectedAsset.geometry);
+        const latLngs = geometryToLatLngs(selectedAsset.geometry);
         if (latLngs.length) {
-            const bounds = L.latLngBounds(latLngs.map(([lat, lng]) => L.latLng(lat, lng)));
+            const bounds = latLngsToBounds(latLngs);
+            if (bounds) {
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
+            }
         }
     }, [selectedAsset, map, markerRefs]);
+
+    return null;
+};
+
+const BoundsWatcher: React.FC<{ onBoundsChange: (bounds: L.LatLngBounds) => void }> = ({ onBoundsChange }) => {
+    const map = useMapEvents({
+        moveend: () => onBoundsChange(map.getBounds()),
+        zoomend: () => onBoundsChange(map.getBounds()),
+        resize: () => onBoundsChange(map.getBounds()),
+    });
+
+    useEffect(() => {
+        onBoundsChange(map.getBounds());
+    }, [map, onBoundsChange]);
 
     return null;
 };
@@ -84,11 +106,32 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
     const [mapMode, setMapMode] = useState<'markers' | 'heatmap'>('markers');
     const center: [number, number] = [16.047079, 108.206230];
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
+    const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
 
     // Prepare heatmap data
     const heatmapPoints = assets
         .filter(a => a.geometry.type === 'Point' && Array.isArray(a.geometry.coordinates) && a.geometry.coordinates.length >= 2)
         .map(a => [a.geometry.coordinates[1], a.geometry.coordinates[0], 0.5] as [number, number, number]);
+
+    const assetIntersectsBounds = useCallback((asset: Asset, bounds: L.LatLngBounds) => {
+        const latLngs = geometryToLatLngs(asset.geometry);
+        if (!latLngs.length) return false;
+        const assetBounds = latLngsToBounds(latLngs);
+        if (!assetBounds) return false;
+        return bounds.intersects(assetBounds);
+    }, []);
+
+    const visibleAssets = useMemo(() => {
+        if (!mapBounds) return assets;
+        const filtered = assets.filter((asset) => assetIntersectsBounds(asset, mapBounds));
+
+        // Always include selected asset even if currently out of bounds (so it renders after fitBounds)
+        if (selectedAsset && !filtered.find(a => a._id === selectedAsset._id)) {
+            filtered.push(selectedAsset);
+        }
+
+        return filtered;
+    }, [assets, assetIntersectsBounds, mapBounds, selectedAsset]);
 
     const _onCreated = (e: any) => {
         if (!onFilterByShape) return;
@@ -132,6 +175,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
 
             <MapContainer center={center} zoom={13} scrollWheelZoom={true} className="h-full w-full rounded-xl shadow-sm border border-slate-200">
                 <MapUpdater selectedAsset={selectedAsset || null} markerRefs={markerRefs} />
+                <BoundsWatcher onBoundsChange={setMapBounds} />
                 <TileLayer
                     attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
                     url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
@@ -160,7 +204,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
                 {mapMode === 'markers' && (
                     <>
                         <MarkerClusterGroup chunkedLoading>
-                            {assets.map((asset) => {
+                            {visibleAssets.map((asset) => {
                                 if (asset.geometry.type === 'Point') {
                                     const position: [number, number] = [asset.geometry.coordinates[1], asset.geometry.coordinates[0]];
                                     const isSelected = selectedAsset?._id === asset._id;
@@ -193,7 +237,7 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
                                 return null;
                             })}
                         </MarkerClusterGroup>
-                        {assets.map((asset) => {
+                        {visibleAssets.map((asset) => {
                             if (asset.geometry.type === 'LineString') {
                                 const positions = asset.geometry.coordinates.map((coord: any) => [coord[1], coord[0]] as [number, number]);
                                 const color = getColorForFeatureCode(asset.feature_code);
