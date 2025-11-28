@@ -16,7 +16,7 @@ async def create_asset(asset: AssetCreate):
 @router.get("/", response_model=List[Asset])
 async def list_assets(
     skip: int = 0, 
-    limit: int = 100, 
+    limit: Optional[int] = None, 
     feature_type: Optional[str] = None
 ):
     db = await get_database()
@@ -24,9 +24,14 @@ async def list_assets(
     if feature_type:
         query["feature_type"] = feature_type
         
-    cursor = db["assets"].find(query).skip(skip).limit(limit)
-    assets = await cursor.to_list(length=limit)
-    return [Asset(**asset) for asset in assets]
+    cursor = db["assets"].find(query).skip(skip)
+    if limit:
+        cursor = cursor.limit(limit)
+    
+    assets: List[Asset] = []
+    async for asset in cursor:
+        assets.append(Asset(**asset))
+    return assets
 
 @router.get("/{id}", response_model=Asset)
 async def get_asset(id: str):

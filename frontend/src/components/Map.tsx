@@ -23,9 +23,34 @@ interface MapProps {
 const MapUpdater: React.FC<{ selectedAsset: Asset | null; markerRefs: React.MutableRefObject<{ [key: string]: L.Marker | null }> }> = ({ selectedAsset, markerRefs }) => {
     const map = useMap();
 
+    const extractLatLngs = (geometry: Asset['geometry']): [number, number][] => {
+        if (!geometry || !geometry.coordinates) return [];
+
+        const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
+
+        switch (geometry.type) {
+            case 'Point':
+                return [toLatLng(geometry.coordinates as number[])];
+            case 'LineString':
+                return (geometry.coordinates as number[][]).map(toLatLng);
+            case 'MultiLineString':
+                return (geometry.coordinates as number[][][]).flatMap(line => line.map(toLatLng));
+            case 'Polygon':
+                return (geometry.coordinates as number[][][])[0].map(toLatLng); // outer ring is enough for bounds
+            case 'MultiPolygon':
+                return (geometry.coordinates as number[][][][]).flatMap(poly => poly[0].map(toLatLng));
+            case 'MultiPoint':
+                return (geometry.coordinates as number[][]).map(toLatLng);
+            default:
+                return [];
+        }
+    };
+
     useEffect(() => {
-        if (selectedAsset && selectedAsset.geometry.type === 'Point') {
-            const [lng, lat] = selectedAsset.geometry.coordinates;
+        if (!selectedAsset) return;
+
+        if (selectedAsset.geometry.type === 'Point') {
+            const [lng, lat] = selectedAsset.geometry.coordinates as number[];
 
             // Fly to the asset
             map.flyTo([lat, lng], 18, {
@@ -41,6 +66,14 @@ const MapUpdater: React.FC<{ selectedAsset: Asset | null; markerRefs: React.Muta
                     marker.openPopup();
                 }, 500);
             }
+            return;
+        }
+
+        // For non-Point geometries, fit bounds to the shape
+        const latLngs = extractLatLngs(selectedAsset.geometry);
+        if (latLngs.length) {
+            const bounds = L.latLngBounds(latLngs.map(([lat, lng]) => L.latLng(lat, lng)));
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
         }
     }, [selectedAsset, map, markerRefs]);
 
@@ -212,4 +245,3 @@ const MapComponent: React.FC<MapProps> = ({ assets, onAssetSelect, onFilterBySha
 
 
 export default MapComponent;
-

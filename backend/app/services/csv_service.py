@@ -12,6 +12,7 @@ from typing import List, Dict, Any
 import io
 import pymongo
 import os
+from typing import Set, Tuple
 
 
 def download_csv(url: str) -> str:
@@ -86,12 +87,21 @@ def parse_csv_to_assets(csv_content: str) -> List[Dict[str, Any]]:
         List of asset documents ready for insertion
     """
     df = pd.read_csv(io.StringIO(csv_content))
+    debug = os.getenv("CSV_IMPORT_DEBUG") == "1"
     
     assets = []
+    point_rows = 0
+    unique_point_coords: Set[Tuple[float, float]] = set()
     for _, row in df.iterrows():
         geometry = parse_geometry(row.get('geometry'))
         if not geometry:
             continue
+        
+        if geometry["type"] == "Point":
+            # Track duplicates inside the incoming CSV to debug skip counts
+            coords = tuple(geometry["coordinates"])
+            point_rows += 1
+            unique_point_coords.add(coords)
             
         asset = {
             "feature_type": str(row.get('feature_type', 'Unknown')),
@@ -100,6 +110,16 @@ def parse_csv_to_assets(csv_content: str) -> List[Dict[str, Any]]:
             "created_at": datetime.utcnow()
         }
         assets.append(asset)
+
+    if debug:
+        duplicate_points_in_csv = point_rows - len(unique_point_coords)
+        print(
+            "[CSV_IMPORT_DEBUG] "
+            f"rows={len(df)}, parsed_assets={len(assets)}, "
+            f"point_rows={point_rows}, "
+            f"unique_point_coords_in_csv={len(unique_point_coords)}, "
+            f"duplicate_point_rows_in_csv={duplicate_points_in_csv}"
+        )
     
     return assets
 
@@ -150,11 +170,15 @@ def insert_assets_skip_duplicates(db, assets: List[Dict[str, Any]]) -> Dict[str,
     # Get synchronous database connection
     sync_db = get_sync_db()
     collection = sync_db.assets
+    debug = os.getenv("CSV_IMPORT_DEBUG") == "1"
     
     total = len(assets)
     inserted = 0
     skipped = 0
     errors = 0
+    seen_in_batch: Set[Tuple[float, float]] = set()
+    skipped_in_batch = 0
+    skipped_in_db = 0
     
     for asset in assets:
         try:
@@ -167,8 +191,19 @@ def insert_assets_skip_duplicates(db, assets: List[Dict[str, Any]]) -> Dict[str,
             
             # Check for duplicate coordinates
             coordinates = asset["geometry"]["coordinates"]
+            coord_key = tuple(coordinates)
+
+            # First, deduplicate inside this CSV batch (tracks real repeats in the same file)
+            if coord_key in seen_in_batch:
+                skipped += 1
+                skipped_in_batch += 1
+                continue
+
+            seen_in_batch.add(coord_key)
+
             if check_duplicate_coordinates(collection, coordinates):
                 skipped += 1
+                skipped_in_db += 1
                 continue
             
             # Insert new asset
@@ -178,6 +213,14 @@ def insert_assets_skip_duplicates(db, assets: List[Dict[str, Any]]) -> Dict[str,
         except Exception as e:
             print(f"Error inserting asset: {e}")
             errors += 1
+
+    if debug:
+        print(
+            "[CSV_IMPORT_DEBUG] "
+            f"total={total}, inserted={inserted}, skipped={skipped} "
+            f"(in_batch={skipped_in_batch}, in_db={skipped_in_db}), "
+            f"errors={errors}"
+        )
     
     return {
         "total": total,
