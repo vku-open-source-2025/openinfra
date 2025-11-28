@@ -4,6 +4,10 @@ const api = axios.create({
     baseURL: import.meta.env.VITE_BASE_API_URL || '/api',
 });
 
+const leaderboardApi = axios.create({
+    baseURL: import.meta.env.VITE_LEADERBOARD_URL || 'https://contribapi.openinfra.space/api',
+});
+
 export interface Asset {
     _id: string;
     feature_type: string;
@@ -28,6 +32,18 @@ export interface MaintenanceLog {
 
 export const getAssets = async () => {
     const response = await api.get<Asset[]>('/assets/');
+    return response.data;
+};
+
+export interface LeaderboardEntry {
+    msv: string;
+    contributor_name: string;
+    unit: string;
+    count: number;
+}
+
+export const getLeaderboard = async () => {
+    const response = await leaderboardApi.get<LeaderboardEntry[]>('/leaderboard');
     return response.data;
 };
 

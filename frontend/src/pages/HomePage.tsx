@@ -1,8 +1,8 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, Droplet, MapPin, Network, Shield, Zap } from "lucide-react";
-import { getAssets } from "../api";
+import { ArrowRight, BarChart3, Droplet, MapPin, Award, Activity } from "lucide-react";
+import { getAssets, getLeaderboard } from "../api";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import mapImage from "../assets/map.png";
@@ -11,32 +11,17 @@ const featureCards = [
     {
         icon: MapPin,
         title: "Bản đồ tương tác",
-        description: "Xem tất cả điểm hạ tầng trên bản đồ với dữ liệu thời gian thực.",
-    },
-    {
-        icon: Zap,
-        title: "Giám sát năng lượng",
-        description: "Theo dõi tiêu thụ điện năng và phát hiện sự cố nhanh chóng.",
+        description: "Toàn bộ hạ tầng được hiển thị trực quan, thao tác và tìm kiếm ngay trên bản đồ.",
     },
     {
         icon: Droplet,
         title: "Quản lý nước",
-        description: "Kiểm soát hệ thống cấp nước và xử lý nước thải.",
-    },
-    {
-        icon: Network,
-        title: "Mạng thông tin",
-        description: "Giám sát cơ sở hạ tầng mạng và kết nối.",
+        description: "Theo dõi lưu lượng, cảnh báo rò rỉ và lập kế hoạch bảo trì chủ động.",
     },
     {
         icon: BarChart3,
         title: "Phân tích chi tiết",
-        description: "Báo cáo toàn diện với biểu đồ và thống kê.",
-    },
-    {
-        icon: Shield,
-        title: "An toàn dữ liệu",
-        description: "Bảo mật cấp doanh nghiệp cho tất cả thông tin.",
+        description: "Chỉ số vận hành, biểu đồ và thống kê giúp bạn ra quyết định nhanh.",
     },
 ];
 
@@ -51,27 +36,40 @@ const dashboardImage =
 
 const HomePage = () => {
     const [assetCount, setAssetCount] = useState<number | null>(null);
+    const [contributorCount, setContributorCount] = useState<number | null>(null);
+    const [totalContributions, setTotalContributions] = useState<number | null>(null);
     const [loadingAssets, setLoadingAssets] = useState(false);
+    const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
         setLoadingAssets(true);
-        getAssets()
-            .then((assets) => {
-                if (!cancelled) {
-                    setAssetCount(assets.length);
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setAssetCount(null);
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setLoadingAssets(false);
-                }
-            });
+        setLoadingLeaderboard(true);
+
+        Promise.allSettled([getAssets(), getLeaderboard()]).then((results) => {
+            if (cancelled) return;
+
+            const [assetsResult, leaderboardResult] = results;
+
+            if (assetsResult.status === "fulfilled") {
+                setAssetCount(assetsResult.value.length);
+            } else {
+                setAssetCount(null);
+            }
+            setLoadingAssets(false);
+
+            if (leaderboardResult.status === "fulfilled") {
+                const leaderboard = leaderboardResult.value;
+                setContributorCount(leaderboard.length);
+                const total = leaderboard.reduce((sum, entry) => sum + (entry.count || 0), 0);
+                setTotalContributions(total);
+            } else {
+                setContributorCount(null);
+                setTotalContributions(null);
+            }
+            setLoadingLeaderboard(false);
+        });
+
         return () => {
             cancelled = true;
         };
@@ -83,6 +81,42 @@ const HomePage = () => {
             : loadingAssets
                 ? "Đang tải điểm giám sát..."
                 : "200+ Điểm giám sát hoạt động";
+
+    const statCards = [
+        {
+            icon: Activity,
+            label: "Điểm giám sát đang hoạt động",
+            value:
+                assetCount !== null
+                    ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(assetCount)
+                    : "—",
+            hint: loadingAssets ? "Đang tải..." : "Cập nhật theo dữ liệu mới nhất",
+        },
+        {
+            icon: Award,
+            label: "Người đóng góp dữ liệu",
+            value:
+                contributorCount !== null
+                    ? new Intl.NumberFormat("en-US").format(contributorCount)
+                    : "—",
+            hint: loadingLeaderboard ? "Đang tải..." : "Từ bảng xếp hạng đóng góp",
+        },
+        {
+            icon: BarChart3,
+            label: "",
+            value:
+                totalContributions !== null
+                    ? new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(totalContributions)
+                    : "—",
+            hint: loadingLeaderboard ? "Đang tải..." : "Tổng số lần gửi dữ liệu",
+        },
+        {
+            icon: MapPin,
+            label: "Hệ thống đang sử dụng",
+            value: "7",
+            hint: "7 hệ thống đang sử dụng dịch vụ",
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-gray-heading">
@@ -144,6 +178,42 @@ const HomePage = () => {
                                     <span className="text-sm font-medium text-slate-700">{assetCountLabel}</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Stats Section */}
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                            <div>
+                                <div className="text-sm uppercase tracking-wide text-blue-600 font-semibold">Các con số nổi bật</div>
+                                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-1">Hiệu quả được chứng minh</h2>
+                                <p className="text-slate-600 mt-2">Dữ liệu thu thập, người đóng góp, và hệ thống đang vận hành thực tế.</p>
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                            {statCards.map((item) => (
+                                <div
+                                    key={item.label}
+                                    className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-5 py-6 shadow-xs flex flex-col gap-2"
+                                >
+                                    {item.label && (
+                                        <div className="flex items-center gap-3">
+                                            <item.icon className="w-5 h-5 text-main-blue" />
+                                            <span className="text-sm font-medium text-slate-500">{item.label}</span>
+                                        </div>
+                                    )}
+                                    {!item.label && (
+                                        <div className="flex items-center gap-3">
+                                            <item.icon className="w-5 h-5 text-main-blue" />
+                                            <span className="text-sm font-medium text-slate-500">Đóng góp dữ liệu</span>
+                                        </div>
+                                    )}
+                                    <div className="text-3xl font-bold text-slate-900">{item.value}</div>
+                                    <div className="text-xs text-slate-500">{item.hint}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
