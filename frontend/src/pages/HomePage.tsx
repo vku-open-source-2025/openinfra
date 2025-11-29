@@ -276,7 +276,7 @@ const HomePage = () => {
                 {/* CTA Section */}
                 <section className="bg-white py-20">
                     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-                        <h2 className="text-3xl md:text-5xl font-bold text-slate-900">Try it Today</h2>
+                        <h2 className="text-3xl md:text-5xl font-bold text-slate-900">Try it now</h2>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
                             Explore the visual infrastructure map or integrate open data into your application via API
                         </p>
