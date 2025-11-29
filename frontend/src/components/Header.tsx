@@ -89,7 +89,7 @@ function Header() {
                         href="#about-us"
                         className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors"
                     >
-                        Về chúng tôi
+                        About Us
                     </a>
                     <Link
                         to="/docs"
@@ -119,7 +119,7 @@ function Header() {
                     transition-shadow
                     "
                     >
-                        <p className="text-white font-semibold text-center">Bản đồ</p>
+                        <p className="text-white font-semibold text-center">Map</p>
                     </Link>
                 </nav>
             </div>

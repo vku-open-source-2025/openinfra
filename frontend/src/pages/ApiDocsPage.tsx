@@ -26,41 +26,41 @@ const endpoints: Endpoint[] = [
         method: "GET",
         path: "/api/opendata/",
         title: "API Information",
-        description: "Thông tin về API và giấy phép sử dụng dữ liệu",
+        description: "Information about the API and data usage license",
         testPath: "/api/opendata/",
     },
     {
         method: "GET",
         path: "/api/opendata/assets",
-        title: "Danh sách tài sản hạ tầng",
-        description: "Lấy tất cả tài sản hạ tầng dưới dạng GeoJSON FeatureCollection (JSON-LD)",
+        title: "Infrastructure Assets List",
+        description: "Get all infrastructure assets as GeoJSON FeatureCollection (JSON-LD)",
         params: [
-            { name: "skip", type: "integer", desc: "Số bản ghi bỏ qua (mặc định: 0)", default: "0" },
-            { name: "limit", type: "integer", desc: "Số bản ghi tối đa (mặc định: 100, tối đa: 1000)", default: "5" },
-            { name: "feature_type", type: "string", desc: "Lọc theo loại hạ tầng" },
-            { name: "feature_code", type: "string", desc: "Lọc theo mã hạ tầng" },
+            { name: "skip", type: "integer", desc: "Number of records to skip (default: 0)", default: "0" },
+            { name: "limit", type: "integer", desc: "Maximum number of records (default: 100, max: 1000)", default: "5" },
+            { name: "feature_type", type: "string", desc: "Filter by infrastructure type" },
+            { name: "feature_code", type: "string", desc: "Filter by infrastructure code" },
         ],
         testPath: "/api/opendata/assets?limit=5",
     },
     {
         method: "GET",
         path: "/api/opendata/assets/{asset_id}",
-        title: "Chi tiết tài sản",
-        description: "Lấy thông tin chi tiết một tài sản theo ID",
-        params: [{ name: "asset_id", type: "string", desc: "ID của tài sản (MongoDB ObjectId)" }],
+        title: "Asset Details",
+        description: "Get detailed information of an asset by ID",
+        params: [{ name: "asset_id", type: "string", desc: "Asset ID (MongoDB ObjectId)" }],
     },
     {
         method: "GET",
         path: "/api/opendata/feature-types",
-        title: "Danh sách loại hạ tầng",
-        description: "Lấy tất cả các loại hạ tầng có sẵn và số lượng tương ứng",
+        title: "Infrastructure Types List",
+        description: "Get all available infrastructure types and their counts",
         testPath: "/api/opendata/feature-types",
     },
     {
         method: "GET",
         path: "/api/opendata/license",
-        title: "Thông tin giấy phép",
-        description: "Chi tiết về giấy phép ODC-BY",
+        title: "License Information",
+        description: "Details about ODC-BY license",
         testPath: "/api/opendata/license",
     },
 ];
@@ -68,22 +68,22 @@ const endpoints: Endpoint[] = [
 const codeExamples = {
     curl: `curl -X GET "${API_BASE_URL}/api/opendata/assets?limit=10" \\
   -H "Accept: application/json"`,
-    javascript: `// Sử dụng fetch API
+    javascript: `// Using fetch API
 const response = await fetch('${API_BASE_URL}/api/opendata/assets?limit=10');
 const data = await response.json();
 
-// Dữ liệu trả về là GeoJSON FeatureCollection với JSON-LD context
+// Response is GeoJSON FeatureCollection with JSON-LD context
 console.log(data.features);
 console.log('License:', data.license);`,
     python: `import requests
 
 response = requests.get(
     '${API_BASE_URL}/api/opendata/assets',
-    params={'limit': 10, 'feature_type': 'Trạm điện'}
+    params={'limit': 10, 'feature_type': 'Power Station'}
 )
 data = response.json()
 
-# Dữ liệu GeoJSON với JSON-LD context
+# GeoJSON data with JSON-LD context
 for feature in data['features']:
     print(feature['properties']['feature_type'])
     print(feature['geometry']['coordinates'])`,
@@ -131,7 +131,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
             } else if (endpoint.path.includes("{asset_id}") && assetId) {
                 testUrl += endpoint.path.replace("{asset_id}", assetId);
             } else {
-                setError("Vui lòng nhập asset_id để test");
+                setError("Please enter asset_id to test");
                 setIsLoading(false);
                 return;
             }
@@ -140,7 +140,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
             const data = await res.json();
             setResponse(JSON.stringify(data, null, 2));
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+            setError(err instanceof Error ? err.message : "An error occurred");
         } finally {
             setIsLoading(false);
         }
@@ -181,9 +181,9 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-left text-slate-500">
-                                        <th className="pb-2 pr-4">Tên</th>
-                                        <th className="pb-2 pr-4">Kiểu</th>
-                                        <th className="pb-2">Mô tả</th>
+                                        <th className="pb-2 pr-4">Name</th>
+                                        <th className="pb-2 pr-4">Type</th>
+                                        <th className="pb-2">Description</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-slate-700">
@@ -204,13 +204,13 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                 {endpoint.path.includes("{asset_id}") && (
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Nhập asset_id để test:
+                            Enter asset_id to test:
                         </label>
                         <p className="text-xs text-slate-500 mb-2">
-                            Mẫu: <code 
+                            Sample: <code 
                                 className="bg-slate-100 px-2 py-1 rounded cursor-pointer hover:bg-slate-200 transition-colors"
                                 onClick={() => setAssetId("6927235efbcca60d69c3bf97")}
-                                title="Click để sử dụng ID mẫu"
+                                title="Click to use sample ID"
                             >6927235efbcca60d69c3bf97</code>
                         </p>
                         <div className="flex gap-2">
@@ -295,8 +295,8 @@ export default function ApiDocsPage() {
                             API Documentation
                         </h1>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            Truy cập dữ liệu hạ tầng GIS mở theo chuẩn JSON-LD. 
-                            Miễn phí sử dụng với giấy phép ODC-BY.
+                            Access open GIS infrastructure data in JSON-LD format. 
+                            Free to use under ODC-BY license.
                         </p>
                     </div>
 
@@ -313,7 +313,7 @@ export default function ApiDocsPage() {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-slate-900">ODC-BY License</h3>
-                                <p className="text-sm text-slate-500">Điều khoản sử dụng</p>
+                                <p className="text-sm text-slate-500">Terms of Use</p>
                             </div>
                             <ExternalLink size={16} className="ml-auto text-slate-400" />
                         </a>
@@ -327,17 +327,17 @@ export default function ApiDocsPage() {
                             <Key className="text-amber-600 shrink-0 mt-1" size={24} />
                             <div>
                                 <h2 className="text-xl font-bold text-slate-900 mb-2">
-                                    Giấy phép ODC-BY (Open Data Commons Attribution)
+                                    ODC-BY License (Open Data Commons Attribution)
                                 </h2>
                                 <p className="text-slate-700">
-                                    Dữ liệu được cung cấp miễn phí theo{" "}
+                                    Data is provided free under{" "}
                                     <a 
                                         href="https://opendatacommons.org/licenses/by/1-0/" 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="text-blue-600 hover:underline font-medium"
                                     >
-                                        giấy phép ODC-BY
+                                        ODC-BY license
                                     </a>.
                                 </p>
                             </div>
@@ -352,7 +352,7 @@ export default function ApiDocsPage() {
                         API Endpoints
                     </h2>
                     <p className="text-slate-500 mb-8">
-                        Bấm nút <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white text-xs font-medium rounded"><Play size={12} /> Test</span> để thử nghiệm trực tiếp
+                        Click the <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white text-xs font-medium rounded"><Play size={12} /> Test</span> button to try it directly
                     </p>
 
                     <div className="space-y-4">
@@ -401,7 +401,7 @@ export default function ApiDocsPage() {
                             {API_BASE_URL}
                         </code>
                         <p className="text-slate-600 mt-4">
-                            Không cần API key. Dữ liệu mở, miễn phí sử dụng.
+                            No API key required. Open data, free to use.
                         </p>
                     </div>
                 </section>
