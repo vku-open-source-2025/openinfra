@@ -138,7 +138,7 @@ def check_duplicate_coordinates(collection, coordinates: List[float]) -> bool:
 
 def insert_assets_skip_duplicates(db, assets: List[Dict[str, Any]]) -> Dict[str, int]:
     """
-    Insert assets into database, skipping duplicates based on coordinates
+    Insert assets into database, skipping duplicates based on geometry
     
     Args:
         db: Database connection (not used, get fresh connection)
@@ -155,21 +155,33 @@ def insert_assets_skip_duplicates(db, assets: List[Dict[str, Any]]) -> Dict[str,
     inserted = 0
     skipped = 0
     errors = 0
+    seen_geo_keys: set[str] = set()
     
     for asset in assets:
         try:
-            # Check if Point type
-            if asset["geometry"]["type"] != "Point":
-                # For non-Point geometries, insert without duplicate check
-                collection.insert_one(asset)
-                inserted += 1
-                continue
-            
-            # Check for duplicate coordinates
-            coordinates = asset["geometry"]["coordinates"]
-            if check_duplicate_coordinates(collection, coordinates):
+            geometry = asset["geometry"]
+            geom_key = json.dumps(geometry, sort_keys=True)
+
+            # Deduplicate within the same batch for any geometry type
+            if geom_key in seen_geo_keys:
                 skipped += 1
                 continue
+            seen_geo_keys.add(geom_key)
+
+            if geometry["type"] == "Point":
+                coordinates = geometry["coordinates"]
+                if check_duplicate_coordinates(collection, coordinates):
+                    skipped += 1
+                    continue
+            else:
+                # For non-Point geometries, check full geometry match to avoid re-inserting same lines/polygons
+                existing = collection.find_one({
+                    "geometry": geometry,
+                    "feature_code": asset.get("feature_code"),
+                })
+                if existing:
+                    skipped += 1
+                    continue
             
             # Insert new asset
             collection.insert_one(asset)

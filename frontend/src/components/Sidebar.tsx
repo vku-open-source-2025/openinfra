@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { LayoutDashboard, Map, Wrench, Settings, Activity } from 'lucide-react';
 
 interface SidebarProps {
@@ -17,7 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
 
     return (
         <div className="h-screen w-64 bg-slate-900 text-white flex flex-col shadow-xl">
-            <div className="p-6 border-b border-slate-800">
+            <Link to="/" className="p-6 border-b border-slate-800 block hover:bg-slate-800/40 transition-colors">
                 <div className="flex items-center gap-3">
                     <div className="bg-blue-500 p-2 rounded-lg">
                         <Activity size={24} />
@@ -27,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
                         <p className="text-xs text-slate-400">v1.0.0</p>
                     </div>
                 </div>
-            </div>
+            </Link>
 
             <nav className="flex-1 p-4 space-y-2">
                 {menuItems.map((item) => {

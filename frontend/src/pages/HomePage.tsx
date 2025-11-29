@@ -26,9 +26,9 @@ const featureCards = [
 ];
 
 const benefitHighlights = [
-    { num: "30%", title: "Giảm thời gian phản ứng", desc: "Phát hiện sự cố nhanh hơn." },
-    { num: "45%", title: "Tiết kiệm chi phí", desc: "Tối ưu hóa vận hành hiệu quả." },
-    { num: "99.9%", title: "Độ tin cậy", desc: "Hệ thống giám sát liên tục." },
+    { title: "Giảm thời gian phản ứng", desc: "Phát hiện sự cố nhanh hơn." },
+    { title: "Tiết kiệm chi phí", desc: "Tối ưu hóa vận hành hiệu quả." },
+    { title: "Độ tin cậy", desc: "Hệ thống giám sát liên tục." },
 ];
 
 const dashboardImage =
@@ -146,12 +146,12 @@ const HomePage = () => {
                                 >
                                     Trải nghiệm ngay <ArrowRight className="w-4 h-4 ml-2" />
                                 </Link>
-                                <a
-                                    href="#features"
+                                <Link
+                                    to="/docs"
                                     className="inline-flex items-center justify-center px-6 py-3 border border-slate-200 text-slate-700 rounded-full hover:border-blue hover:text-blue transition-colors"
                                 >
-                                    Tìm hiểu thêm
-                                </a>
+                                    Sử dụng API
+                                </Link>
                             </div>
                         </div>
                         <div className="relative">
@@ -195,7 +195,7 @@ const HomePage = () => {
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                             {statCards.map((item) => (
                                 <div
-                                    key={item.label}
+                                    key={item.label || "contributions"}
                                     className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-5 py-6 shadow-xs flex flex-col gap-2"
                                 >
                                     {item.label && (
@@ -250,7 +250,6 @@ const HomePage = () => {
                         <div className="space-y-6">
                             {benefitHighlights.map((item) => (
                                 <div key={item.title} className="flex gap-4">
-                                    <div className="text-3xl font-bold text-main-blue">{item.num}</div>
                                     <div>
                                         <h3 className="font-semibold text-slate-900">{item.title}</h3>
                                         <p className="text-slate-600">{item.desc}</p>
@@ -268,20 +267,20 @@ const HomePage = () => {
                 <section className="bg-gradient-to-r from-main-blue to-main-cyan text-white py-16">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
                         <h2 className="text-3xl md:text-4xl font-bold">Sẵn sàng bắt đầu?</h2>
-                        <p className="text-lg text-white/80">Tham gia hàng ngàn tổ chức đang hiện đại hóa hạ tầng của họ</p>
+                        <p className="text-lg text-white/80">Khám phá bản đồ hạ tầng hoặc tích hợp dữ liệu mở qua API</p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                             <Link
                                 to="/map"
                                 className="px-8 py-3 bg-white text-main-blue font-semibold rounded-full hover:bg-blue-50 transition-colors"
                             >
-                                Yêu cầu Demo
+                                Khám phá bản đồ
                             </Link>
-                            <a
-                                href="#benefits"
+                            <Link
+                                to="/docs"
                                 className="px-8 py-3 border border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors"
                             >
-                                Tìm hiểu thêm
-                            </a>
+                                Sử dụng API
+                            </Link>
                         </div>
                     </div>
                 </section>

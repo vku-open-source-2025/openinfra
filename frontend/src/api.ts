@@ -35,6 +35,11 @@ export const getAssets = async () => {
     return response.data;
 };
 
+export const loginAdmin = async (username: string, password: string) => {
+    const response = await api.post<{ token: string }>('/auth/login', { username, password });
+    return response.data;
+};
+
 export interface LeaderboardEntry {
     msv: string;
     contributor_name: string;
