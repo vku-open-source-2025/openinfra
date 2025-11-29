@@ -1,16 +1,33 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Code, Database, FileJson, Key, ExternalLink, Copy, Check } from "lucide-react";
+import { Code, Database, Key, ExternalLink, Copy, Check, Play, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
 const API_BASE_URL = "https://api.openinfra.space";
 
-const endpoints = [
+interface EndpointParam {
+    name: string;
+    type: string;
+    desc: string;
+    default?: string;
+}
+
+interface Endpoint {
+    method: string;
+    path: string;
+    title: string;
+    description: string;
+    params?: EndpointParam[];
+    testPath?: string;
+}
+
+const endpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/opendata/",
         title: "API Information",
         description: "Thông tin về API và giấy phép sử dụng dữ liệu",
+        testPath: "/api/opendata/",
     },
     {
         method: "GET",
@@ -18,11 +35,12 @@ const endpoints = [
         title: "Danh sách tài sản hạ tầng",
         description: "Lấy tất cả tài sản hạ tầng dưới dạng GeoJSON FeatureCollection (JSON-LD)",
         params: [
-            { name: "skip", type: "integer", desc: "Số bản ghi bỏ qua (mặc định: 0)" },
-            { name: "limit", type: "integer", desc: "Số bản ghi tối đa (mặc định: 100, tối đa: 1000)" },
+            { name: "skip", type: "integer", desc: "Số bản ghi bỏ qua (mặc định: 0)", default: "0" },
+            { name: "limit", type: "integer", desc: "Số bản ghi tối đa (mặc định: 100, tối đa: 1000)", default: "5" },
             { name: "feature_type", type: "string", desc: "Lọc theo loại hạ tầng" },
             { name: "feature_code", type: "string", desc: "Lọc theo mã hạ tầng" },
         ],
+        testPath: "/api/opendata/assets?limit=5",
     },
     {
         method: "GET",
@@ -36,12 +54,14 @@ const endpoints = [
         path: "/api/opendata/feature-types",
         title: "Danh sách loại hạ tầng",
         description: "Lấy tất cả các loại hạ tầng có sẵn và số lượng tương ứng",
+        testPath: "/api/opendata/feature-types",
     },
     {
         method: "GET",
         path: "/api/opendata/license",
         title: "Thông tin giấy phép",
         description: "Chi tiết về giấy phép ODC-BY",
+        testPath: "/api/opendata/license",
     },
 ];
 
@@ -69,39 +89,6 @@ for feature in data['features']:
     print(feature['geometry']['coordinates'])`,
 };
 
-const responseExample = `{
-  "@context": {
-    "@vocab": "https://schema.org/",
-    "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
-    "geojson": "https://purl.org/geojson/vocab#",
-    "Feature": "geojson:Feature",
-    "FeatureCollection": "geojson:FeatureCollection",
-    ...
-  },
-  "@type": "FeatureCollection",
-  "features": [
-    {
-      "@type": "Feature",
-      "@id": "https://api.openinfra.space/api/opendata/assets/...",
-      "geometry": {
-        "@type": "Point",
-        "coordinates": [108.2544, 15.9748]
-      },
-      "properties": {
-        "feature_type": "Trạm điện",
-        "feature_code": "tram_dien",
-        "created_at": "2025-11-22T14:27:29.567Z",
-        "license": "ODC-BY-1.0",
-        "publisher": "VKU.OneLove - OpenInfra"
-      }
-    }
-  ],
-  "totalCount": 1250,
-  "returned": 10,
-  "license": "ODC-BY-1.0",
-  "license_url": "https://opendatacommons.org/licenses/by/1-0/"
-}`;
-
 function CopyButton({ text }: { text: string }) {
     const [copied, setCopied] = useState(false);
 
@@ -114,11 +101,179 @@ function CopyButton({ text }: { text: string }) {
     return (
         <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors"
+            className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors"
             title="Copy to clipboard"
         >
             {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} className="text-slate-300" />}
         </button>
+    );
+}
+
+function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
+    const [isLoading, setIsLoading] = useState(false);
+    const [response, setResponse] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [showResponse, setShowResponse] = useState(false);
+    const [assetId, setAssetId] = useState("");
+
+    const canTest = endpoint.testPath || (endpoint.path.includes("{asset_id}") && assetId);
+
+    const handleTest = async () => {
+        setIsLoading(true);
+        setError(null);
+        setResponse(null);
+        setShowResponse(true);
+
+        try {
+            let testUrl = API_BASE_URL;
+            if (endpoint.testPath) {
+                testUrl += endpoint.testPath;
+            } else if (endpoint.path.includes("{asset_id}") && assetId) {
+                testUrl += endpoint.path.replace("{asset_id}", assetId);
+            } else {
+                setError("Vui lòng nhập asset_id để test");
+                setIsLoading(false);
+                return;
+            }
+
+            const res = await fetch(testUrl);
+            const data = await res.json();
+            setResponse(JSON.stringify(data, null, 2));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="p-6">
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-mono font-semibold rounded">
+                            {endpoint.method}
+                        </span>
+                        <code className="text-slate-800 font-mono text-sm">{endpoint.path}</code>
+                    </div>
+                    {endpoint.testPath && (
+                        <button
+                            onClick={handleTest}
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                                <Play size={16} />
+                            )}
+                            Test
+                        </button>
+                    )}
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">{endpoint.title}</h3>
+                <p className="text-slate-600">{endpoint.description}</p>
+
+                {endpoint.params && (
+                    <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-slate-700 mb-2">Parameters:</h4>
+                        <div className="bg-slate-50 rounded-lg p-4 overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-500">
+                                        <th className="pb-2 pr-4">Tên</th>
+                                        <th className="pb-2 pr-4">Kiểu</th>
+                                        <th className="pb-2">Mô tả</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-slate-700">
+                                    {endpoint.params.map((param) => (
+                                        <tr key={param.name}>
+                                            <td className="py-1 pr-4 font-mono text-blue-600">{param.name}</td>
+                                            <td className="py-1 pr-4 text-slate-500">{param.type}</td>
+                                            <td className="py-1">{param.desc}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Input for asset_id if needed */}
+                {endpoint.path.includes("{asset_id}") && (
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Nhập asset_id để test:
+                        </label>
+                        <p className="text-xs text-slate-500 mb-2">
+                            Mẫu: <code 
+                                className="bg-slate-100 px-2 py-1 rounded cursor-pointer hover:bg-slate-200 transition-colors"
+                                onClick={() => setAssetId("6927235efbcca60d69c3bf97")}
+                                title="Click để sử dụng ID mẫu"
+                            >6927235efbcca60d69c3bf97</code>
+                        </p>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={assetId}
+                                onChange={(e) => setAssetId(e.target.value)}
+                                placeholder="6927235efbcca60d69c3bf97"
+                                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <button
+                                onClick={handleTest}
+                                disabled={isLoading || !assetId}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
+                            >
+                                {isLoading ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <Play size={16} />
+                                )}
+                                Test
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Response Section */}
+                {showResponse && (
+                    <div className="mt-4">
+                        <button
+                            onClick={() => setShowResponse(!showResponse)}
+                            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 mb-2"
+                        >
+                            {showResponse ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            Response
+                        </button>
+                        <div className="bg-slate-900 rounded-lg overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
+                                <span className="text-xs text-slate-400">
+                                    {error ? "Error" : "application/json"}
+                                </span>
+                                {response && <CopyButton text={response} />}
+                            </div>
+                            <div className="p-4 max-h-96 overflow-auto">
+                                {isLoading && (
+                                    <div className="flex items-center justify-center py-8">
+                                        <Loader2 size={24} className="animate-spin text-blue-400" />
+                                    </div>
+                                )}
+                                {error && (
+                                    <p className="text-red-400 text-sm">{error}</p>
+                                )}
+                                {response && (
+                                    <pre className="text-sm text-slate-300 overflow-x-auto">
+                                        <code>{response}</code>
+                                    </pre>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }
 
@@ -146,23 +301,7 @@ export default function ApiDocsPage() {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="grid md:grid-cols-2 gap-6 mb-12">
-                        <a
-                            href={`${API_BASE_URL}/api/opendata/assets?limit=5`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-4 p-6 bg-white rounded-xl border border-slate-200 hover:border-green-300 hover:shadow-lg transition-all group"
-                        >
-                            <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                                <FileJson className="text-green-600" size={24} />
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-slate-900">Try API</h3>
-                                <p className="text-sm text-slate-500">Xem dữ liệu mẫu</p>
-                            </div>
-                            <ExternalLink size={16} className="ml-auto text-slate-400" />
-                        </a>
-
+                    <div className="flex justify-center mb-12">
                         <a
                             href="https://opendatacommons.org/licenses/by/1-0/"
                             target="_blank"
@@ -208,54 +347,17 @@ export default function ApiDocsPage() {
 
                 {/* Endpoints */}
                 <section className="max-w-6xl mx-auto px-4 mb-16">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                         <Code size={28} className="text-blue-600" />
                         API Endpoints
                     </h2>
+                    <p className="text-slate-500 mb-8">
+                        Bấm nút <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white text-xs font-medium rounded"><Play size={12} /> Test</span> để thử nghiệm trực tiếp
+                    </p>
 
                     <div className="space-y-4">
                         {endpoints.map((endpoint) => (
-                            <div
-                                key={endpoint.path}
-                                className="bg-white rounded-xl border border-slate-200 overflow-hidden"
-                            >
-                                <div className="p-6">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-mono font-semibold rounded">
-                                            {endpoint.method}
-                                        </span>
-                                        <code className="text-slate-800 font-mono">{endpoint.path}</code>
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-slate-900 mb-1">{endpoint.title}</h3>
-                                    <p className="text-slate-600">{endpoint.description}</p>
-
-                                    {endpoint.params && (
-                                        <div className="mt-4">
-                                            <h4 className="text-sm font-semibold text-slate-700 mb-2">Parameters:</h4>
-                                            <div className="bg-slate-50 rounded-lg p-4">
-                                                <table className="w-full text-sm">
-                                                    <thead>
-                                                        <tr className="text-left text-slate-500">
-                                                            <th className="pb-2">Tên</th>
-                                                            <th className="pb-2">Kiểu</th>
-                                                            <th className="pb-2">Mô tả</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="text-slate-700">
-                                                        {endpoint.params.map((param) => (
-                                                            <tr key={param.name}>
-                                                                <td className="py-1 font-mono text-blue-600">{param.name}</td>
-                                                                <td className="py-1 text-slate-500">{param.type}</td>
-                                                                <td className="py-1">{param.desc}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                            <EndpointCard key={endpoint.path} endpoint={endpoint} />
                         ))}
                     </div>
                 </section>
@@ -281,26 +383,11 @@ export default function ApiDocsPage() {
                             ))}
                         </div>
                         <div className="relative p-6">
-                            <CopyButton text={codeExamples[activeTab]} />
+                            <div className="absolute top-2 right-2">
+                                <CopyButton text={codeExamples[activeTab]} />
+                            </div>
                             <pre className="text-sm text-slate-300 overflow-x-auto">
                                 <code>{codeExamples[activeTab]}</code>
-                            </pre>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Response Example */}
-                <section className="max-w-6xl mx-auto px-4 mb-16">
-                    <h2 className="text-2xl font-bold text-slate-900 mb-8">Response Example (JSON-LD)</h2>
-
-                    <div className="bg-slate-900 rounded-2xl overflow-hidden">
-                        <div className="flex items-center justify-between px-6 py-3 border-b border-slate-700">
-                            <span className="text-sm text-slate-400">application/json</span>
-                            <CopyButton text={responseExample} />
-                        </div>
-                        <div className="p-6">
-                            <pre className="text-sm text-slate-300 overflow-x-auto">
-                                <code>{responseExample}</code>
                             </pre>
                         </div>
                     </div>
@@ -314,7 +401,7 @@ export default function ApiDocsPage() {
                             {API_BASE_URL}
                         </code>
                         <p className="text-slate-600 mt-4">
-                            Không cần API key. Dữ liệu mở, miễn phí sử dụng với điều kiện ghi nguồn.
+                            Không cần API key. Dữ liệu mở, miễn phí sử dụng.
                         </p>
                     </div>
                 </section>

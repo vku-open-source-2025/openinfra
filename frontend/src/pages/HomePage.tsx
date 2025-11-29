@@ -264,20 +264,22 @@ const HomePage = () => {
                 </section>
 
                 {/* CTA Section */}
-                <section className="bg-gradient-to-r from-main-blue to-main-cyan text-white py-16">
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-                        <h2 className="text-3xl md:text-4xl font-bold">Sẵn sàng bắt đầu?</h2>
-                        <p className="text-lg text-white/80">Khám phá bản đồ hạ tầng hoặc tích hợp dữ liệu mở qua API</p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <section className="bg-white py-20">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+                        <h2 className="text-3xl md:text-5xl font-bold text-slate-900">Trải nghiệm ngay hôm nay</h2>
+                        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                            Khám phá bản đồ hạ tầng trực quan hoặc tích hợp dữ liệu mở vào ứng dụng của bạn qua API
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-6 justify-center pt-6">
                             <Link
                                 to="/map"
-                                className="px-8 py-3 bg-white text-main-blue font-semibold rounded-full hover:bg-blue-50 transition-colors"
+                                className="inline-flex items-center justify-center px-10 py-4 text-white font-bold text-lg rounded-full bg-gradient-to-r from-[#00F2FE] from-21% to-[#4FACFE] shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                             >
-                                Khám phá bản đồ
+                                Khám phá bản đồ →
                             </Link>
                             <Link
                                 to="/docs"
-                                className="px-8 py-3 border border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors"
+                                className="inline-flex items-center justify-center px-10 py-4 border-2 border-slate-300 text-slate-700 font-bold text-lg rounded-full hover:border-[#4FACFE] hover:text-[#4FACFE] transition-all transform hover:scale-105"
                             >
                                 Sử dụng API
                             </Link>
