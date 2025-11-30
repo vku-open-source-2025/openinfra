@@ -10,6 +10,7 @@ import CalendarView from '../components/CalendarView';
 import { useIoT } from '../hooks/useIoT';
 import QRCodeModal from '../components/QRCodeModal';
 import NFCWriteModal from '../components/NFCWriteModal';
+import IoTSensorChart from '../components/IoTSensorChart';
 import { Zap, AlertTriangle, CheckCircle, Activity, QrCode, Radio } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -256,6 +257,17 @@ const Dashboard: React.FC = () => {
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Maintenance History</h4>
                                                         <MaintenanceLogList assetId={selectedAsset._id} />
                                                     </div>
+
+                                                    {/* IoT Sensor Chart for drainage assets */}
+                                                    {selectedAsset.feature_code === 'cong_thoat_nuoc' && (
+                                                        <div>
+                                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">IoT Sensor Data</h4>
+                                                            <IoTSensorChart 
+                                                                assetId={selectedAsset._id} 
+                                                                assetName={selectedAsset.feature_type}
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

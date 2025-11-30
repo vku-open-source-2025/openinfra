@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.mongodb import db
-from app.routers import assets, maintenance, ingest, opendata
+from app.routers import assets, maintenance, ingest, opendata, iot
 import app.routers.auth as auth
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -29,6 +29,7 @@ app.include_router(maintenance.router, prefix="/api/maintenance", tags=["Mainten
 app.include_router(ingest.router, prefix="/api/ingest", tags=["Ingestion"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(opendata.router, prefix="/api/opendata", tags=["Open Data (JSON-LD)"])
+app.include_router(iot.router, prefix="/api/iot", tags=["IoT Sensors"])
 
 @app.get("/")
 async def root():

@@ -116,8 +116,6 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
     const [showResponse, setShowResponse] = useState(false);
     const [assetId, setAssetId] = useState("");
 
-    const canTest = endpoint.testPath || (endpoint.path.includes("{asset_id}") && assetId);
-
     const handleTest = async () => {
         setIsLoading(true);
         setError(null);
