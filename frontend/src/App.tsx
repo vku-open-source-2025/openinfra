@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import PublicMap from './pages/PublicMap';
 import AdminLogin from './pages/AdminLogin';
 import ApiDocsPage from './pages/ApiDocsPage';
+import AboutUs from './pages/AboutUs';
 
 const RequireAuth = ({ children }: { children: React.ReactElement }) => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/map" element={<PublicMap />} />
         <Route path="/docs" element={<ApiDocsPage />} />
+        <Route path="/about" element={<AboutUs />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"
