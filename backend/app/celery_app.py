@@ -10,7 +10,7 @@ app = Celery(
     "openinfra",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.tasks.csv_import"]
+    include=["app.tasks.csv_import", "app.tasks.content_filter"]
 )
 
 # Configure Celery
@@ -30,6 +30,10 @@ app.conf.beat_schedule = {
     "import-csv-daily": {
         "task": "app.tasks.csv_import.import_csv_data",
         "schedule": crontab(hour=2, minute=0),  # Run daily at 2 AM UTC
+    },
+    "content-filter-hourly": {
+        "task": "app.tasks.content_filter.filter_inappropriate_content",
+        "schedule": crontab(minute=0),  # Run every hour at minute 0
     },
 }
 
