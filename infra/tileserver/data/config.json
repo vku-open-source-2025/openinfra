@@ -1,0 +1,23 @@
+{
+  "options": {
+    "paths": {
+      "root": "/data",
+      "fonts": "/data/fonts",
+      "styles": "/data/styles",
+      "mbtiles": "/data"
+    }
+  },
+  "styles": {
+    "vietnam-sovereignty": {
+      "style": "styles/vietnam-sovereignty.json",
+      "tilejson": {
+        "bounds": [100, 5, 120, 25]
+      }
+    }
+  },
+  "data": {
+    "vietnam": {
+      "mbtiles": "vietnam.mbtiles"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  tileserver:
+    build: .
+    container_name: openinfra-tileserver
+    ports:
+      - "8083:8080"
+    restart: unless-stopped
