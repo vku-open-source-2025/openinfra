@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, BarChart3, Droplet, MapPin, Award, Activity } from "lucide-react";
 import { getAssets, getLeaderboard } from "../api";
 import Footer from "../components/Footer";

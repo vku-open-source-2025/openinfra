@@ -1,12 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-    baseURL: import.meta.env.VITE_BASE_API_URL || '/api',
-});
-
-const leaderboardApi = axios.create({
-    baseURL: import.meta.env.VITE_LEADERBOARD_URL || 'https://contribapi.openinfra.space/api',
-});
+import { httpClient, leaderboardApi } from './lib/httpClient';
 
 export interface Asset {
     _id: string;
@@ -31,7 +23,7 @@ export interface MaintenanceLog {
 }
 
 export const getAssets = async () => {
-    const response = await api.get<Asset[]>('/assets/');
+    const response = await httpClient.get<Asset[]>('/assets');
     return response.data;
 };
 
@@ -48,13 +40,13 @@ export const getLeaderboard = async () => {
 };
 
 export const getMaintenanceLogs = async (assetId: string) => {
-    const response = await api.get<MaintenanceLog[]>(`/maintenance/asset/${assetId}`);
+    const response = await httpClient.get<MaintenanceLog[]>(`/maintenance/asset/${assetId}`);
     return response.data;
 };
 
 export const createMaintenanceLog = async (data: any) => {
-    const response = await api.post('/maintenance/', data);
+    const response = await httpClient.post('/maintenance', data);
     return response.data;
 };
 
-export default api;
+export default httpClient;

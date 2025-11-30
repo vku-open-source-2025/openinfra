@@ -10,6 +10,7 @@ import CalendarView from '../components/CalendarView';
 import { useIoT } from '../hooks/useIoT';
 import QRCodeModal from '../components/QRCodeModal';
 import NFCWriteModal from '../components/NFCWriteModal';
+import { NotificationCenter } from '../components/notifications/NotificationCenter';
 import { Zap, AlertTriangle, CheckCircle, Activity, QrCode, Radio } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -106,7 +107,8 @@ const Dashboard: React.FC = () => {
                         </h2>
                         <p className="text-sm text-slate-500">System status and asset performance</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-center">
+                        <NotificationCenter />
                         <button
                             onClick={handleRouteOptimization}
                             className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"

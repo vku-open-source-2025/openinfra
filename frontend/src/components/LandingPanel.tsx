@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 
 const LandingPanel = () => {
     const navigate = useNavigate();
@@ -13,7 +13,7 @@ const LandingPanel = () => {
                     Bắt đầu giám sát và bảo trì tài sản hạ tầng với dữ liệu IoT thời gian thực
                 </p>
                 <button
-                    onClick={() => navigate('/admin')}
+                    onClick={() => navigate({ to: '/admin' })}
                     className="bg-white text-[#4FACFE] font-semibold px-10 py-3 rounded-full hover:shadow-lg transition-shadow"
                 >
                     Bắt đầu ngay

@@ -1,20 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { getAssets, type Asset } from '../api';
-import MapComponent from '../components/Map';
-import AssetTable from '../components/AssetTable';
-import MaintenanceLogList from '../components/MaintenanceLog';
-import { useIoT } from '../hooks/useIoT';
-import { AlertTriangle, Activity, QrCode, Radio } from 'lucide-react';
-import Header from '../components/Header';
-import QRCodeModal from '../components/QRCodeModal';
-import NFCWriteModal from '../components/NFCWriteModal';
+import React, { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { getAssets, type Asset } from "../api";
+import MapComponent from "../components/Map";
+import AssetTable from "../components/AssetTable";
+import MaintenanceLogList from "../components/MaintenanceLog";
+import { useIoT } from "../hooks/useIoT";
+import { AlertTriangle, Activity, QrCode, Radio } from "lucide-react";
+import Header from "../components/Header";
+import QRCodeModal from "../components/QRCodeModal";
+import NFCWriteModal from "../components/NFCWriteModal";
+
+// Extended Asset type with status added by useIoT hook
+type AssetWithStatus = Asset & {
+    status?: "Online" | "Offline";
+    lastPing?: string;
+};
 
 const PublicMap: React.FC = () => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const { data: initialAssets, isLoading, error } = useQuery({
-        queryKey: ['assets'],
+    const navigate = useNavigate();
+    const searchParams = useSearch({ from: "/map" }) as { assetId?: string };
+    const {
+        data: initialAssets,
+        isLoading,
+        error,
+    } = useQuery({
+        queryKey: ["assets"],
         queryFn: getAssets,
     });
 
@@ -27,25 +38,30 @@ const PublicMap: React.FC = () => {
     const [showNFCModal, setShowNFCModal] = useState(false);
 
     // Use filtered assets if available, otherwise use live IoT assets
-    const displayAssets = filteredAssets || assetsWithStatus || [];
+    const displayAssets = useMemo(() => {
+        return filteredAssets || assetsWithStatus || [];
+    }, [filteredAssets, assetsWithStatus]);
 
     // Sync URL param with selected asset
     useEffect(() => {
-        const assetId = searchParams.get('assetId');
+        const assetId = searchParams?.assetId;
         if (assetId && displayAssets.length > 0) {
-            const asset = displayAssets.find(a => a._id === assetId);
-            if (asset) {
-                setSelectedAsset(asset);
+            const asset = displayAssets.find((a) => a._id === assetId);
+            if (asset && (!selectedAsset || selectedAsset._id !== asset._id)) {
+                // Use setTimeout to avoid synchronous setState in effect
+                setTimeout(() => {
+                    setSelectedAsset(asset);
+                }, 0);
             }
         }
-    }, [searchParams, displayAssets]);
+    }, [searchParams, displayAssets, selectedAsset]);
 
     const handleAssetSelect = (asset: Asset | null) => {
         setSelectedAsset(asset);
         if (asset) {
-            setSearchParams({ assetId: asset._id });
+            navigate({ to: "/map", search: { assetId: asset._id } });
         } else {
-            setSearchParams({});
+            navigate({ to: "/map", search: { assetId: undefined } });
         }
     };
 
@@ -53,24 +69,34 @@ const PublicMap: React.FC = () => {
         if (!displayAssets.length) return;
 
         const points = [...displayAssets]
-            .filter(a => a.geometry.type === 'Point')
+            .filter((a) => a.geometry.type === "Point")
             .slice(0, 5)
-            .sort((a, b) => b.geometry.coordinates[1] - a.geometry.coordinates[1]);
+            .sort(
+                (a, b) => b.geometry.coordinates[1] - a.geometry.coordinates[1]
+            );
 
         setRoutePoints(points);
         alert(`Route optimized for ${points.length} stops!`);
     };
 
-    if (isLoading) return (
-        <div className="flex h-screen items-center justify-center bg-slate-50">
-            <div className="text-center">
-                <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-500 font-medium">Loading system resources...</p>
+    if (isLoading)
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-50">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-500 font-medium">
+                        Loading system resources...
+                    </p>
+                </div>
             </div>
-        </div>
-    );
+        );
 
-    if (error) return <div className="p-8 text-center text-red-500">Error loading assets</div>;
+    if (error)
+        return (
+            <div className="p-8 text-center text-red-500">
+                Error loading assets
+            </div>
+        );
 
     return (
         <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
@@ -83,9 +109,17 @@ const PublicMap: React.FC = () => {
                 {alerts.length > 0 && (
                     <div className="absolute top-24 right-8 z-50 w-80 pointer-events-none">
                         {alerts.map((alert, idx) => (
-                            <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-3 mb-2 shadow-lg rounded-r animate-in slide-in-from-right fade-in duration-300 pointer-events-auto flex items-start gap-3">
-                                <AlertTriangle className="text-red-500 shrink-0" size={18} />
-                                <p className="text-xs font-medium text-red-800">{alert}</p>
+                            <div
+                                key={idx}
+                                className="bg-red-50 border-l-4 border-red-500 p-3 mb-2 shadow-lg rounded-r animate-in slide-in-from-right fade-in duration-300 pointer-events-auto flex items-start gap-3"
+                            >
+                                <AlertTriangle
+                                    className="text-red-500 shrink-0"
+                                    size={18}
+                                />
+                                <p className="text-xs font-medium text-red-800">
+                                    {alert}
+                                </p>
                             </div>
                         ))}
                     </div>
@@ -103,13 +137,16 @@ const PublicMap: React.FC = () => {
                                     routePoints={routePoints}
                                     selectedAsset={selectedAsset}
                                     className="h-full"
+                                    enableGeoSearches={true}
                                 />
                             </div>
 
                             <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-0">
                                 <div className="px-6 py-3 border-b border-slate-100 flex justify-between items-center shrink-0">
                                     <h3 className="font-bold text-lg">
-                                        {filteredAssets ? `Filtered Assets (${filteredAssets.length})` : 'System Assets'}
+                                        {filteredAssets
+                                            ? `Filtered Assets (${filteredAssets.length})`
+                                            : "System Assets"}
                                     </h3>
                                     <div className="flex gap-2">
                                         <button
@@ -121,7 +158,9 @@ const PublicMap: React.FC = () => {
                                         </button>
                                         {filteredAssets && (
                                             <button
-                                                onClick={() => setFilteredAssets(null)}
+                                                onClick={() =>
+                                                    setFilteredAssets(null)
+                                                }
                                                 className="text-xs text-red-600 font-medium hover:text-red-800"
                                             >
                                                 Clear Filter
@@ -148,44 +187,87 @@ const PublicMap: React.FC = () => {
                                             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">
                                                 {selectedAsset.feature_code}
                                             </span>
-                                            <span className="text-xs text-slate-400">ID: {selectedAsset._id.slice(-6)}</span>
-                                            {/* @ts-ignore */}
-                                            {selectedAsset.status && (
-                                                /* @ts-ignore */
-                                                <span className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${selectedAsset.status === 'Online' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                    {/* @ts-ignore */}
-                                                    {selectedAsset.status}
+                                            <span className="text-xs text-slate-400">
+                                                ID:{" "}
+                                                {selectedAsset._id.slice(-6)}
+                                            </span>
+                                            {(selectedAsset as AssetWithStatus)
+                                                .status && (
+                                                <span
+                                                    className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${
+                                                        (
+                                                            selectedAsset as AssetWithStatus
+                                                        ).status === "Online"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-red-100 text-red-700"
+                                                    }`}
+                                                >
+                                                    {
+                                                        (
+                                                            selectedAsset as AssetWithStatus
+                                                        ).status
+                                                    }
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900">{selectedAsset.feature_type}</h3>
+                                        <h3 className="text-xl font-bold text-slate-900">
+                                            {selectedAsset.feature_type}
+                                        </h3>
                                     </div>
 
                                     <div className="flex-1 overflow-y-auto p-6">
                                         <div className="space-y-6">
                                             <div>
-                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Location</h4>
+                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                                    Location
+                                                </h4>
                                                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                    {selectedAsset.geometry.type === 'Point' ? (
+                                                    {selectedAsset.geometry
+                                                        .type === "Point" ? (
                                                         <div className="grid grid-cols-2 gap-4 text-sm">
                                                             <div>
-                                                                <p className="text-slate-500 text-xs">Latitude</p>
-                                                                <p className="font-mono font-medium">{selectedAsset.geometry.coordinates[1].toFixed(6)}</p>
+                                                                <p className="text-slate-500 text-xs">
+                                                                    Latitude
+                                                                </p>
+                                                                <p className="font-mono font-medium">
+                                                                    {selectedAsset.geometry.coordinates[1].toFixed(
+                                                                        6
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                             <div>
-                                                                <p className="text-slate-500 text-xs">Longitude</p>
-                                                                <p className="font-mono font-medium">{selectedAsset.geometry.coordinates[0].toFixed(6)}</p>
+                                                                <p className="text-slate-500 text-xs">
+                                                                    Longitude
+                                                                </p>
+                                                                <p className="font-mono font-medium">
+                                                                    {selectedAsset.geometry.coordinates[0].toFixed(
+                                                                        6
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     ) : (
                                                         <div className="text-sm">
-                                                            <p className="text-slate-500 text-xs mb-1">Geometry Type</p>
-                                                            <p className="font-mono font-medium mb-2">{selectedAsset.geometry.type}</p>
-                                                            <p className="text-slate-500 text-xs mb-1">Details</p>
+                                                            <p className="text-slate-500 text-xs mb-1">
+                                                                Geometry Type
+                                                            </p>
+                                                            <p className="font-mono font-medium mb-2">
+                                                                {
+                                                                    selectedAsset
+                                                                        .geometry
+                                                                        .type
+                                                                }
+                                                            </p>
+                                                            <p className="text-slate-500 text-xs mb-1">
+                                                                Details
+                                                            </p>
                                                             <p className="font-mono font-medium">
-                                                                {selectedAsset.geometry.type === 'LineString'
+                                                                {selectedAsset
+                                                                    .geometry
+                                                                    .type ===
+                                                                "LineString"
                                                                     ? `${selectedAsset.geometry.coordinates.length} points`
-                                                                    : 'Complex Geometry'}
+                                                                    : "Complex Geometry"}
                                                             </p>
                                                         </div>
                                                     )}
@@ -193,8 +275,12 @@ const PublicMap: React.FC = () => {
                                             </div>
 
                                             <div>
-                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Maintenance History</h4>
-                                                <MaintenanceLogList assetId={selectedAsset._id} />
+                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                                    Maintenance History
+                                                </h4>
+                                                <MaintenanceLogList
+                                                    assetId={selectedAsset._id}
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -208,7 +294,9 @@ const PublicMap: React.FC = () => {
                                             QR Code
                                         </button>
                                         <button
-                                            onClick={() => setShowNFCModal(true)}
+                                            onClick={() =>
+                                                setShowNFCModal(true)
+                                            }
                                             className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
                                         >
                                             <Radio size={16} />
@@ -219,10 +307,18 @@ const PublicMap: React.FC = () => {
                             ) : (
                                 <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
                                     <div className="bg-slate-100 p-4 rounded-full mb-4">
-                                        <Activity size={32} className="text-slate-300" />
+                                        <Activity
+                                            size={32}
+                                            className="text-slate-300"
+                                        />
                                     </div>
-                                    <p className="font-medium text-slate-500">No Asset Selected</p>
-                                    <p className="text-sm mt-2">Select an asset from the map or list to view details.</p>
+                                    <p className="font-medium text-slate-500">
+                                        No Asset Selected
+                                    </p>
+                                    <p className="text-sm mt-2">
+                                        Select an asset from the map or list to
+                                        view details.
+                                    </p>
                                 </div>
                             )}
                         </div>

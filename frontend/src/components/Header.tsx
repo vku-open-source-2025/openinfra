@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 function Header() {
@@ -53,7 +54,7 @@ function Header() {
                     <FontAwesomeIcon icon={faBars} />
                 </div>
                 <nav
-                    className={`flex items-center 
+                    className={`flex items-center
                 max-lg:flex-col
                 max-lg:absolute
                 max-lg:top-0
@@ -65,10 +66,11 @@ function Header() {
                 max-lg:transition-transform
                 max-lg:duration-500
                 max-lg:ease-in-out
-                    ${showMenu
+                    ${
+                        showMenu
                             ? "max-lg:transform translate-x-0"
                             : "max-lg:transform max-lg:translate-x-full"
-                        }
+                    }
                 `}
                 >
                     <div
@@ -93,6 +95,7 @@ function Header() {
                     </a>
                     <Link
                         to="/map"
+                        search={{ assetId: undefined }}
                         className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors"
                     >
                         Bản đồ
@@ -105,7 +108,8 @@ function Header() {
                     </Link> */}
                     <Link
                         to="/map"
-                        className="ml-8 text-base h-10 
+                        search={{ assetId: undefined }}
+                        className="ml-8 text-base h-10
                     bg-gradient-to-r from-[#00F2FE] from-21%
                     to-[#4FACFE]
                     px-6
@@ -119,7 +123,9 @@ function Header() {
                     transition-shadow
                     "
                     >
-                        <p className="text-white font-semibold text-center">Bắt đầu</p>
+                        <p className="text-white font-semibold text-center">
+                            Bắt đầu
+                        </p>
                     </Link>
                 </nav>
             </div>

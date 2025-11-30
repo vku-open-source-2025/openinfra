@@ -10,7 +10,7 @@ app = Celery(
     "openinfra",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.tasks.csv_import"]
+    include=["app.tasks.csv_import", "app.tasks.sensor_monitoring", "app.tasks.report_generation"]
 )
 
 # Configure Celery
@@ -30,6 +30,18 @@ app.conf.beat_schedule = {
     "import-csv-daily": {
         "task": "app.tasks.csv_import.import_csv_data",
         "schedule": crontab(hour=2, minute=0),  # Run daily at 2 AM UTC
+    },
+    "check-sensor-offline": {
+        "task": "check_sensor_offline_status",
+        "schedule": crontab(minute="*/15"),  # Run every 15 minutes
+    },
+    "aggregate-sensor-data-hourly": {
+        "task": "aggregate_sensor_data_hourly",
+        "schedule": crontab(minute=0),  # Run every hour
+    },
+    "generate-scheduled-reports": {
+        "task": "generate_scheduled_reports",
+        "schedule": crontab(hour=0, minute=0),  # Run daily at midnight
     },
 }
 
