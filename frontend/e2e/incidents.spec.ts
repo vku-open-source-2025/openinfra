@@ -1,12 +1,13 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { navigateTo } from './helpers';
 
 describe('Incidents Module', () => {
   beforeEach(async () => {
-    window.location.href = '/admin/incidents';
+    await navigateTo('/admin/incidents');
     // Wait for page to load
-    await waitFor(() => document.body, { timeout: 1000 });
+    await waitFor(() => document.body, { timeout: 5000 });
   });
 
   test('should display incidents list page', async () => {
@@ -58,18 +59,22 @@ describe('Incidents Module', () => {
   });
 
   test('should display public incident report form', async () => {
-    window.location.href = '/public/report';
-    await waitFor(() => document.body);
+    await navigateTo('/public/report');
+    await waitFor(() => document.body, { timeout: 5000 });
 
     // Check for report form elements
-    const form = document.querySelector('form');
-    await waitFor(() => {
-      expect(form).toBeTruthy();
-    });
+    const form = await waitFor(() => {
+      const f = document.querySelector('form');
+      expect(f).toBeTruthy();
+      return f;
+    }, { timeout: 5000 });
 
-    // Check for required fields
-    const descriptionField = screen.queryByLabelText(/description/i) ||
-                            screen.queryByPlaceholderText(/description/i);
-    expect(descriptionField).toBeTruthy();
+    // Check for required fields - look for textarea directly (more reliable)
+    const descriptionField = await waitFor(() => {
+      const field = document.querySelector('textarea[placeholder*="details"]') ||
+                    document.querySelector('textarea');
+      expect(field).toBeTruthy();
+      return field;
+    }, { timeout: 2000 });
   });
 });

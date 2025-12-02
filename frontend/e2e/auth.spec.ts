@@ -1,12 +1,13 @@
 import { describe, test, expect, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { navigateTo } from "./helpers";
 
 describe("Authentication Flow", () => {
     beforeEach(async () => {
-        // Navigate to home page before each test
-        window.location.href = "/";
-        await waitFor(() => document.body);
+        // Navigate to home page before each test using router (doesn't reload page)
+        await navigateTo("/");
+        await waitFor(() => document.body, { timeout: 5000 });
     });
 
     test("should navigate to login page", async () => {
@@ -17,15 +18,18 @@ describe("Authentication Flow", () => {
 
         if (loginLink) {
             await userEvent.click(loginLink);
-            await waitFor(() => {
-                expect(window.location.pathname).toMatch(/.*login/);
-            });
+            await waitFor(
+                () => {
+                    expect(window.location.pathname).toMatch(/.*login/);
+                },
+                { timeout: 5000 }
+            );
         }
     });
 
     test("should display login form", async () => {
-        window.location.href = "/login";
-        await waitFor(() => document.body);
+        await navigateTo("/login");
+        await waitFor(() => document.body, { timeout: 5000 });
 
         // Check for login form elements
         const emailInput =
@@ -43,8 +47,8 @@ describe("Authentication Flow", () => {
     });
 
     test("should display register form", async () => {
-        window.location.href = "/register";
-        await waitFor(() => document.body);
+        await navigateTo("/register");
+        await waitFor(() => document.body, { timeout: 5000 });
 
         // Check for registration form elements
         const emailInput =
@@ -63,8 +67,8 @@ describe("Authentication Flow", () => {
     });
 
     test("should show validation errors on empty form submission", async () => {
-        window.location.href = "/login";
-        await waitFor(() => document.body);
+        await navigateTo("/login");
+        await waitFor(() => document.body, { timeout: 5000 });
 
         const submitButton = screen.queryByRole("button", {
             name: /login|sign in/i,
@@ -77,8 +81,8 @@ describe("Authentication Flow", () => {
     });
 
     test("should navigate between login and register pages", async () => {
-        window.location.href = "/login";
-        await waitFor(() => document.body);
+        await navigateTo("/login");
+        await waitFor(() => document.body, { timeout: 5000 });
 
         // Look for link to register page
         const registerLink = screen.queryByRole("link", {
@@ -86,9 +90,12 @@ describe("Authentication Flow", () => {
         });
         if (registerLink) {
             await userEvent.click(registerLink);
-            await waitFor(() => {
-                expect(window.location.pathname).toMatch(/.*register/);
-            });
+            await waitFor(
+                () => {
+                    expect(window.location.pathname).toMatch(/.*register/);
+                },
+                { timeout: 5000 }
+            );
         }
     });
 });

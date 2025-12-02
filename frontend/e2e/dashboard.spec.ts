@@ -1,13 +1,14 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { navigateTo } from './helpers';
 
 describe('Admin Dashboard', () => {
   beforeEach(async () => {
     // Note: In a real scenario, you'd need to authenticate first
     // For now, we'll test the public-facing parts or mock auth
-    window.location.href = '/admin';
-    await waitFor(() => document.body);
+    await navigateTo('/admin');
+    await waitFor(() => document.body, { timeout: 5000 });
   });
 
   test('should display dashboard when authenticated', async () => {
@@ -16,8 +17,9 @@ describe('Admin Dashboard', () => {
 
     if (currentPath.includes('/login')) {
       // User needs to login first - this is expected
-      const loginText = screen.queryByText(/login|sign in/i);
-      expect(loginText).toBeTruthy();
+      // Use queryAllByText to handle multiple matches
+      const loginTexts = screen.queryAllByText(/login|sign in/i);
+      expect(loginTexts.length).toBeGreaterThan(0);
     } else {
       // User is authenticated, check for dashboard elements
       const dashboardText = screen.queryByText(/overview|dashboard/i);
