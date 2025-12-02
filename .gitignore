@@ -12,3 +12,10 @@ venv/
 celerybeat-schedule
 
 github/copilot-instructions.md
+
+notes/
+
+# MQTT data (logs, persistence, passwords)
+infra/mqtt/data/
+infra/mqtt/log/
+infra/mqtt/config/passwd

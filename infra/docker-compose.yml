@@ -56,6 +56,7 @@ services:
       - kafka_data:/var/lib/kafka/data
 
   # IoT Producer - receives HTTP from ESP8266, publishes to Kafka
+  # Also bridges MQTT messages to Kafka
   iot-producer:
     build: ../iot_integration/producer
     ports:
@@ -64,6 +65,13 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_IOT_TOPIC=iot-sensor-data
       - IOT_API_KEY=${IOT_API_KEY:-}
+      - MQTT_HOST=host.docker.internal
+      - MQTT_PORT=1883
+      - MQTT_USER=openinfra
+      - MQTT_PASS=OpenInfra2025!
+      - MQTT_TOPICS=openinfra/sensors/#
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - kafka
     networks:

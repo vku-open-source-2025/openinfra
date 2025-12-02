@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: openinfra-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
+    networks:
+      - openinfra-network
+
+networks:
+  openinfra-network:
+    driver: bridge
