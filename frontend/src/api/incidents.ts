@@ -5,6 +5,10 @@ import type {
   IncidentUpdateRequest,
   IncidentCommentRequest,
 } from '../types/incident';
+import { mockIncidents, delay } from './mocks/assetLifecycleMocks';
+
+// Set to true to use mock data instead of real API calls
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || false;
 
 export interface IncidentListParams {
   skip?: number;
@@ -16,6 +20,20 @@ export interface IncidentListParams {
 
 export const incidentsApi = {
   list: async (params?: IncidentListParams): Promise<Incident[]> => {
+    if (USE_MOCK_DATA && params?.asset_id) {
+      await delay(400);
+      let incidents = mockIncidents(params.asset_id);
+
+      // Apply filters
+      if (params.status) {
+        incidents = incidents.filter(i => i.status === params.status);
+      }
+      if (params.severity) {
+        incidents = incidents.filter(i => i.severity === params.severity);
+      }
+
+      return incidents;
+    }
     const response = await httpClient.get<Incident[]>('/incidents', { params });
     return response.data;
   },

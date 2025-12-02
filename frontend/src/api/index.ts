@@ -2,6 +2,7 @@ export * from './auth';
 export * from './users';
 export * from './assets';
 export * from './maintenance';
+export * from './preventive-maintenance';
 export * from './incidents';
 export * from './alerts';
 export * from './budgets';

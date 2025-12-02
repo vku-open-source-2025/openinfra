@@ -51,6 +51,15 @@ const MaintenanceLogList: React.FC<MaintenanceLogListProps> = ({ assetId }) => {
                             <p className="text-sm font-medium text-slate-800 mb-1">{log.description}</p>
                             <div className="flex items-center gap-2 text-xs text-slate-500">
                                 <span>Tech: {log.technician}</span>
+                                {(log as any).approval_status && (
+                                    <span className={`px-2 py-0.5 rounded text-xs ${
+                                        (log as any).approval_status === "approved" ? "bg-green-100 text-green-700" :
+                                        (log as any).approval_status === "rejected" ? "bg-red-100 text-red-700" :
+                                        "bg-yellow-100 text-yellow-700"
+                                    }`}>
+                                        {(log as any).approval_status}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

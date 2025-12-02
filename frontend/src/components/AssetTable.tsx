@@ -1,14 +1,26 @@
 import React from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import type { Asset } from '../api';
 import { ChevronRight } from 'lucide-react';
 
 interface AssetTableProps {
     assets: Asset[];
-    onAssetSelect: (asset: Asset) => void;
+    onAssetSelect?: (asset: Asset) => void;
     selectedAssetId?: string;
 }
 
 const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selectedAssetId }) => {
+    const navigate = useNavigate();
+
+    const handleAssetClick = (asset: Asset) => {
+        if (onAssetSelect) {
+            onAssetSelect(asset);
+        } else {
+            // Navigate to asset detail page if no onAssetSelect handler
+            navigate({ to: `/admin/assets/${asset._id || asset.id}` });
+        }
+    };
+
     return (
         <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-slate-200">
             <div className="overflow-x-auto">
@@ -24,9 +36,9 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selected
                     <tbody className="bg-white divide-y divide-slate-200">
                         {assets.map((asset) => (
                             <tr
-                                key={asset._id}
-                                onClick={() => onAssetSelect(asset)}
-                                className={`cursor-pointer transition-colors duration-150 ${selectedAssetId === asset._id
+                                key={asset._id || asset.id}
+                                onClick={() => handleAssetClick(asset)}
+                                className={`cursor-pointer transition-colors duration-150 ${selectedAssetId === (asset._id || asset.id)
                                         ? 'bg-blue-50 hover:bg-blue-100'
                                         : 'hover:bg-slate-50'
                                     }`}

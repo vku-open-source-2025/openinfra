@@ -13,6 +13,7 @@ import {
     ChevronRight,
     Menu,
     X,
+    Building2,
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 
@@ -49,7 +50,13 @@ const Sidebar: React.FC<SidebarProps> = () => {
             id: "map",
             label: "Map View",
             icon: Map,
-            path: "/map",
+            path: "/admin/map",
+        },
+        {
+            id: "assets",
+            label: "Assets",
+            icon: Building2,
+            path: "/admin/assets",
         },
         {
             id: "incidents",
