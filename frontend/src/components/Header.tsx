@@ -87,18 +87,17 @@ function Header() {
                     >
                         Bảng giá
                     </a> */}
-                    <a
-                        href="#about-us"
-                        className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors"
-                    >
-                        Về chúng tôi
-                    </a>
                     <Link
-                        to="/map"
-                        search={{ assetId: undefined }}
+                        to="/about"
                         className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors"
                     >
-                        Bản đồ
+                        About Us
+                    </Link>
+                    <Link
+                        to="/docs"
+                        className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors"
+                    >
+                        API Docs
                     </Link>
                     {/* <Link
                         to="/admin"

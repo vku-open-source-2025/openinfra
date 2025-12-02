@@ -27,6 +27,9 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import * as turf from "@turf/turf";
 import L from "leaflet";
 
+// VietMap API key from environment
+const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || '';
+
 interface MapProps {
     assets: Asset[];
     onAssetSelect: (asset: Asset) => void;
@@ -364,10 +367,10 @@ const MapComponent: React.FC<MapProps> = ({
                         onGeoSearchClear={handleGeoSearchClear}
                     />
                 )}
+                {/* VietMap Raster Tiles */}
                 <TileLayer
-                    attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
-                    url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-                    subdomains={["mt0", "mt1", "mt2", "mt3"]}
+                    attribution='&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳'
+                    url={`https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`}
                 />
 
                 {!enableGeoSearches && (

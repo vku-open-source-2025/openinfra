@@ -1,0 +1,18 @@
+# ESP8266 Drainage Sensor Configuration
+# Copy to config.h and update values
+
+# WiFi
+WIFI_SSID = "YOUR_WIFI_SSID"
+WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"
+
+# IoT Producer API
+IOT_API_URL = "http://YOUR_SERVER_IP:8001/api/iot/reading"
+IOT_API_KEY = "YOUR_API_KEY"
+
+# Sensor identification
+SENSOR_ID = "drainage-sensor-001"
+ASSET_ID = "69298e9e3127bed87ace1a93"
+
+# Hardware configuration
+PIPE_HEIGHT_CM = 100.0
+READING_INTERVAL_MS = 60000

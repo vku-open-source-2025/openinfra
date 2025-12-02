@@ -14,8 +14,8 @@ services:
   redis:
     env_file: .env
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"  # Hidden for security - internal only
     networks:
       - app_network
     healthcheck:
@@ -23,6 +23,67 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # ==================== Kafka for IoT ====================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - app_network
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    # ports:
+    #   - "9092:9092"  # Hidden for security - internal only
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - app_network
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  # IoT Producer - receives HTTP from ESP8266, publishes to Kafka
+  iot-producer:
+    build: ../iot_integration/producer
+    ports:
+      - "${IOT_PRODUCER_PORT:-8002}:8001"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_IOT_TOPIC=iot-sensor-data
+      - IOT_API_KEY=${IOT_API_KEY:-}
+    depends_on:
+      - kafka
+    networks:
+      - app_network
+
+  # IoT Consumer - consumes from Kafka, stores in MongoDB
+  iot-consumer:
+    build: ../backend
+    command: python -m app.services.kafka_consumer
+    environment:
+      - MONGODB_URL=${MONGODB_URL}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_IOT_TOPIC=iot-sensor-data
+      - KAFKA_GROUP_ID=openinfra-iot-consumer
+    depends_on:
+      - mongo
+      - kafka
+    networks:
+      - app_network
 
   backend:
     env_file: .env
@@ -94,6 +155,9 @@ services:
 
 volumes:
   mongo_data:
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:
 
 networks:
   app_network:

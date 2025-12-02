@@ -6,6 +6,9 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 .env
 .DS_Store
 celerybeat-schedule
+
+github/copilot-instructions.md

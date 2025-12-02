@@ -11,6 +11,7 @@ import { useIoT } from "../hooks/useIoT";
 import QRCodeModal from "../components/QRCodeModal";
 import NFCWriteModal from "../components/NFCWriteModal";
 import { NotificationCenter } from "../components/notifications/NotificationCenter";
+import IoTSensorChart from '../components/IoTSensorChart';
 import {
     Zap,
     AlertTriangle,
@@ -360,6 +361,17 @@ const Dashboard: React.FC = () => {
                                                             }
                                                         />
                                                     </div>
+
+                                                    {/* IoT Sensor Chart for drainage assets */}
+                                                    {selectedAsset.feature_code === 'cong_thoat_nuoc' && (
+                                                        <div>
+                                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">IoT Sensor Data</h4>
+                                                            <IoTSensorChart 
+                                                                assetId={selectedAsset._id} 
+                                                                assetName={selectedAsset.feature_type}
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

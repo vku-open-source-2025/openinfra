@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ADMIN_JWT_SECRET: str = "change-me"
+    ADMIN_JWT_ALGORITHM: str = "HS256"
+    ADMIN_JWT_EXPIRE_MINUTES: int = 60 * 24
+    ADMIN_DEFAULT_USERNAME: str = "admin"
+    ADMIN_DEFAULT_PASSWORD: str = "admin123"
 
     # File Storage
     STORAGE_TYPE: str = "local"  # "local" or "s3"
@@ -18,7 +23,6 @@ class Settings(BaseSettings):
 
     # External Services
     OSM_NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"
-
     class Config:
         env_file = ".env"
 
