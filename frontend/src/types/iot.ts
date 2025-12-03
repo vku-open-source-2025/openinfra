@@ -23,7 +23,7 @@ export interface IoTSensor {
   measurement_unit?: string;
   thresholds?: SensorThresholds;
   last_seen?: string;
-  last_reading?: number;
+  last_reading?: number | { value: number; timestamp: string; status: string };
   created_at: string;
 }
 

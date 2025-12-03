@@ -76,7 +76,7 @@ class MaintenanceAttachment(BaseModel):
 
 class Maintenance(BaseModel):
     """Maintenance record domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     work_order_number: str
     asset_id: str
 

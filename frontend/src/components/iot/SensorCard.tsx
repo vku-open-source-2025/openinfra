@@ -25,7 +25,9 @@ export const SensorCard: React.FC<SensorCardProps> = ({ sensor, onClick }) => {
           <div className="flex items-center gap-1">
             <Activity className="h-3 w-3" />
             <span>
-              {sensor.last_reading} {sensor.measurement_unit || ""}
+              {typeof sensor.last_reading === 'object'
+                ? sensor.last_reading.value
+                : sensor.last_reading} {sensor.measurement_unit || ""}
             </span>
           </div>
         )}

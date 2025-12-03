@@ -31,15 +31,34 @@ async def drop_all_collections(db, confirm: bool = False):
             logger.info("No collections found in database")
             return True
 
+        # Filter out system collections that cannot be dropped when time-series collections exist
+        system_collections = {"system.views", "system.buckets"}
+        user_collections = [c for c in collections if c not in system_collections]
+
         logger.info(
-            f"Found {len(collections)} collections to drop: {', '.join(collections)}"
+            f"Found {len(collections)} collections total, {len(user_collections)} user collections to drop"
         )
+        if system_collections & set(collections):
+            logger.info(
+                f"Skipping system collections: {', '.join(system_collections & set(collections))}"
+            )
 
-        for collection_name in collections:
-            await db.drop_collection(collection_name)
-            logger.info(f"Dropped collection: {collection_name}")
+        for collection_name in user_collections:
+            try:
+                await db.drop_collection(collection_name)
+                logger.info(f"Dropped collection: {collection_name}")
+            except Exception as e:
+                logger.warning(f"Could not drop collection {collection_name}: {e}")
+                # Try to clear it instead
+                try:
+                    await db[collection_name].delete_many({})
+                    logger.info(f"Cleared collection: {collection_name}")
+                except Exception as clear_error:
+                    logger.error(
+                        f"Could not clear collection {collection_name}: {clear_error}"
+                    )
 
-        logger.info("All collections dropped successfully")
+        logger.info("All user collections dropped/cleared successfully")
         return True
     except Exception as e:
         logger.error(f"Error dropping collections: {e}")

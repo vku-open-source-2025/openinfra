@@ -26,7 +26,9 @@ class UserStatus(str, Enum):
 class User(BaseModel):
     """User domain entity."""
 
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(
+        validation_alias="_id", serialization_alias="id", default=None
+    )
     username: str
     email: EmailStr
     password_hash: str

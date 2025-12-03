@@ -23,14 +23,22 @@ export const IncidentStatusBadge: React.FC<IncidentStatusBadgeProps> = ({ status
     critical: { label: "Critical", variant: "destructive" },
   }
 
-  const statusInfo = statusConfig[status]
+  // Safely get status info with fallback for invalid/undefined status
+  const statusInfo = status && statusConfig[status as IncidentStatus]
+    ? statusConfig[status as IncidentStatus]
+    : { label: "Unknown", variant: "outline" as const }
+
+  // Safely get severity info with fallback for invalid/undefined severity
+  const severityInfo = severity && severityConfig[severity as IncidentSeverity]
+    ? severityConfig[severity as IncidentSeverity]
+    : null
 
   return (
     <div className="flex items-center gap-2">
       <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-      {severity && (
-        <Badge variant={severityConfig[severity].variant} className="text-xs">
-          {severityConfig[severity].label}
+      {severityInfo && (
+        <Badge variant={severityInfo.variant} className="text-xs">
+          {severityInfo.label}
         </Badge>
       )}
     </div>

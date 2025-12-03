@@ -163,11 +163,13 @@ const AssetList: React.FC = () => {
                                                 <span className="flex items-center gap-1">
                                                     <MapPin size={14} />
                                                     {asset.location.address ||
-                                                        `${asset.location.coordinates.latitude.toFixed(
-                                                            4
-                                                        )}, ${asset.location.coordinates.longitude.toFixed(
-                                                            4
-                                                        )}`}
+                                                        (asset.geometry?.coordinates &&
+                                                         Array.isArray(asset.geometry.coordinates) &&
+                                                         asset.geometry.coordinates.length >= 2 &&
+                                                         typeof asset.geometry.coordinates[0] === 'number' &&
+                                                         typeof asset.geometry.coordinates[1] === 'number'
+                                                            ? `${asset.geometry.coordinates[1].toFixed(4)}, ${asset.geometry.coordinates[0].toFixed(4)}`
+                                                            : 'N/A')}
                                                 </span>
                                             )}
                                         </div>

@@ -9,8 +9,13 @@ interface BudgetCardProps {
 }
 
 export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
-  const utilizationPercent = budget.total_amount > 0
-    ? (budget.spent_amount / budget.total_amount) * 100
+  // Safely handle undefined/null values with defaults
+  const totalAmount = budget.total_amount ?? 0
+  const spentAmount = budget.spent_amount ?? 0
+  const allocatedAmount = budget.allocated_amount ?? 0
+
+  const utilizationPercent = totalAmount > 0
+    ? (spentAmount / totalAmount) * 100
     : 0
 
   const statusConfig: Record<typeof budget.status, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "outline" }> = {
@@ -41,19 +46,19 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600">Total Budget</span>
           <span className="font-semibold text-slate-900">
-            {budget.total_amount.toLocaleString()} VND
+            {totalAmount.toLocaleString()} VND
           </span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600">Spent</span>
           <span className="font-semibold text-red-600">
-            {budget.spent_amount.toLocaleString()} VND
+            {spentAmount.toLocaleString()} VND
           </span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-600">Remaining</span>
           <span className="font-semibold text-green-600">
-            {(budget.total_amount - budget.spent_amount).toLocaleString()} VND
+            {(totalAmount - spentAmount).toLocaleString()} VND
           </span>
         </div>
       </div>
@@ -82,7 +87,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
         </div>
         <div className="flex items-center gap-1">
           <DollarSign className="h-3 w-3" />
-          <span>{budget.allocated_amount.toLocaleString()} allocated</span>
+          <span>{allocatedAmount.toLocaleString()} allocated</span>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import AdminMap from "@/pages/admin/AdminMap";
+import AssetMapView from "../../pages/AssetMapView";
 
 export const Route = createFileRoute("/admin/map")({
-    component: AdminMap,
+    component: AssetMapView,
     validateSearch: (search: Record<string, unknown>) => {
         return {
             assetId: search.assetId as string | undefined,

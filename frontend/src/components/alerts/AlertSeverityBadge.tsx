@@ -13,7 +13,11 @@ export const AlertSeverityBadge: React.FC<AlertSeverityBadgeProps> = ({ severity
     critical: { label: "Critical", variant: "destructive" },
   }
 
-  const { label, variant } = config[severity]
+  // Normalize severity to lowercase and ensure it's a valid key
+  const normalizedSeverity = severity?.toLowerCase() as AlertSeverity
+  const severityConfig = config[normalizedSeverity] || { label: severity || "Unknown", variant: "default" as const }
+
+  const { label, variant } = severityConfig
 
   return <Badge variant={variant}>{label}</Badge>
 }

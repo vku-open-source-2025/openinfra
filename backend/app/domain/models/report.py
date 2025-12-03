@@ -35,7 +35,7 @@ class ReportStatus(str, Enum):
 
 class Report(BaseModel):
     """Report domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     report_code: str
 
     # Report Details

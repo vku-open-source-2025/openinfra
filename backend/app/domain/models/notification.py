@@ -44,7 +44,7 @@ class ChannelDelivery(BaseModel):
 
 class Notification(BaseModel):
     """Notification domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
 
     # Recipient
     user_id: str

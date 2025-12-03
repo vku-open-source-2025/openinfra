@@ -20,8 +20,9 @@ const LifecycleConditionTab: React.FC<LifecycleConditionTabProps> = ({ assetId, 
   });
 
   const healthScore = asset.lifecycle?.health_score ?? healthData?.health_score ?? 0;
+  const healthStatus = healthData?.health_status;
   const healthColor = getHealthScoreColor(healthScore);
-  const healthLabel = getHealthScoreLabel(healthScore);
+  const healthLabel = healthStatus || getHealthScoreLabel(healthScore);
 
   const currentAge = asset.lifecycle?.commissioned_date
     ? Math.floor((new Date().getTime() - new Date(asset.lifecycle.commissioned_date).getTime()) / (1000 * 60 * 60 * 24 * 365))
@@ -48,9 +49,9 @@ const LifecycleConditionTab: React.FC<LifecycleConditionTabProps> = ({ assetId, 
             healthColor === "orange" ? "text-orange-600" :
             "text-red-600"
           }`}>
-            {healthScore}/100
+            {healthScore.toFixed(1)}/100
           </p>
-          <p className="text-sm text-slate-600 mt-1">{healthLabel}</p>
+          <p className="text-sm text-slate-600 mt-1 capitalize">{healthLabel}</p>
         </div>
       </div>
 
@@ -124,38 +125,36 @@ const LifecycleConditionTab: React.FC<LifecycleConditionTabProps> = ({ assetId, 
         </div>
       )}
 
-      {/* Factors Affecting Condition */}
-      {healthData?.factors && (
+      {/* Health Score Breakdown */}
+      {healthData?.breakdown && (
         <div className="bg-slate-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Factors Affecting Condition</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Health Score Breakdown</h3>
           <div className="space-y-3">
             <FactorItem
-              label="Incident Frequency"
-              value={healthData.factors.incident_frequency}
+              label="Condition (30%)"
+              value={healthData.breakdown.condition_score}
               trend="neutral"
             />
             <FactorItem
-              label="Severity of Issues"
-              value={healthData.factors.incident_severity}
+              label="Status (20%)"
+              value={healthData.breakdown.status_score}
               trend="neutral"
             />
             <FactorItem
-              label="Maintenance Recency"
-              value={healthData.factors.maintenance_recency}
+              label="Maintenance (25%)"
+              value={healthData.breakdown.maintenance_score}
               trend="up"
             />
             <FactorItem
-              label="Maintenance Cost Trend"
-              value={healthData.factors.maintenance_cost_trend}
+              label="Incidents (15%)"
+              value={healthData.breakdown.incident_score}
+              trend="neutral"
+            />
+            <FactorItem
+              label="Age (10%)"
+              value={healthData.breakdown.age_score}
               trend="down"
             />
-            {healthData.factors.iot_sensor_alerts !== undefined && (
-              <FactorItem
-                label="IoT Sensor Alerts"
-                value={healthData.factors.iot_sensor_alerts}
-                trend="neutral"
-              />
-            )}
           </div>
         </div>
       )}

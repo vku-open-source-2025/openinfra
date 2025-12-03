@@ -6,12 +6,33 @@
     border: none !important;
   }
 
+  .custom-marker-icon div {
+    pointer-events: none;
+  }
+
+  .custom-marker-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .leaflet-popup-content-wrapper {
     @apply rounded-xl shadow-lg border border-slate-100;
   }
 
   .leaflet-popup-content {
     @apply m-3;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
   }
 }
 

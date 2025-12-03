@@ -45,7 +45,7 @@ class SensorThresholds(BaseModel):
 
 class IoTSensor(BaseModel):
     """IoT Sensor domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     sensor_code: str
     asset_id: str
 
@@ -117,7 +117,7 @@ class IoTSensor(BaseModel):
 
 class SensorReading(BaseModel):
     """Sensor reading model."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     sensor_id: str
     asset_id: str
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/api/users";
+import { authApi } from "@/api/auth";
 import {
     Form,
     FormField,
@@ -62,7 +63,10 @@ const ProfileSettings: React.FC = () => {
         }: {
             current: string;
             new: string;
-        }) => usersApi.changePassword(current, newPass),
+        }) => authApi.changePassword({
+            current_password: current,
+            new_password: newPass,
+        }),
         onSuccess: () => {
             setPasswordData({
                 current_password: "",

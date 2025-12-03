@@ -6,7 +6,7 @@ from datetime import datetime
 
 class AuditLog(BaseModel):
     """Audit log entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     user_id: Optional[str] = None
     username: Optional[str] = None
     user_role: Optional[str] = None

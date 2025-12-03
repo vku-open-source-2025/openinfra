@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as PublicReportRouteImport } from './routes/public/report'
 import { Route as AdminMapRouteImport } from './routes/admin/map'
+import { Route as AdminIngestRouteImport } from './routes/admin/ingest'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports/index'
@@ -87,6 +88,11 @@ const PublicReportRoute = PublicReportRouteImport.update({
 const AdminMapRoute = AdminMapRouteImport.update({
   id: '/map',
   path: '/map',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIngestRoute = AdminIngestRouteImport.update({
+  id: '/ingest',
+  path: '/ingest',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/register': typeof RegisterRoute
+  '/admin/ingest': typeof AdminIngestRoute
   '/admin/map': typeof AdminMapRoute
   '/public/report': typeof PublicReportRoute
   '/admin/': typeof AdminIndexRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/register': typeof RegisterRoute
+  '/admin/ingest': typeof AdminIngestRoute
   '/admin/map': typeof AdminMapRoute
   '/public/report': typeof PublicReportRoute
   '/admin': typeof AdminIndexRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/register': typeof RegisterRoute
+  '/admin/ingest': typeof AdminIngestRoute
   '/admin/map': typeof AdminMapRoute
   '/public/report': typeof PublicReportRoute
   '/admin/': typeof AdminIndexRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/map'
     | '/register'
+    | '/admin/ingest'
     | '/admin/map'
     | '/public/report'
     | '/admin/'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/map'
     | '/register'
+    | '/admin/ingest'
     | '/admin/map'
     | '/public/report'
     | '/admin'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/map'
     | '/register'
+    | '/admin/ingest'
     | '/admin/map'
     | '/public/report'
     | '/admin/'
@@ -454,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/map'
       fullPath: '/admin/map'
       preLoaderRoute: typeof AdminMapRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ingest': {
+      id: '/admin/ingest'
+      path: '/ingest'
+      fullPath: '/admin/ingest'
+      preLoaderRoute: typeof AdminIngestRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/users/': {
@@ -593,6 +612,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminIngestRoute: typeof AdminIngestRoute
   AdminMapRoute: typeof AdminMapRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminAlertsListRoute: typeof AdminAlertsListRoute
@@ -617,6 +637,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminIngestRoute: AdminIngestRoute,
   AdminMapRoute: AdminMapRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminAlertsListRoute: AdminAlertsListRoute,

@@ -10,3 +10,5 @@ export * from './iot';
 export * from './notifications';
 export * from './reports';
 export * from './geo';
+export * from './public';
+export * from './ingest';

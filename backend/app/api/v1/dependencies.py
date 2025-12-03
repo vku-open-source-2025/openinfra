@@ -45,7 +45,16 @@ async def get_asset_service():
     """Get asset service instance."""
     repository = await get_asset_repository()
     audit_service = await get_audit_service()
-    return AssetService(repository, audit_service)
+    # Optional: inject maintenance and incident repositories for health score calculation
+    try:
+        maintenance_repo = await get_maintenance_repository()
+    except:
+        maintenance_repo = None
+    try:
+        incident_repo = await get_incident_repository()
+    except:
+        incident_repo = None
+    return AssetService(repository, audit_service, maintenance_repo, incident_repo)
 
 
 async def get_storage_service():

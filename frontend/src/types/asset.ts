@@ -22,10 +22,10 @@ export interface AssetGeometry {
 
 export interface AssetLocation {
     address: string;
-    coordinates: {
-        longitude: number;
-        latitude: number;
-    };
+    ward?: string;
+    district?: string;
+    city?: string | null;
+    country?: string;
 }
 
 export interface AssetAttachment {
@@ -50,6 +50,19 @@ export interface AssetLifecycleData {
     maintenance_overdue?: boolean;
 }
 
+export interface AssetSpecifications {
+    manufacturer?: string | null;
+    model?: string | null;
+    serial_number?: string | null;
+    installation_date?: string | null;
+    warranty_expiry?: string | null;
+    capacity?: string | null;
+    dimensions?: string | null;
+    weight?: string | null;
+    material?: string | null;
+    custom_fields?: Record<string, unknown>;
+}
+
 export interface Asset {
     id: string;
     asset_code: string;
@@ -59,14 +72,31 @@ export interface Asset {
     geometry: AssetGeometry;
     category?: string;
     status: AssetStatus;
+    condition?: string;
+    lifecycle_stage?: string;
     location: AssetLocation;
-    properties?: Record<string, any>;
+    specifications?: AssetSpecifications;
+    properties?: Record<string, unknown>;
     attachments?: AssetAttachment[];
     lifecycle?: AssetLifecycleData;
     managing_unit?: string;
     manufacturer?: string;
+    installation_cost?: number | null;
+    current_value?: number | null;
+    depreciation_rate?: number | null;
+    owner?: string | null;
+    manager_id?: string | null;
+    qr_code?: string | null;
+    nfc_tag_id?: string | null;
+    public_info_visible?: boolean;
+    iot_enabled?: boolean;
+    sensor_ids?: string[];
+    tags?: string[];
+    notes?: string | null;
     created_at: string;
     updated_at: string;
+    created_by?: string;
+    updated_by?: string | null;
 }
 
 export interface AssetCreateRequest {
@@ -77,8 +107,11 @@ export interface AssetCreateRequest {
     geometry: AssetGeometry;
     category?: string;
     status?: AssetStatus;
-    location: AssetLocation;
-    properties?: Record<string, any>;
+    location?: AssetLocation;
+    specifications?: Partial<AssetSpecifications>;
+    condition?: string;
+    lifecycle_stage?: string;
+    properties?: Record<string, unknown>;
 }
 
 export interface AssetUpdateRequest {
@@ -87,7 +120,7 @@ export interface AssetUpdateRequest {
     category?: string;
     status?: AssetStatus;
     location?: AssetLocation;
-    properties?: Record<string, any>;
+    properties?: Record<string, unknown>;
     lifecycle_status?: LifecycleStatus;
     managing_unit?: string;
     manufacturer?: string;

@@ -81,7 +81,7 @@ class ReporterContact(BaseModel):
 
 class Incident(BaseModel):
     """Incident domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     incident_number: str
     asset_id: Optional[str] = None
 

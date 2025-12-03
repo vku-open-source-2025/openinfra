@@ -6,8 +6,10 @@ interface BudgetProgressProps {
 }
 
 export const BudgetProgress: React.FC<BudgetProgressProps> = ({ budget, showDetails = true }) => {
-  const utilizationPercent = budget.total_amount > 0
-    ? (budget.spent_amount / budget.total_amount) * 100
+  const totalAmount = budget.total_amount ?? 0
+  const spentAmount = budget.spent_amount ?? 0
+  const utilizationPercent = totalAmount > 0
+    ? (spentAmount / totalAmount) * 100
     : 0
 
   return (
@@ -30,8 +32,8 @@ export const BudgetProgress: React.FC<BudgetProgressProps> = ({ budget, showDeta
       </div>
       {showDetails && (
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Spent: {budget.spent_amount.toLocaleString()} VND</span>
-          <span>Remaining: {(budget.total_amount - budget.spent_amount).toLocaleString()} VND</span>
+          <span>Spent: {spentAmount.toLocaleString()} VND</span>
+          <span>Remaining: {(totalAmount - spentAmount).toLocaleString()} VND</span>
         </div>
       )}
     </div>

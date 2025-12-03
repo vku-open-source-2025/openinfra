@@ -10,22 +10,25 @@ import {
     TileLayer,
     Marker,
     Popup,
-    FeatureGroup,
     Polyline,
     useMap,
     useMapEvents,
 } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
-import { EditControl } from "react-leaflet-draw";
 import type { Asset } from "../api";
-import type { Asset as AssetType } from "../types/asset";
 import { getIconForAsset, getColorForFeatureCode } from "../utils/mapIcons";
 import HeatmapLayer from "./HeatmapLayer";
-import { NearbySearch, AddressSearch, PolygonDraw } from "./geo";
+import AssetLayerFilter from "./AssetLayerFilter";
 import "leaflet/dist/leaflet.css";
-import "leaflet-draw/dist/leaflet.draw.css";
-import * as turf from "@turf/turf";
 import L from "leaflet";
+
+// Disable default Leaflet marker icons to prevent showing default markers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: undefined,
+    iconUrl: undefined,
+    shadowUrl: undefined,
+});
 
 // VietMap API key from environment
 const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || "";
@@ -33,11 +36,9 @@ const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || "";
 interface MapProps {
     assets: Asset[];
     onAssetSelect: (asset: Asset) => void;
-    onFilterByShape?: (filteredAssets: Asset[]) => void;
     routePoints?: Asset[]; // For routing feature
     selectedAsset?: Asset | null;
     className?: string;
-    enableGeoSearches?: boolean; // Enable geospatial search features
 }
 
 const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
@@ -133,53 +134,18 @@ const BoundsWatcher: React.FC<{
     return null;
 };
 
-// Wrapper components for geo search components that need to be inside MapContainer
-// These components use useMap() hook which requires them to be descendants of MapContainer
-const GeoSearchControlsWrapper: React.FC<{
-    onLocationSelect?: (lat: number, lng: number, address: string) => void;
-    onGeoSearchResults: (assets: AssetType[]) => void;
-    onGeoSearchClear: () => void;
-}> = ({ onLocationSelect, onGeoSearchResults, onGeoSearchClear }) => {
-    return (
-        <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
-            <div className="pointer-events-auto">
-                <AddressSearch
-                    onLocationSelect={onLocationSelect}
-                    onClear={onGeoSearchClear}
-                />
-            </div>
-            <div className="pointer-events-auto">
-                <NearbySearch
-                    onResults={onGeoSearchResults}
-                    onClear={onGeoSearchClear}
-                />
-            </div>
-            <div className="pointer-events-auto">
-                <PolygonDraw
-                    onResults={onGeoSearchResults}
-                    onClear={onGeoSearchClear}
-                />
-            </div>
-        </div>
-    );
-};
-
 const MapComponent: React.FC<MapProps> = ({
     assets,
     onAssetSelect,
-    onFilterByShape,
     routePoints,
     selectedAsset,
     className,
-    enableGeoSearches = false,
 }) => {
     const [mapMode, setMapMode] = useState<"markers" | "heatmap">("markers");
     const center: [number, number] = [16.047079, 108.20623];
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
     const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
-    const [geoSearchResults, setGeoSearchResults] = useState<Asset[] | null>(
-        null
-    );
+    const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
 
     // Prepare heatmap data
     const heatmapPoints = assets
@@ -209,12 +175,14 @@ const MapComponent: React.FC<MapProps> = ({
         []
     );
 
-    const visibleAssets = useMemo(() => {
-        // Use geo search results if available, otherwise use regular assets
-        const sourceAssets = geoSearchResults || assets;
+    // Update filtered assets when assets prop changes
+    useEffect(() => {
+        setFilteredAssets(assets);
+    }, [assets]);
 
-        if (!mapBounds) return sourceAssets;
-        const filtered = sourceAssets.filter((asset) =>
+    const visibleAssets = useMemo(() => {
+        if (!mapBounds) return filteredAssets;
+        const filtered = filteredAssets.filter((asset) =>
             assetIntersectsBounds(asset, mapBounds)
         );
 
@@ -227,52 +195,7 @@ const MapComponent: React.FC<MapProps> = ({
         }
 
         return filtered;
-    }, [
-        assets,
-        geoSearchResults,
-        assetIntersectsBounds,
-        mapBounds,
-        selectedAsset,
-    ]);
-
-    const handleGeoSearchResults = useCallback(
-        (results: AssetType[]) => {
-            // Convert AssetType to Asset format expected by the map
-            const convertedResults = results as unknown as Asset[];
-            setGeoSearchResults(convertedResults);
-            if (onFilterByShape) {
-                onFilterByShape(convertedResults);
-            }
-        },
-        [onFilterByShape]
-    );
-
-    const handleGeoSearchClear = useCallback(() => {
-        setGeoSearchResults(null);
-        if (onFilterByShape) {
-            onFilterByShape(assets);
-        }
-    }, [assets, onFilterByShape]);
-
-    const _onCreated = (e: any) => {
-        if (!onFilterByShape) return;
-
-        const layer = e.layer;
-        const shape = layer.toGeoJSON();
-
-        // Filter assets within the shape
-        const filtered = assets.filter((asset) => {
-            if (asset.geometry.type !== "Point") return false;
-            const pt = turf.point(asset.geometry.coordinates);
-            return turf.booleanPointInPolygon(pt, shape);
-        });
-
-        onFilterByShape(filtered);
-    };
-
-    const _onDeleted = () => {
-        if (onFilterByShape) onFilterByShape(assets);
-    };
+    }, [filteredAssets, assetIntersectsBounds, mapBounds, selectedAsset]);
 
     return (
         <div
@@ -280,6 +203,12 @@ const MapComponent: React.FC<MapProps> = ({
                 className || "h-[calc(100vh-250px)]"
             }`}
         >
+            {/* Asset Layer Filter */}
+            <AssetLayerFilter
+                assets={assets}
+                onFilterChange={setFilteredAssets}
+            />
+
             {/* Map Controls Overlay */}
             <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-md border border-slate-200 p-1 flex flex-col gap-1">
                 <button
@@ -342,7 +271,8 @@ const MapComponent: React.FC<MapProps> = ({
 
             <MapContainer
                 center={center}
-                zoom={13}
+                zoom={16}
+                maxZoom={20}
                 scrollWheelZoom={true}
                 className="h-full w-full rounded-xl shadow-sm border border-slate-200"
             >
@@ -351,107 +281,75 @@ const MapComponent: React.FC<MapProps> = ({
                     markerRefs={markerRefs}
                 />
                 <BoundsWatcher onBoundsChange={setMapBounds} />
-                {/* Geo search components need to be inside MapContainer to use useMap() */}
-                {enableGeoSearches && (
-                    <GeoSearchControlsWrapper
-                        onLocationSelect={(lat, lng, address) => {
-                            // Address search can trigger nearby search or just navigate
-                            console.log(
-                                "Location selected:",
-                                address,
-                                lat,
-                                lng
-                            );
-                        }}
-                        onGeoSearchResults={handleGeoSearchResults}
-                        onGeoSearchClear={handleGeoSearchClear}
+                {/* Map Tile Layer (VietMap with fallback to OpenStreetMap) */}
+                {VIETMAP_API_KEY ? (
+                    <TileLayer
+                        attribution='&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳'
+                        url={`https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`}
                     />
-                )}
-                {/* VietMap Raster Tiles */}
-                <TileLayer
-                    attribution='&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳'
-                    url={`https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`}
-                />
-
-                {!enableGeoSearches && (
-                    <FeatureGroup>
-                        <EditControl
-                            position="topleft"
-                            onCreated={_onCreated}
-                            onDeleted={_onDeleted}
-                            draw={{
-                                rectangle: false,
-                                circle: false,
-                                circlemarker: false,
-                                marker: false,
-                                polyline: false,
-                                polygon: {
-                                    allowIntersection: false,
-                                    showArea: true,
-                                },
-                            }}
-                        />
-                    </FeatureGroup>
+                ) : (
+                    <TileLayer
+                        attribution='&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        maxZoom={20}
+                        maxNativeZoom={16}
+                    />
                 )}
 
                 {mapMode === "markers" && (
                     <>
-                        <MarkerClusterGroup chunkedLoading>
-                            {visibleAssets.map((asset) => {
-                                if (asset.geometry.type === "Point") {
-                                    const position: [number, number] = [
-                                        asset.geometry.coordinates[1],
-                                        asset.geometry.coordinates[0],
-                                    ];
-                                    const isSelected =
-                                        selectedAsset?._id === asset._id;
-                                    return (
-                                        <Marker
-                                            key={asset._id}
-                                            position={position}
-                                            icon={getIconForAsset(
-                                                asset.feature_code,
-                                                isSelected
-                                            )}
-                                            eventHandlers={{
-                                                click: () =>
-                                                    onAssetSelect(asset),
-                                            }}
-                                            ref={(el) => {
-                                                if (el) {
-                                                    markerRefs.current[
-                                                        asset._id
-                                                    ] = el;
-                                                }
-                                            }}
-                                        >
-                                            <Popup className="custom-popup">
-                                                <div className="font-semibold text-slate-900">
-                                                    {asset.feature_type}
-                                                </div>
-                                                <div className="text-xs text-slate-500">
-                                                    {asset.feature_code}
-                                                </div>
-                                                <div className="mt-2 text-xs">
-                                                    <span
-                                                        className={`px-2 py-0.5 rounded-full ${
-                                                            Math.random() > 0.1
-                                                                ? "bg-green-100 text-green-700"
-                                                                : "bg-red-100 text-red-700"
-                                                        }`}
-                                                    >
-                                                        {Math.random() > 0.1
-                                                            ? "Online"
-                                                            : "Offline"}
-                                                    </span>
-                                                </div>
-                                            </Popup>
-                                        </Marker>
-                                    );
-                                }
-                                return null;
-                            })}
-                        </MarkerClusterGroup>
+                        {visibleAssets.map((asset) => {
+                            if (asset.geometry.type === "Point") {
+                                const position: [number, number] = [
+                                    asset.geometry.coordinates[1],
+                                    asset.geometry.coordinates[0],
+                                ];
+                                const isSelected =
+                                    selectedAsset?._id === asset._id;
+                                return (
+                                    <Marker
+                                        key={asset._id}
+                                        position={position}
+                                        icon={getIconForAsset(
+                                            asset.feature_code,
+                                            isSelected
+                                        )}
+                                        eventHandlers={{
+                                            click: () => onAssetSelect(asset),
+                                        }}
+                                        ref={(el) => {
+                                            if (el) {
+                                                markerRefs.current[asset._id] =
+                                                    el;
+                                            }
+                                        }}
+                                    >
+                                        <Popup className="custom-popup">
+                                            <div className="font-semibold text-slate-900">
+                                                {asset.feature_type}
+                                            </div>
+                                            <div className="text-xs text-slate-500">
+                                                {asset.feature_code}
+                                            </div>
+                                            <div className="mt-2 text-xs">
+                                                <span
+                                                    className={`px-2 py-0.5 rounded-full ${
+                                                        Math.random() > 0.1
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-red-100 text-red-700"
+                                                    }`}
+                                                >
+                                                    {Math.random() > 0.1
+                                                        ? "Online"
+                                                        : "Offline"}
+                                                </span>
+                                            </div>
+                                        </Popup>
+                                    </Marker>
+                                );
+                            }
+                            return null;
+                        })}
                         {visibleAssets.map((asset) => {
                             if (asset.geometry.type === "LineString") {
                                 const positions =

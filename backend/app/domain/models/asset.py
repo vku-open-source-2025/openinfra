@@ -49,7 +49,9 @@ class Attachment(BaseModel):
 class Asset(BaseModel):
     """Asset domain entity."""
 
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(
+        validation_alias="_id", serialization_alias="id", default=None
+    )
     asset_code: Optional[str] = None  # Optional for legacy data migration
     name: Optional[str] = None  # Optional for legacy data migration
     feature_type: str

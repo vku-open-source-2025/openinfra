@@ -31,7 +31,7 @@ class AlertSourceType(str, Enum):
 
 class Alert(BaseModel):
     """Alert domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     alert_code: str
 
     # Source

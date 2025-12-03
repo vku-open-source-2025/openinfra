@@ -65,7 +65,7 @@ class BudgetAttachment(BaseModel):
 
 class Budget(BaseModel):
     """Budget domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     budget_code: str
 
     # Budget Period
@@ -137,7 +137,7 @@ class Budget(BaseModel):
 
 class BudgetTransaction(BaseModel):
     """Budget transaction domain entity."""
-    id: Optional[str] = Field(alias="_id", default=None)
+    id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     transaction_number: str
     budget_id: str
 

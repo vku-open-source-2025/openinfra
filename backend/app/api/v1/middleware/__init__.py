@@ -60,6 +60,9 @@ def require_permission(permission: str):
     """Decorator factory for permission checking."""
 
     async def permission_checker(current_user=Depends(get_current_user)):
+        if "*" in current_user.permissions:
+            return current_user
+
         if permission not in current_user.permissions:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

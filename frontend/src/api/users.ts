@@ -24,13 +24,6 @@ export const usersApi = {
     return response.data;
   },
 
-  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
-    await httpClient.post('/users/me/password', {
-      current_password: currentPassword,
-      new_password: newPassword,
-    });
-  },
-
   getById: async (id: string): Promise<User> => {
     const response = await httpClient.get<User>(`/users/${id}`);
     return response.data;

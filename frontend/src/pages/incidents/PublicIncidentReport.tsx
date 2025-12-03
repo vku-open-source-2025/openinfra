@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
-import { incidentsApi } from "../../api/incidents"
+import { publicApi } from "../../api/public"
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
 import { Textarea } from "../../components/ui/textarea"
@@ -26,7 +26,7 @@ const PublicIncidentReport: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const createMutation = useMutation({
-    mutationFn: (data: IncidentCreateRequest) => incidentsApi.create(data),
+    mutationFn: (data: IncidentCreateRequest) => publicApi.createAnonymousIncident(data),
     onSuccess: (incident) => {
       navigate({ to: `/public/incidents/${incident.id}` })
     },

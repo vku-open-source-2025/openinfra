@@ -57,8 +57,8 @@ const AssetDetail: React.FC = () => {
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["asset", id, "lifecycle"],
-        queryFn: () => assetsApi.getAssetWithLifecycle(id),
+        queryKey: ["asset", id],
+        queryFn: () => assetsApi.getById(id),
         enabled: !!id,
     });
 
@@ -90,17 +90,22 @@ const AssetDetail: React.FC = () => {
     const healthScore = asset.lifecycle?.health_score ?? 0;
     const healthColor = getHealthScoreColor(healthScore);
     const healthLabel = getHealthScoreLabel(healthScore);
-    const lifecycleStatus = asset.lifecycle?.lifecycle_status ?? "operational";
+    // Use asset.status since lifecycle data may not be available from API
+    const lifecycleStatus =
+        asset.lifecycle?.lifecycle_status ?? asset.status ?? "active";
 
     const getStatusBadgeColor = (status: string) => {
         switch (status) {
             case "operational":
+            case "active":
                 return "bg-green-100 text-green-700";
             case "under_repair":
+            case "maintenance":
                 return "bg-yellow-100 text-yellow-700";
             case "damaged":
                 return "bg-red-100 text-red-700";
             case "decommissioned":
+            case "inactive":
                 return "bg-gray-100 text-gray-700";
             default:
                 return "bg-slate-100 text-slate-700";
@@ -154,20 +159,35 @@ const AssetDetail: React.FC = () => {
                                     </span>{" "}
                                     {asset.id.slice(-8)}
                                 </div>
-                                {asset.location && (
-                                    <div className="flex items-center gap-1">
-                                        <MapPin size={14} />
-                                        <span>
-                                            {asset.location.coordinates.latitude.toFixed(
-                                                6
-                                            )}
-                                            ,{" "}
-                                            {asset.location.coordinates.longitude.toFixed(
-                                                6
-                                            )}
-                                        </span>
-                                    </div>
-                                )}
+                                {asset.geometry?.coordinates &&
+                                    Array.isArray(asset.geometry.coordinates) &&
+                                    asset.geometry.coordinates.length >= 2 &&
+                                    typeof asset.geometry.coordinates[0] ===
+                                        "number" &&
+                                    typeof asset.geometry.coordinates[1] ===
+                                        "number" && (
+                                        <div className="flex items-center gap-1">
+                                            <MapPin size={14} />
+                                            <span>
+                                                {asset.geometry.coordinates[1].toFixed(
+                                                    6
+                                                )}
+                                                ,{" "}
+                                                {asset.geometry.coordinates[0].toFixed(
+                                                    6
+                                                )}
+                                            </span>
+                                        </div>
+                                    )}
+                                {asset.location?.address &&
+                                    !asset.geometry?.coordinates && (
+                                        <div className="flex items-center gap-1">
+                                            <MapPin size={14} />
+                                            <span>
+                                                {asset.location.address}
+                                            </span>
+                                        </div>
+                                    )}
                             </div>
                         </div>
                     </div>
