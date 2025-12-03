@@ -22,3 +22,6 @@ async def test_health_check(test_client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert "status" in data
+
+
+

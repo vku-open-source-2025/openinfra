@@ -1,8 +1,8 @@
-import { httpClient, leaderboardApi } from './lib/httpClient';
-import axios from 'axios';
+import { httpClient, leaderboardApi } from "./lib/httpClient";
+import axios from "axios";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_BASE_API_URL || '/api',
+    baseURL: import.meta.env.VITE_BASE_API_URL || "/api",
 });
 
 export interface Asset {
@@ -10,8 +10,14 @@ export interface Asset {
     feature_type: string;
     feature_code: string;
     geometry: {
-        type: 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon';
-        coordinates: any; // GeoJSON coordinates can be number[], number[][], or number[][][]
+        type:
+            | "Point"
+            | "LineString"
+            | "Polygon"
+            | "MultiPoint"
+            | "MultiLineString"
+            | "MultiPolygon";
+        coordinates: number[] | number[][] | number[][][]; // GeoJSON coordinates
     };
     created_at: string;
 }
@@ -28,12 +34,15 @@ export interface MaintenanceLog {
 }
 
 export const getAssets = async () => {
-    const response = await httpClient.get<Asset[]>('/assets');
+    const response = await httpClient.get<Asset[]>("/assets");
     return response.data;
 };
 
 export const loginAdmin = async (username: string, password: string) => {
-    const response = await api.post<{ token: string }>('/auth/login', { username, password });
+    const response = await api.post<{ token: string }>("/auth/login", {
+        username,
+        password,
+    });
     return response.data;
 };
 
@@ -45,17 +54,21 @@ export interface LeaderboardEntry {
 }
 
 export const getLeaderboard = async () => {
-    const response = await leaderboardApi.get<LeaderboardEntry[]>('/leaderboard');
+    const response = await leaderboardApi.get<LeaderboardEntry[]>(
+        "/leaderboard"
+    );
     return response.data;
 };
 
 export const getMaintenanceLogs = async (assetId: string) => {
-    const response = await httpClient.get<MaintenanceLog[]>(`/maintenance/asset/${assetId}`);
+    const response = await httpClient.get<MaintenanceLog[]>(
+        `/maintenance/asset/${assetId}`
+    );
     return response.data;
 };
 
-export const createMaintenanceLog = async (data: any) => {
-    const response = await httpClient.post('/maintenance', data);
+export const createMaintenanceLog = async (data: Record<string, unknown>) => {
+    const response = await httpClient.post("/maintenance", data);
     return response.data;
 };
 

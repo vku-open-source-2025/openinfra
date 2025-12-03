@@ -1,4 +1,5 @@
 """Main FastAPI application."""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -29,6 +30,7 @@ async def lifespan(app: FastAPI):
     if settings.DATABASE_NAME == "gis_db":
         try:
             from app.infrastructure.database.init_db import init_database
+
             await init_database()
         except Exception as e:
             logger.warning(f"Database initialization skipped: {e}")
@@ -41,11 +43,7 @@ async def lifespan(app: FastAPI):
     await cache.close()
 
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    lifespan=lifespan,
-    version="1.0.0"
-)
+app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan, version="1.0.0")
 
 # CORS
 app.add_middleware(
@@ -70,13 +68,14 @@ app.include_router(api_router, prefix="/api/v1")
 # app.include_router(opendata.router, prefix="/api/opendata", tags=["Open Data (JSON-LD)"])
 # app.include_router(iot.router, prefix="/api/iot", tags=["IoT Sensors"])
 
+
 @app.get("/")
 async def root():
     """Root endpoint."""
     return {
         "message": "Infrastructure Management System API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
     }
 
 
@@ -85,7 +84,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "database": "connected" if db.client else "disconnected"
+        "database": "connected" if db.client else "disconnected",
     }
 
 

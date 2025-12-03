@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Infrastructure Management System"
     MONGODB_URL: str = "mongodb://mongo:27017"
@@ -23,7 +24,9 @@ class Settings(BaseSettings):
 
     # External Services
     OSM_NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"
+
     class Config:
         env_file = ".env"
+
 
 settings = Settings()

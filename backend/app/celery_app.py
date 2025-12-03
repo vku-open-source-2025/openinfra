@@ -10,7 +10,12 @@ app = Celery(
     "openinfra",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.tasks.csv_import", "app.tasks.sensor_monitoring", "app.tasks.report_generation", "app.tasks.content_filter"]
+    include=[
+        "app.tasks.csv_import",
+        "app.tasks.sensor_monitoring",
+        "app.tasks.report_generation",
+        "app.tasks.content_filter",
+    ],
 )
 
 # Configure Celery

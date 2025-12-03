@@ -28,7 +28,7 @@ import * as turf from "@turf/turf";
 import L from "leaflet";
 
 // VietMap API key from environment
-const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || '';
+const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || "";
 
 interface MapProps {
     assets: Asset[];

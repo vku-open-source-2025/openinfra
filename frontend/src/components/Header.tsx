@@ -109,7 +109,7 @@ function Header() {
                         to="/map"
                         search={{ assetId: undefined }}
                         className="ml-8 text-base h-10
-                    bg-gradient-to-r from-[#00F2FE] from-21%
+                    bg-linear-to-r from-[#00F2FE] from-21%
                     to-[#4FACFE]
                     px-6
                     flex items-center rounded-full
