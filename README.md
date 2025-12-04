@@ -612,7 +612,7 @@ npm run test:e2e
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -623,6 +623,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **MongoDB** - Flexible, scalable database
 - **React Community** - Frontend ecosystem
 - **shadcn/ui** - Beautiful UI components
+- **Font Awesome** - Icons by Font Awesome (https://fontawesome.com) licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 - **Vietnamese Telecom Providers** - Infrastructure data sources
 - All open-source contributors
 
