@@ -25,7 +25,7 @@ async def create_asset(
 @router.get("/", response_model=List[Asset])
 async def list_assets(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(1000, ge=1, le=10000),
     feature_type: Optional[str] = None,
     status: Optional[str] = None,
     category: Optional[str] = None,

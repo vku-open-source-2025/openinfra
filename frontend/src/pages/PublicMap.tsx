@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { getAssets, type Asset } from "../api";
+import { getAssets, getAssetId, type Asset } from "../api";
 import MapComponent from "../components/Map";
 import AssetTable from "../components/AssetTable";
 import MaintenanceLogList from "../components/MaintenanceLog";
@@ -27,6 +27,8 @@ const PublicMap: React.FC = () => {
     } = useQuery({
         queryKey: ["assets"],
         queryFn: getAssets,
+        staleTime: 5 * 60 * 1000, // 5 minutes - prevent refetch on navigation
+        refetchOnWindowFocus: false,
     });
 
     const { assetsWithStatus, alerts } = useIoT(initialAssets);
@@ -42,27 +44,25 @@ const PublicMap: React.FC = () => {
         return filteredAssets || assetsWithStatus || [];
     }, [filteredAssets, assetsWithStatus]);
 
-    // Sync URL param with selected asset
+    // Sync URL param with selected asset - only on initial load or when assets are loaded
+    const initialAssetIdRef = React.useRef(searchParams?.assetId);
     useEffect(() => {
-        const assetId = searchParams?.assetId;
-        if (assetId && displayAssets.length > 0) {
-            const asset = displayAssets.find((a) => a._id === assetId);
-            if (asset && (!selectedAsset || selectedAsset._id !== asset._id)) {
-                // Use setTimeout to avoid synchronous setState in effect
-                setTimeout(() => {
-                    setSelectedAsset(asset);
-                }, 0);
+        const assetId = initialAssetIdRef.current;
+        if (assetId && displayAssets.length > 0 && !selectedAsset) {
+            const asset = displayAssets.find((a) => getAssetId(a) === assetId);
+            if (asset) {
+                setSelectedAsset(asset);
             }
         }
-    }, [searchParams, displayAssets, selectedAsset]);
+    }, [displayAssets, selectedAsset]);
 
     const handleAssetSelect = (asset: Asset | null) => {
         setSelectedAsset(asset);
-        if (asset) {
-            navigate({ to: "/map", search: { assetId: asset._id } });
-        } else {
-            navigate({ to: "/map", search: { assetId: undefined } });
-        }
+        // Update URL without causing re-render
+        const newUrl = asset 
+            ? `${window.location.pathname}?assetId=${getAssetId(asset)}`
+            : window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
     };
 
     const handleRouteOptimization = () => {
@@ -172,7 +172,7 @@ const PublicMap: React.FC = () => {
                                     <AssetTable
                                         assets={displayAssets}
                                         onAssetSelect={handleAssetSelect}
-                                        selectedAssetId={selectedAsset?._id}
+                                        selectedAssetId={selectedAsset ? getAssetId(selectedAsset) : undefined}
                                     />
                                 </div>
                             </div>
@@ -189,7 +189,7 @@ const PublicMap: React.FC = () => {
                                             </span>
                                             <span className="text-xs text-slate-400">
                                                 ID:{" "}
-                                                {selectedAsset._id.slice(-6)}
+                                                {getAssetId(selectedAsset).slice(-6)}
                                             </span>
                                             {(selectedAsset as AssetWithStatus)
                                                 .status && (
@@ -279,7 +279,7 @@ const PublicMap: React.FC = () => {
                                                     Maintenance History
                                                 </h4>
                                                 <MaintenanceLogList
-                                                    assetId={selectedAsset._id}
+                                                    assetId={getAssetId(selectedAsset)}
                                                 />
                                             </div>
                                         </div>

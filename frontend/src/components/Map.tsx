@@ -14,7 +14,7 @@ import {
     useMap,
     useMapEvents,
 } from "react-leaflet";
-import type { Asset } from "../api";
+import { type Asset, getAssetId } from "../api";
 import { getIconForAsset, getColorForFeatureCode } from "../utils/mapIcons";
 import HeatmapLayer from "./HeatmapLayer";
 import AssetLayerFilter from "./AssetLayerFilter";
@@ -35,10 +35,12 @@ const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || "";
 
 interface MapProps {
     assets: Asset[];
-    onAssetSelect: (asset: Asset) => void;
+    onAssetSelect: (asset: Asset | null) => void;
+    onFilterByShape?: (assets: Asset[] | null) => void;
     routePoints?: Asset[]; // For routing feature
     selectedAsset?: Asset | null;
     className?: string;
+    enableGeoSearches?: boolean;
 }
 
 const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
@@ -95,7 +97,7 @@ const MapUpdater: React.FC<{
             });
 
             // Open popup if marker exists
-            const marker = markerRefs.current[selectedAsset._id];
+            const marker = markerRefs.current[getAssetId(selectedAsset)];
             if (marker) {
                 // Small timeout to ensure flyTo starts/completes or just to be safe with UI updates
                 setTimeout(() => {
@@ -137,9 +139,11 @@ const BoundsWatcher: React.FC<{
 const MapComponent: React.FC<MapProps> = ({
     assets,
     onAssetSelect,
+    onFilterByShape,
     routePoints,
     selectedAsset,
     className,
+    enableGeoSearches,
 }) => {
     const [mapMode, setMapMode] = useState<"markers" | "heatmap">("markers");
     const center: [number, number] = [16.047079, 108.20623];
@@ -189,7 +193,7 @@ const MapComponent: React.FC<MapProps> = ({
         // Always include selected asset even if currently out of bounds (so it renders after fitBounds)
         if (
             selectedAsset &&
-            !filtered.find((a) => a._id === selectedAsset._id)
+            !filtered.find((a) => getAssetId(a) === getAssetId(selectedAsset))
         ) {
             filtered.push(selectedAsset);
         }
@@ -304,11 +308,12 @@ const MapComponent: React.FC<MapProps> = ({
                                     asset.geometry.coordinates[1],
                                     asset.geometry.coordinates[0],
                                 ];
+                                const assetId = getAssetId(asset);
                                 const isSelected =
-                                    selectedAsset?._id === asset._id;
+                                    selectedAsset && getAssetId(selectedAsset) === assetId;
                                 return (
                                     <Marker
-                                        key={asset._id}
+                                        key={assetId}
                                         position={position}
                                         icon={getIconForAsset(
                                             asset.feature_code,
@@ -319,7 +324,7 @@ const MapComponent: React.FC<MapProps> = ({
                                         }}
                                         ref={(el) => {
                                             if (el) {
-                                                markerRefs.current[asset._id] =
+                                                markerRefs.current[assetId] =
                                                     el;
                                             }
                                         }}
@@ -365,7 +370,7 @@ const MapComponent: React.FC<MapProps> = ({
                                 );
                                 return (
                                     <Polyline
-                                        key={asset._id}
+                                        key={getAssetId(asset)}
                                         positions={positions}
                                         color={color}
                                         weight={4}

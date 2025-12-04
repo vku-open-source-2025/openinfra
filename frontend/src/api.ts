@@ -6,7 +6,8 @@ export const api = axios.create({
 });
 
 export interface Asset {
-    _id: string;
+    id: string;
+    _id?: string; // Legacy support
     feature_type: string;
     feature_code: string;
     geometry: {
@@ -22,6 +23,9 @@ export interface Asset {
     created_at: string;
 }
 
+// Helper to get asset ID (supports both id and _id)
+export const getAssetId = (asset: Asset): string => asset.id || asset._id || '';
+
 export interface MaintenanceLog {
     _id: string;
     asset_id: string;
@@ -34,16 +38,19 @@ export interface MaintenanceLog {
 }
 
 export const getAssets = async () => {
-    const response = await httpClient.get<Asset[]>("/assets");
+    const response = await httpClient.get<Asset[]>("/assets/");
     return response.data;
 };
 
 export const loginAdmin = async (username: string, password: string) => {
-    const response = await api.post<{ token: string }>("/auth/login", {
-        username,
-        password,
-    });
-    return response.data;
+    const response = await httpClient.post<{ access_token: string }>(
+        "/auth/login",
+        {
+            username,
+            password,
+        }
+    );
+    return { token: response.data.access_token };
 };
 
 export interface LeaderboardEntry {

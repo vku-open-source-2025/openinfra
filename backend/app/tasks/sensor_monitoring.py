@@ -1,5 +1,5 @@
 """Celery tasks for IoT sensor monitoring."""
-from app.celery_app import celery_app
+from app.celery_app import app as celery_app
 from app.infrastructure.database.mongodb import get_database
 from app.domain.services.alert_service import AlertService
 from app.domain.services.iot_service import IoTService

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import type { Asset } from '../api';
+import { type Asset, getAssetId } from '../api';
 import { ChevronRight } from 'lucide-react';
 
 interface AssetTableProps {
@@ -17,7 +17,7 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selected
             onAssetSelect(asset);
         } else {
             // Navigate to asset detail page if no onAssetSelect handler
-            navigate({ to: `/admin/assets/${asset._id || asset.id}` });
+            navigate({ to: `/admin/assets/${getAssetId(asset)}` });
         }
     };
 
@@ -34,11 +34,13 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selected
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
-                        {assets.map((asset) => (
+                        {assets.map((asset) => {
+                            const assetId = getAssetId(asset);
+                            return (
                             <tr
-                                key={asset._id || asset.id}
+                                key={assetId}
                                 onClick={() => handleAssetClick(asset)}
-                                className={`cursor-pointer transition-colors duration-150 ${selectedAssetId === (asset._id || asset.id)
+                                className={`cursor-pointer transition-colors duration-150 ${selectedAssetId === assetId
                                         ? 'bg-blue-50 hover:bg-blue-100'
                                         : 'hover:bg-slate-50'
                                     }`}
@@ -60,7 +62,8 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selected
                                     <ChevronRight size={16} className="text-slate-400" />
                                 </td>
                             </tr>
-                        ))}
+                        );
+                        })}
                     </tbody>
                 </table>
             </div>

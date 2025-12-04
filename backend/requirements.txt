@@ -24,4 +24,5 @@ pytest-cov==6.0.0
 
 passlib
 passlib[bcrypt]
+email-validator
 minio>=7.2.0

@@ -1,5 +1,5 @@
 """Celery tasks for report generation."""
-from app.celery_app import celery_app
+from app.celery_app import app as celery_app
 from app.infrastructure.database.mongodb import get_database
 from app.domain.services.report_service import ReportService
 from app.domain.repositories.report_repository import ReportRepository

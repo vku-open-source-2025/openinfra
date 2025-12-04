@@ -86,7 +86,7 @@ class MongoAssetRepository(AssetRepository):
         return result.modified_count > 0
 
     async def list(
-        self, skip: int = 0, limit: int = 100, filters: Optional[dict] = None
+        self, skip: int = 0, limit: int = 10000, filters: Optional[dict] = None
     ) -> List[Asset]:
         """List assets with pagination and filtering."""
         query = filters or {}
