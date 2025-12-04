@@ -911,7 +911,7 @@ db.audit_logs.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 31536000 }) 
 
   // Export
   format: String,                // "pdf" | "excel" | "csv" | "json"
-  file_url: String?,             // GridFS reference or S3 URL
+  file_url: String?,             // GridFS reference or MinIO URL
   file_size: Number?,            // bytes
 
   // Scheduling
@@ -1100,8 +1100,8 @@ db.system_settings.createIndex({ "environment": 1 })
 - **Notifications**: 90 days
 - **Audit Logs**: 1 year
 
-### Cold Storage (Archive/S3)
-- Move older data to cheaper storage (S3, Glacier)
+### Cold Storage (Archive/MinIO)
+- Move older data to cheaper storage (MinIO with lifecycle policies)
 - Compress and archive data beyond retention periods
 - Keep searchable indexes for archived data
 

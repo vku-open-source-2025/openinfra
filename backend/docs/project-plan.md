@@ -297,7 +297,7 @@ async def login(
 - [ ] Asset change history (audit trail)
 
 #### File Storage
-- [ ] S3/GCS integration for file uploads
+- [ ] MinIO integration for file uploads
 - [ ] Image upload endpoint
 - [ ] Document upload endpoint
 - [ ] File download endpoint
@@ -373,7 +373,7 @@ class AssetService:
         file: UploadFile,
         user_id: str
     ) -> str:
-        # Upload to S3
+        # Upload to MinIO
         file_url = await self.storage_service.upload_file(
             file,
             bucket="assets-photos",

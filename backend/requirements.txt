@@ -24,3 +24,4 @@ pytest-cov==6.0.0
 
 passlib
 passlib[bcrypt]
+minio>=7.2.0

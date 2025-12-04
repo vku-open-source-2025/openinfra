@@ -1929,7 +1929,7 @@ VITE_LEADERBOARD_URL=https://contribapi.openinfra.space/api
 3. **Soft Deletes**: Assets and users are soft-deleted (status changed, not removed)
 4. **Role-Based Access**: Check user role/permissions before showing UI elements
 5. **Rate Limiting**: Public endpoints may have rate limiting (not yet implemented)
-6. **File Storage**: Files are stored via StorageService (local or S3-compatible)
+6. **File Storage**: Files are stored via StorageService (local or MinIO)
 
 ---
 

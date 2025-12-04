@@ -99,7 +99,7 @@ OpenInfra is a production-grade Urban Infrastructure Asset Management System des
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │   MongoDB    │  │    Redis     │  │   S3/GCS     │         │
+│  │   MongoDB    │  │    Redis     │  │    MinIO     │         │
 │  │  (Primary)   │  │   (Cache)    │  │  (Storage)   │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
 │                                                                 │
@@ -242,7 +242,7 @@ backend/
 │   │   │   └── redis_cache.py
 │   │   │
 │   │   ├── storage/               # File storage
-│   │   │   ├── s3_storage.py
+│   │   │   ├── minio_storage.py
 │   │   │   └── local_storage.py
 │   │   │
 │   │   ├── messaging/             # Message queues
@@ -714,7 +714,7 @@ class Money:
 | **Cache** | Redis 7.0+ | Fast in-memory cache, pub/sub for real-time |
 | **Task Queue** | Celery + Redis | Distributed task processing, scheduling |
 | **IoT Gateway** | MQTT (Mosquitto) | Lightweight, pub/sub for IoT devices |
-| **Storage** | S3/GCS | Scalable object storage for files |
+| **Storage** | MinIO | S3-compatible object storage for files |
 | **Search** | MongoDB Atlas Search | Full-text search within MongoDB |
 
 ### Frontend
@@ -814,7 +814,7 @@ PERMISSIONS = {
 
 ### Data Security
 
-1. **Encryption at Rest**: MongoDB encryption, encrypted S3 buckets
+1. **Encryption at Rest**: MongoDB encryption, MinIO server-side encryption
 2. **Encryption in Transit**: TLS 1.3 for all communications
 3. **Secrets Management**: Environment variables, Kubernetes secrets
 4. **Input Validation**: Pydantic validation, SQL injection prevention
