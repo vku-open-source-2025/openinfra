@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { getAssets, type Asset } from "../../api";
+import { getAssets, getAssetId, type Asset } from "../../api";
 import MapComponent from "../../components/Map";
 import AssetTable from "../../components/AssetTable";
 import MaintenanceLogList from "../../components/MaintenanceLog";
@@ -56,8 +56,8 @@ const AdminMap: React.FC = () => {
     useEffect(() => {
         const assetId = searchParams?.assetId;
         if (assetId && displayAssets.length > 0) {
-            const asset = displayAssets.find((a) => a._id === assetId);
-            if (asset && (!selectedAsset || selectedAsset._id !== asset._id)) {
+            const asset = displayAssets.find((a) => getAssetId(a) === assetId);
+            if (asset && (!selectedAsset || getAssetId(selectedAsset) !== getAssetId(asset))) {
                 // Use setTimeout to avoid synchronous setState in effect
                 setTimeout(() => {
                     setSelectedAsset(asset);
@@ -69,7 +69,7 @@ const AdminMap: React.FC = () => {
     const handleAssetSelect = (asset: Asset | null) => {
         setSelectedAsset(asset);
         if (asset) {
-            navigate({ to: "/admin/map", search: { assetId: asset._id } });
+            navigate({ to: "/admin/map", search: { assetId: getAssetId(asset) } });
         } else {
             navigate({
                 to: "/admin/map",
@@ -215,7 +215,7 @@ const AdminMap: React.FC = () => {
                             <AssetTable
                                 assets={displayAssets}
                                 onAssetSelect={handleAssetSelect}
-                                selectedAssetId={selectedAsset?._id}
+                                selectedAssetId={selectedAsset ? getAssetId(selectedAsset) : undefined}
                             />
                         </div>
                     )}
@@ -247,7 +247,7 @@ const AdminMap: React.FC = () => {
                                             </span>
                                             <span className="text-xs text-slate-400">
                                                 ID:{" "}
-                                                {selectedAsset._id.slice(-6)}
+                                                {getAssetId(selectedAsset).slice(-6)}
                                             </span>
                                             {(selectedAsset as AssetWithStatus)
                                                 .status && (
@@ -376,7 +376,7 @@ const AdminMap: React.FC = () => {
                                                 Maintenance History
                                             </h4>
                                             <MaintenanceLogList
-                                                assetId={selectedAsset._id}
+                                                assetId={getAssetId(selectedAsset)}
                                             />
                                         </div>
                                     </div>

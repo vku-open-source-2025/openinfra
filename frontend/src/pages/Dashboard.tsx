@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { getAssets, type Asset } from "../api";
+import { getAssets, getAssetId, type Asset } from "../api";
 import MapComponent from "../components/Map";
 import AssetTable from "../components/AssetTable";
 import MaintenanceLogList from "../components/MaintenanceLog";
@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
                                             <AssetTable
                                                 assets={displayAssets}
                                                 onAssetSelect={setSelectedAsset}
-                                                selectedAssetId={selectedAsset?._id}
+                                                selectedAssetId={selectedAsset ? getAssetId(selectedAsset) : undefined}
                                             />
                                         </div>
                                     </div>
@@ -255,7 +255,7 @@ const Dashboard: React.FC = () => {
                                                         {selectedAsset.feature_code}
                                                     </span>
                                                     <span className="text-xs text-slate-400">
-                                                        ID: {selectedAsset._id.slice(-6)}
+                                                        ID: {getAssetId(selectedAsset).slice(-6)}
                                                     </span>
                                                     {(selectedAsset as Asset & { status?: string }).status && (
                                                         <span
@@ -321,7 +321,7 @@ const Dashboard: React.FC = () => {
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
                                                             Maintenance History
                                                         </h4>
-                                                        <MaintenanceLogList assetId={selectedAsset._id} />
+                                                        <MaintenanceLogList assetId={getAssetId(selectedAsset)} />
                                                     </div>
 
                                                     {/* IoT Sensor Chart */}
@@ -331,7 +331,7 @@ const Dashboard: React.FC = () => {
                                                                 IoT Sensor Data
                                                             </h4>
                                                             <IoTSensorChart
-                                                                assetId={selectedAsset._id}
+                                                                assetId={getAssetId(selectedAsset)}
                                                                 assetName={selectedAsset.feature_type}
                                                             />
                                                         </div>
