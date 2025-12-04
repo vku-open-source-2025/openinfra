@@ -82,11 +82,13 @@ TWILIO_ACCOUNT_SID=your-twilio-sid
 TWILIO_AUTH_TOKEN=your-twilio-token
 
 # Storage
-STORAGE_BACKEND=local  # or 's3' for production
-S3_BUCKET_NAME=openinfra-assets
-S3_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your-aws-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret
+STORAGE_BACKEND=local  # or 'minio' for production
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET_NAME=openinfra-assets
+MINIO_USE_SSL=false
+MINIO_REGION=us-east-1
 
 # MQTT
 MQTT_BROKER_HOST=localhost
@@ -457,8 +459,10 @@ stringData:
   SECRET_KEY: "your-app-secret-key"
   JWT_SECRET_KEY: "your-jwt-secret"
   SENDGRID_API_KEY: "your-sendgrid-key"
-  AWS_ACCESS_KEY_ID: "your-aws-key"
-  AWS_SECRET_ACCESS_KEY: "your-aws-secret"
+  MINIO_ACCESS_KEY: "minioadmin"
+  MINIO_SECRET_KEY: "minioadmin"
+  MINIO_ENDPOINT: "minio:9000"
+  MINIO_BUCKET_NAME: "openinfra-assets"
 ```
 
 **k8s/redis-deployment.yaml**:

@@ -18,9 +18,13 @@ class Settings(BaseSettings):
     ADMIN_DEFAULT_PASSWORD: str = "admin123"
 
     # File Storage
-    STORAGE_TYPE: str = "local"  # "local" or "s3"
-    S3_BUCKET_NAME: str = ""
-    S3_REGION: str = ""
+    STORAGE_TYPE: str = "local"  # "local" or "minio"
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_BUCKET_NAME: str = "openinfra-assets"
+    MINIO_USE_SSL: bool = False
+    MINIO_REGION: str = "us-east-1"  # MinIO region (for compatibility)
 
     # External Services
     OSM_NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"

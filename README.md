@@ -127,7 +127,7 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 - **Cache**: Redis 7.0+
 - **Task Queue**: Celery + Redis
 - **IoT Gateway**: MQTT (Mosquitto)
-- **Storage**: S3-compatible (AWS S3, GCS, MinIO)
+- **Storage**: MinIO (S3-compatible object storage)
 - **Authentication**: JWT with RBAC
 
 ### Frontend
@@ -183,7 +183,7 @@ OpenInfra follows **Clean Architecture** principles with clear separation of con
 │  • Redis (caching & pub/sub)                                │
 │  • Celery (background tasks)                                │
 │  • MQTT (IoT data ingestion)                                │
-│  • S3 (file storage)                                        │
+│  • MinIO (object storage)                                   │
 │  • External APIs (OSM, email, SMS)                          │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -302,13 +302,15 @@ SENDGRID_API_KEY=your-sendgrid-api-key
 TWILIO_ACCOUNT_SID=your-twilio-sid
 TWILIO_AUTH_TOKEN=your-twilio-token
 
-# Storage (local for development, s3 for production)
+# Storage (local for development, minio for production)
 STORAGE_BACKEND=local
-# For S3:
-# STORAGE_BACKEND=s3
-# S3_BUCKET_NAME=openinfra-assets
-# AWS_ACCESS_KEY_ID=your-key
-# AWS_SECRET_ACCESS_KEY=your-secret
+# For MinIO:
+# STORAGE_BACKEND=minio
+# MINIO_ENDPOINT=localhost:9000
+# MINIO_ACCESS_KEY=minioadmin
+# MINIO_SECRET_KEY=minioadmin
+# MINIO_BUCKET_NAME=openinfra-assets
+# MINIO_USE_SSL=false
 
 # MQTT
 MQTT_BROKER_HOST=localhost
