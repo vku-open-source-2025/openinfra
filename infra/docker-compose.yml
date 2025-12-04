@@ -152,6 +152,10 @@ services:
     build: ../frontend
     ports:
       - "${FRONTEND_PORT}:5173"
+    environment:
+      - VITE_BASE_API_URL=${VITE_BASE_API_URL}
+      - VITE_LEADERBOARD_URL=${VITE_LEADERBOARD_URL}
+      - VITE_VIETMAP_API_KEY=${VITE_VIETMAP_API_KEY}
     volumes:
       - ../frontend:/app
       - /app/node_modules
