@@ -27,7 +27,7 @@ class BatchIngestRequest(BaseModel):
 @router.get("/sensors", response_model=List[IoTSensor])
 async def list_sensors(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=2000),
     asset_id: Optional[str] = None,
     sensor_type: Optional[str] = None,
     status: Optional[str] = None,

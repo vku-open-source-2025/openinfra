@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { iotApi } from "../../api/iot"
@@ -16,20 +16,27 @@ const SensorList: React.FC = () => {
   const [sensorType, setSensorType] = useState<string>("")
   const [status, setStatus] = useState<string>("")
   const [search, setSearch] = useState<string>("")
-  const limit = 20
+  const itemsPerPage = 20
 
-  const { data: sensors, isLoading } = useQuery({
-    queryKey: ["sensors", page, sensorType, status],
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [sensorType, status, search])
+
+  // Fetch all sensors (with high limit) for client-side pagination
+  const { data: allSensors, isLoading } = useQuery({
+    queryKey: ["sensors", sensorType, status],
     queryFn: () =>
       iotApi.listSensors({
-        skip: (page - 1) * limit,
-        limit,
+        skip: 0,
+        limit: 2000, // Get all sensors
         sensor_type: sensorType || undefined,
         status: status || undefined,
       }),
   })
 
-  const filteredSensors = sensors?.filter((sensor) => {
+  // Filter sensors by search term
+  const filteredSensors = allSensors?.filter((sensor) => {
     if (!search) return true
     const searchLower = search.toLowerCase()
     return (
@@ -38,7 +45,15 @@ const SensorList: React.FC = () => {
     )
   })
 
-  const totalPages = sensors ? Math.ceil(sensors.length / limit) : 1
+  // Calculate pagination
+  const totalItems = filteredSensors?.length || 0
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  
+  // Get current page items
+  const paginatedSensors = filteredSensors?.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  )
 
   return (
     <div className="p-6 space-y-6">
@@ -92,10 +107,13 @@ const SensorList: React.FC = () => {
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
-      ) : filteredSensors && filteredSensors.length > 0 ? (
+      ) : paginatedSensors && paginatedSensors.length > 0 ? (
         <>
+          <div className="text-sm text-slate-500 mb-2">
+            Showing {(page - 1) * itemsPerPage + 1}-{Math.min(page * itemsPerPage, totalItems)} of {totalItems} sensors
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSensors.map((sensor) => (
+            {paginatedSensors.map((sensor) => (
               <SensorCard
                 key={sensor.id}
                 sensor={sensor}
