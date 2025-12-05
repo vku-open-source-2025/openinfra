@@ -10,6 +10,7 @@ import { AlertTriangle, Activity, QrCode, Radio } from "lucide-react";
 import Header from "../components/Header";
 import QRCodeModal from "../components/QRCodeModal";
 import NFCWriteModal from "../components/NFCWriteModal";
+import ReportModal from "../components/ReportModal";
 
 // Extended Asset type with status added by useIoT hook
 type AssetWithStatus = Asset & {
@@ -38,6 +39,7 @@ const PublicMap: React.FC = () => {
 
     const [showQRModal, setShowQRModal] = useState(false);
     const [showNFCModal, setShowNFCModal] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
 
     // Use filtered assets if available, otherwise use live IoT assets
     const displayAssets = useMemo(() => {
@@ -193,22 +195,21 @@ const PublicMap: React.FC = () => {
                                             </span>
                                             {(selectedAsset as AssetWithStatus)
                                                 .status && (
-                                                <span
-                                                    className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${
-                                                        (
-                                                            selectedAsset as AssetWithStatus
-                                                        ).status === "Online"
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-red-100 text-red-700"
-                                                    }`}
-                                                >
-                                                    {
-                                                        (
-                                                            selectedAsset as AssetWithStatus
-                                                        ).status
-                                                    }
-                                                </span>
-                                            )}
+                                                    <span
+                                                        className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${(
+                                                                selectedAsset as AssetWithStatus
+                                                            ).status === "Online"
+                                                                ? "bg-green-100 text-green-700"
+                                                                : "bg-red-100 text-red-700"
+                                                            }`}
+                                                    >
+                                                        {
+                                                            (
+                                                                selectedAsset as AssetWithStatus
+                                                            ).status
+                                                        }
+                                                    </span>
+                                                )}
                                         </div>
                                         <h3 className="text-xl font-bold text-slate-900">
                                             {selectedAsset.feature_type}
@@ -265,7 +266,7 @@ const PublicMap: React.FC = () => {
                                                                 {selectedAsset
                                                                     .geometry
                                                                     .type ===
-                                                                "LineString"
+                                                                    "LineString"
                                                                     ? `${selectedAsset.geometry.coordinates.length} points`
                                                                     : "Complex Geometry"}
                                                             </p>
@@ -302,6 +303,13 @@ const PublicMap: React.FC = () => {
                                             <Radio size={16} />
                                             Write NFC
                                         </button>
+                                        <button
+                                            onClick={() => setShowReportModal(true)}
+                                            className="flex-1 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium shadow-sm flex items-center justify-center gap-2"
+                                        >
+                                            <AlertTriangle size={16} />
+                                            Report
+                                        </button>
                                     </div>
                                 </>
                             ) : (
@@ -334,6 +342,12 @@ const PublicMap: React.FC = () => {
                 <NFCWriteModal
                     isOpen={showNFCModal}
                     onClose={() => setShowNFCModal(false)}
+                    asset={selectedAsset}
+                />
+
+                <ReportModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
                     asset={selectedAsset}
                 />
             </main>

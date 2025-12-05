@@ -21,12 +21,12 @@ export interface Asset {
     feature_code: string;
     geometry: {
         type:
-            | "Point"
-            | "LineString"
-            | "Polygon"
-            | "MultiPoint"
-            | "MultiLineString"
-            | "MultiPolygon";
+        | "Point"
+        | "LineString"
+        | "Polygon"
+        | "MultiPoint"
+        | "MultiLineString"
+        | "MultiPolygon";
         coordinates: number[] | number[][] | number[][][]; // GeoJSON coordinates
     };
     created_at: string;
@@ -85,6 +85,38 @@ export const getMaintenanceLogs = async (assetId: string) => {
 
 export const createMaintenanceLog = async (data: Record<string, unknown>) => {
     const response = await httpClient.post("/maintenance", data);
+    return response.data;
+};
+
+export const IncidentCategory = {
+    DAMAGE: "damage",
+    MALFUNCTION: "malfunction",
+    SAFETY_HAZARD: "safety_hazard",
+    VANDALISM: "vandalism",
+    OTHER: "other",
+} as const;
+export type IncidentCategory = typeof IncidentCategory[keyof typeof IncidentCategory];
+
+export const IncidentSeverity = {
+    LOW: "low",
+    MEDIUM: "medium",
+    HIGH: "high",
+    CRITICAL: "critical",
+} as const;
+export type IncidentSeverity = typeof IncidentSeverity[keyof typeof IncidentSeverity];
+
+export interface IncidentCreate {
+    asset_id?: string;
+    title: string;
+    description: string;
+    category: IncidentCategory;
+    severity: IncidentSeverity;
+    reported_via?: string;
+    public_visible?: boolean;
+}
+
+export const createIncident = async (data: IncidentCreate) => {
+    const response = await httpClient.post("/incidents", data);
     return response.data;
 };
 
