@@ -46,6 +46,9 @@ const AssetDocumentsTab = lazy(
 const AssetReportsTab = lazy(
     () => import("../../components/assets/AssetReportsTab")
 );
+const AssetSensorsTab = lazy(
+    () => import("../../components/assets/AssetSensorsTab")
+);
 
 const AssetDetail: React.FC = () => {
     const { id } = useParams({ from: "/admin/assets/$id" });
@@ -305,6 +308,7 @@ const AssetDetail: React.FC = () => {
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="mb-6">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="sensors">Sensors</TabsTrigger>
                         <TabsTrigger value="maintenance">
                             Maintenance History
                         </TabsTrigger>
@@ -322,6 +326,9 @@ const AssetDetail: React.FC = () => {
                     <Suspense fallback={<Skeleton className="h-96 w-full" />}>
                         <TabsContent value="overview">
                             <AssetOverviewTab assetId={id} asset={asset} />
+                        </TabsContent>
+                        <TabsContent value="sensors">
+                            <AssetSensorsTab assetId={id} />
                         </TabsContent>
                         <TabsContent value="maintenance">
                             <MaintenanceHistoryTab assetId={id} />

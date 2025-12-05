@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
-import { useParams, useNavigate } from "@tanstack/react-router"
+import { useParams, useNavigate, Link } from "@tanstack/react-router"
 import { iotApi } from "../../api/iot"
+import { assetsApi } from "../../api/assets"
 import { SensorStatusBadge } from "../../components/iot/SensorStatusBadge"
 import { SensorChart } from "../../components/iot/SensorChart"
 import { SensorStatistics } from "../../components/iot/SensorStatistics"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
 import { DatePicker } from "../../components/ui/date-picker"
-import { ArrowLeft, Calendar } from "lucide-react"
+import { ArrowLeft, Calendar, MapPin, ExternalLink } from "lucide-react"
 import { useState } from "react"
 import { format, subDays } from "date-fns"
 
@@ -44,6 +45,13 @@ const SensorDetail: React.FC = () => {
         granularity: "hour",
       }),
     enabled: !!sensor,
+  })
+
+  // Fetch linked asset
+  const { data: linkedAsset } = useQuery({
+    queryKey: ["sensor-asset", sensor?.asset_id],
+    queryFn: () => assetsApi.getById(sensor!.asset_id),
+    enabled: !!sensor?.asset_id,
   })
 
   if (sensorLoading) {
@@ -97,6 +105,26 @@ const SensorDetail: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Linked Asset */}
+        {linkedAsset && (
+          <div className="border-t border-slate-200 pt-4 mt-4">
+            <h3 className="text-sm font-medium text-slate-500 mb-2">Linked Asset</h3>
+            <Link
+              to={`/admin/assets/${linkedAsset.id}`}
+              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="font-medium text-slate-900">{linkedAsset.name || linkedAsset.feature_type}</p>
+                  <p className="text-sm text-slate-500">{linkedAsset.feature_code}</p>
+                </div>
+              </div>
+              <ExternalLink className="h-4 w-4 text-slate-400" />
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
