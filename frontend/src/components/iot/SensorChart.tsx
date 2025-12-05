@@ -38,7 +38,9 @@ export const SensorChart: React.FC<SensorChartProps> = ({ readings, unit = "", h
 
   const { readings: sortedReadings, min, max, range } = chartData
   const chartHeight = height - 40
-  const chartWidth = 100
+  const svgWidth = 800
+  const padding = { left: 40, right: 20 }
+  const chartWidth = svgWidth - padding.left - padding.right
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-4">
@@ -51,7 +53,7 @@ export const SensorChart: React.FC<SensorChartProps> = ({ readings, unit = "", h
         </div>
       </div>
       <div className="relative" style={{ height: `${height}px` }}>
-        <svg width="100%" height={height} className="overflow-visible">
+        <svg viewBox={`0 0 ${svgWidth} ${height}`} preserveAspectRatio="none" width="100%" height={height} className="overflow-visible">
           <defs>
             <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
@@ -61,9 +63,8 @@ export const SensorChart: React.FC<SensorChartProps> = ({ readings, unit = "", h
           <polyline
             points={sortedReadings
               .map((reading, index) => {
-                const x = (index / (sortedReadings.length - 1 || 1)) * chartWidth + "%"
-                const y =
-                  chartHeight - ((reading.value - min) / range) * chartHeight + 20
+                const x = padding.left + (index / (sortedReadings.length - 1 || 1)) * chartWidth
+                const y = chartHeight - ((reading.value - min) / range) * chartHeight + 20
                 return `${x},${y}`
               })
               .join(" ")}
@@ -72,14 +73,13 @@ export const SensorChart: React.FC<SensorChartProps> = ({ readings, unit = "", h
             strokeWidth="2"
           />
           <polygon
-            points={`0,${chartHeight + 20} ${sortedReadings
+            points={`${padding.left},${chartHeight + 20} ${sortedReadings
               .map((reading, index) => {
-                const x = (index / (sortedReadings.length - 1 || 1)) * chartWidth + "%"
-                const y =
-                  chartHeight - ((reading.value - min) / range) * chartHeight + 20
+                const x = padding.left + (index / (sortedReadings.length - 1 || 1)) * chartWidth
+                const y = chartHeight - ((reading.value - min) / range) * chartHeight + 20
                 return `${x},${y}`
               })
-              .join(" ")} ${chartWidth}%,${chartHeight + 20}`}
+              .join(" ")} ${padding.left + chartWidth},${chartHeight + 20}`}
             fill="url(#gradient)"
           />
         </svg>

@@ -13,7 +13,7 @@ class MongoSensorDataRepository(SensorDataRepository):
 
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
-        self.collection = db["sensor_data"]
+        self.collection = db["sensor_readings"]
 
     async def create(self, reading_data: dict) -> SensorReading:
         """Create a new sensor reading."""
@@ -30,6 +30,12 @@ class MongoSensorDataRepository(SensorDataRepository):
         limit: int = 1000
     ) -> List[SensorReading]:
         """Get sensor readings in time range."""
+        # Convert to naive datetime for MongoDB comparison (data stored without tz)
+        if from_time.tzinfo is not None:
+            from_time = from_time.replace(tzinfo=None)
+        if to_time.tzinfo is not None:
+            to_time = to_time.replace(tzinfo=None)
+            
         query = {
             "sensor_id": sensor_id,
             "timestamp": {
@@ -53,6 +59,12 @@ class MongoSensorDataRepository(SensorDataRepository):
         granularity: str = "hour"
     ) -> List[dict]:
         """Aggregate sensor readings."""
+        # Convert to naive datetime for MongoDB comparison
+        if from_time.tzinfo is not None:
+            from_time = from_time.replace(tzinfo=None)
+        if to_time.tzinfo is not None:
+            to_time = to_time.replace(tzinfo=None)
+            
         # Determine group key based on granularity
         if granularity == "minute":
             group_format = {"year": {"$year": "$timestamp"}, "month": {"$month": "$timestamp"},
