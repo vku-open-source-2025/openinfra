@@ -11,6 +11,7 @@ import Header from "../components/Header";
 import QRCodeModal from "../components/QRCodeModal";
 import NFCWriteModal from "../components/NFCWriteModal";
 import ReportModal from "../components/ReportModal";
+import IoTSensorChart from "../components/IoTSensorChart";
 
 // Extended Asset type with status added by useIoT hook
 type AssetWithStatus = Asset & {
@@ -281,6 +282,17 @@ const PublicMap: React.FC = () => {
                                                 </h4>
                                                 <MaintenanceLogList
                                                     assetId={getAssetId(selectedAsset)}
+                                                />
+                                            </div>
+
+                                            {/* IoT Sensor Data */}
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                                    IoT Sensor Data
+                                                </h4>
+                                                <IoTSensorChart
+                                                    assetId={getAssetId(selectedAsset)}
+                                                    assetName={selectedAsset.feature_type}
                                                 />
                                             </div>
                                         </div>

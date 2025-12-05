@@ -172,6 +172,7 @@ const StatCard = ({ label, value, unit, status }: { label: string; value: string
 
 export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartProps) {
     const { data, loading, error, refetch } = useSensorData(assetId, 60000);
+    const [selectedMetric] = useState<string>('water_level');
 
     // Process readings for chart - handle both new and legacy formats
     const chartData = useMemo(() => {

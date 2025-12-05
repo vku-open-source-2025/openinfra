@@ -324,18 +324,16 @@ const Dashboard: React.FC = () => {
                                                         <MaintenanceLogList assetId={getAssetId(selectedAsset)} />
                                                     </div>
 
-                                                    {/* IoT Sensor Chart */}
-                                                    {selectedAsset.feature_code === "cong_thoat_nuoc" && (
-                                                        <div>
-                                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                                IoT Sensor Data
-                                                            </h4>
-                                                            <IoTSensorChart
-                                                                assetId={getAssetId(selectedAsset)}
-                                                                assetName={selectedAsset.feature_type}
-                                                            />
-                                                        </div>
-                                                    )}
+                                                    {/* IoT Sensor Data */}
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                                            IoT Sensor Data
+                                                        </h4>
+                                                        <IoTSensorChart
+                                                            assetId={getAssetId(selectedAsset)}
+                                                            assetName={selectedAsset.feature_type}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
 
