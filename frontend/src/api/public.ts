@@ -59,4 +59,26 @@ export const publicApi = {
     const response = await httpClient.get<AssetQRCodeResponse>(`/public/assets/${code}/qr-code`);
     return response.data;
   },
+
+  /**
+   * Upload photos for a public incident
+   * POST /public/incidents/{incident_id}/photos
+   */
+  uploadPhotos: async (incidentId: string, files: File[]): Promise<Incident> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    const response = await httpClient.post<Incident>(
+      `/public/incidents/${incidentId}/photos`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
 };

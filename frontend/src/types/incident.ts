@@ -1,4 +1,4 @@
-export type IncidentStatus = 'reported' | 'acknowledged' | 'assigned' | 'in_progress' | 'resolved' | 'closed';
+export type IncidentStatus = 'reported' | 'acknowledged' | 'assigned' | 'investigating' | 'in_progress' | 'waiting_approval' | 'resolved' | 'closed';
 export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type ReporterType = 'citizen' | 'technician' | 'admin' | 'manager';
 
@@ -35,6 +35,11 @@ export interface Incident {
   reported_by?: string;
   reporter_type: ReporterType;
   assigned_to?: string;
+  maintenance_record_id?: string;
+  resolution_type?: string;
+  resolution_notes?: string;
+  cost_status?: 'pending' | 'approved' | 'rejected';
+  photos?: string[];
   upvotes: number;
   comments: IncidentComment[];
   created_at: string;

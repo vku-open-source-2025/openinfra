@@ -1,11 +1,12 @@
 """Public API router (no authentication required)."""
-from fastapi import APIRouter, Query, HTTPException, Depends
-from typing import Optional
+from fastapi import APIRouter, Query, HTTPException, Depends, UploadFile, File
+from typing import Optional, List
 from app.domain.models.asset import Asset
 from app.domain.models.incident import Incident, IncidentCreate
 from app.domain.services.asset_service import AssetService
 from app.domain.services.incident_service import IncidentService
-from app.api.v1.dependencies import get_asset_service, get_incident_service
+from app.infrastructure.storage.storage_service import StorageService
+from app.api.v1.dependencies import get_asset_service, get_incident_service, get_storage_service
 from app.infrastructure.services.qr_service import QRCodeService
 from app.core.config import settings
 from pydantic import BaseModel
@@ -84,6 +85,39 @@ async def get_public_incident(
         raise HTTPException(status_code=403, detail="Incident is not publicly visible")
 
     return incident
+
+
+@router.post("/incidents/{incident_id}/photos", response_model=Incident)
+async def upload_public_incident_photos(
+    incident_id: str,
+    files: List[UploadFile] = File(...),
+    incident_service: IncidentService = Depends(get_incident_service),
+    storage_service: StorageService = Depends(get_storage_service)
+):
+    """Upload photos for a public incident."""
+    # Verify incident exists and is public
+    incident = await incident_service.get_incident_by_id(incident_id)
+    if not incident.public_visible:
+         raise HTTPException(status_code=403, detail="Incident is not publicly visible")
+         
+    photo_urls = []
+    for file in files:
+        # Save file
+        file_path = f"incidents/{incident_id}/{file.filename}"
+        file_url = await storage_service.upload_file(file_path, await file.read())
+        photo_urls.append(file_url)
+
+    # Update incident with new photos
+    # We would need to add add_photos method to service or just update
+    # Here we append to existing photos
+    existing_photos = incident.photos or []
+    updated_photos = existing_photos + photo_urls
+    
+    from app.domain.models.incident import IncidentUpdate
+    return await incident_service.update_incident(
+        incident_id,
+        IncidentUpdate(photos=updated_photos)
+    )
 
 
 @router.get("/assets/{code}/qr-code")

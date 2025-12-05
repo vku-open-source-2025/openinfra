@@ -34,6 +34,11 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
             <span>Assigned</span>
           </div>
         )}
+        {incident.cost_status === 'pending' && (
+          <div className="flex items-center gap-1 text-orange-600 font-medium">
+            <span>$$ Approval Needed</span>
+          </div>
+        )}
       </div>
       {incident.upvotes > 0 && (
         <div className="mt-2 text-xs text-slate-500">

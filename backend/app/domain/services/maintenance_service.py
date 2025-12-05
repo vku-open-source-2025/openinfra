@@ -168,25 +168,14 @@ class MaintenanceService:
             (complete_request.other_costs or 0)
         )
 
-        # Create budget transaction if budget_id exists
-        if maintenance.budget_id and self.budget_service:
-            try:
-                from app.domain.models.budget import BudgetTransactionCreate
-                transaction_data = BudgetTransactionCreate(
-                    budget_id=maintenance.budget_id,
-                    amount=total_cost,
-                    transaction_date=actual_end_time,
-                    description=f"Maintenance work order {maintenance.work_order_number}",
-                    category="labor" if complete_request.labor_cost else "materials",
-                    maintenance_record_id=maintenance_id
-                )
-                await self.budget_service.create_transaction(transaction_data, completed_by)
-            except Exception as e:
-                logger.warning(f"Could not create budget transaction: {e}")
+        # Determine new status - if costs involved, wait for approval
+        new_status = MaintenanceStatus.COMPLETED.value
+        if total_cost > 0:
+            new_status = MaintenanceStatus.WAITING_APPROVAL.value
 
         # Update maintenance record
         update_dict = {
-            "status": MaintenanceStatus.COMPLETED.value,
+            "status": new_status,
             "actual_end_time": actual_end_time,
             "actual_duration": actual_duration,
             "work_performed": complete_request.work_performed,
@@ -208,23 +197,78 @@ class MaintenanceService:
         if not updated:
             raise NotFoundError("Maintenance", maintenance_id)
 
+        # If no approval needed (cost is 0), proceed to final completion steps
+        if new_status == MaintenanceStatus.COMPLETED.value:
+            await self._finalize_maintenance_completion(updated, completed_by)
+
+        logger.info(f"Completed maintenance work (Status: {new_status}): {maintenance.work_order_number}")
+        return updated
+
+    async def approve_resolution(
+        self,
+        maintenance_id: str,
+        approved_by: str
+    ) -> Maintenance:
+        """Approve maintenance resolution and costs."""
+        maintenance = await self.get_maintenance_by_id(maintenance_id)
+
+        if maintenance.status != MaintenanceStatus.WAITING_APPROVAL.value:
+            raise ValidationError("Maintenance is not waiting for approval")
+
+        # Create budget transaction if budget_id exists
+        if maintenance.budget_id and self.budget_service:
+            try:
+                from app.domain.models.budget import BudgetTransactionCreate
+                transaction_data = BudgetTransactionCreate(
+                    budget_id=maintenance.budget_id,
+                    amount=maintenance.total_cost,
+                    transaction_date=datetime.utcnow(),
+                    description=f"Maintenance work order {maintenance.work_order_number}",
+                    category="labor" if maintenance.labor_cost else "materials",
+                    maintenance_record_id=maintenance_id
+                )
+                await self.budget_service.create_transaction(transaction_data, approved_by)
+            except Exception as e:
+                logger.warning(f"Could not create budget transaction: {e}")
+
+        # Finalize status
+        updated = await self.repository.update(
+            maintenance_id,
+            {
+                "status": MaintenanceStatus.COMPLETED.value,
+                "updated_at": datetime.utcnow()
+            }
+        )
+        
+        if not updated:
+            raise NotFoundError("Maintenance", maintenance_id)
+
+        # Run final completion logic (asset updates, recurring, etc)
+        await self._finalize_maintenance_completion(updated, approved_by)
+
+        logger.info(f"Approved maintenance resolution: {maintenance.work_order_number}")
+        return updated
+
+    async def _finalize_maintenance_completion(
+        self,
+        maintenance: Maintenance,
+        user_id: str
+    ):
+        """Perform final steps after maintenance is fully completed (and approved)."""
         # Update asset status back to operational
         if self.asset_service:
             try:
                 await self.asset_service.update_asset(
                     maintenance.asset_id,
                     {"status": "operational"},
-                    updated_by=completed_by
+                    updated_by=user_id
                 )
             except Exception as e:
                 logger.warning(f"Could not update asset status: {e}")
 
         # Create next recurring maintenance if needed
         if maintenance.recurring and maintenance.recurrence_pattern:
-            await self._create_next_recurring_maintenance(maintenance, completed_by)
-
-        logger.info(f"Completed maintenance: {maintenance.work_order_number}")
-        return updated
+            await self._create_next_recurring_maintenance(maintenance, user_id)
 
     async def _create_next_recurring_maintenance(
         self,

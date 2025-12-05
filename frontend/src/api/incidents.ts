@@ -16,6 +16,7 @@ export interface IncidentListParams {
   status?: string;
   severity?: string;
   asset_id?: string;
+  assigned_to?: string;
 }
 
 export const incidentsApi = {
@@ -93,6 +94,11 @@ export const incidentsApi = {
     const response = await httpClient.post<{ incident_id: string; maintenance_id: string; message: string }>(
       `/incidents/${id}/create-maintenance`
     );
+    return response.data;
+  },
+
+  approveCost: async (id: string): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(`/incidents/${id}/approve-cost`);
     return response.data;
   },
 };

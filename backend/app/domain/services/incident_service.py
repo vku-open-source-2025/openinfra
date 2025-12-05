@@ -125,14 +125,37 @@ class IncidentService:
         """Assign incident to a technician."""
         incident = await self.get_incident_by_id(incident_id)
 
-        updated = await self.repository.update(
-            incident_id,
-            {
+        # Auto-create maintenance record if linked to an asset
+        if incident.asset_id:
+            try:
+                maintenance_id = await self.create_maintenance_from_incident(incident_id, assigned_by)
+                
+                # Assign the maintenance to the technician as well
+                if self.maintenance_service:
+                    await self.maintenance_service.assign_maintenance(maintenance_id, assigned_to, assigned_by)
+                    
+                update_data = {
+                    "assigned_to": assigned_to,
+                    "status": IncidentStatus.INVESTIGATING.value,
+                    "updated_at": datetime.utcnow(),
+                    "maintenance_record_id": maintenance_id
+                }
+            except Exception as e:
+                logger.error(f"Failed to create maintenance for incident {incident_id}: {e}")
+                # Fallback to just assigning the incident without maintenance (or raise error based on policy)
+                update_data = {
+                    "assigned_to": assigned_to,
+                    "status": IncidentStatus.INVESTIGATING.value,
+                    "updated_at": datetime.utcnow()
+                }
+        else:
+            update_data = {
                 "assigned_to": assigned_to,
                 "status": IncidentStatus.INVESTIGATING.value,
                 "updated_at": datetime.utcnow()
             }
-        )
+
+        updated = await self.repository.update(incident_id, update_data)
         if not updated:
             raise NotFoundError("Incident", incident_id)
 
@@ -145,6 +168,31 @@ class IncidentService:
         )
 
         return updated
+
+    async def approve_incident_resolution(
+        self,
+        incident_id: str,
+        approved_by: str
+    ) -> Incident:
+        """Approve cost/resolution of linked maintenance and resolve incident."""
+        incident = await self.get_incident_by_id(incident_id)
+
+        if not incident.maintenance_record_id:
+             raise ValidationError("Incident has no linked maintenance record to approve")
+
+        if self.maintenance_service:
+            # Approve the maintenance record
+            await self.maintenance_service.approve_resolution(incident.maintenance_record_id, approved_by)
+            
+            # Resolve the incident
+            return await self.resolve_incident(
+                incident_id, 
+                approved_by, 
+                "Resolution approved by admin via maintenance cost approval.", 
+                ResolutionType.FIXED
+            )
+        else:
+             raise RuntimeError("Maintenance service not available")
 
     async def resolve_incident(
         self,

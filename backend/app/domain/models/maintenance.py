@@ -26,6 +26,7 @@ class MaintenanceStatus(str, Enum):
     """Maintenance status enumeration."""
     SCHEDULED = "scheduled"
     IN_PROGRESS = "in_progress"
+    WAITING_APPROVAL = "waiting_approval"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     ON_HOLD = "on_hold"

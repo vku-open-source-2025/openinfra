@@ -1,6 +1,6 @@
 import { Select } from "../ui/select"
 import { Input } from "../ui/input"
-import type { IncidentStatus, IncidentSeverity } from "../../types/incident"
+import { Input } from "../ui/input"
 
 interface IncidentFiltersProps {
   status?: string
@@ -39,6 +39,7 @@ export const IncidentFilters: React.FC<IncidentFiltersProps> = ({
           <option value="acknowledged">Acknowledged</option>
           <option value="assigned">Assigned</option>
           <option value="in_progress">In Progress</option>
+          <option value="waiting_approval">Waiting Approval</option>
           <option value="resolved">Resolved</option>
           <option value="closed">Closed</option>
         </Select>

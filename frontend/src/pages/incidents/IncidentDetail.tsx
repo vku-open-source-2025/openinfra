@@ -7,7 +7,7 @@ import { IncidentComments } from "../../components/incidents/IncidentComments"
 import { IncidentActions } from "../../components/incidents/IncidentActions"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
-import { ArrowLeft, MapPin, Clock, User, Wrench } from "lucide-react"
+import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { useAuthStore } from "../../stores/authStore"
 
@@ -60,13 +60,21 @@ const IncidentDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["incident", id] })
     },
   })
-
   const createMaintenanceMutation = useMutation({
     mutationFn: () => incidentsApi.createMaintenance(id),
     onSuccess: (data) => {
       navigate({ to: `/admin/maintenance/${data.maintenance_id}` })
     },
   })
+
+  const approveCostMutation = useMutation({
+    mutationFn: () => incidentsApi.approveCost(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incident", id] })
+      queryClient.invalidateQueries({ queryKey: ["incidents"] })
+    }
+  })
+
 
   if (isLoading) {
     return (
@@ -177,6 +185,23 @@ const IncidentDetail: React.FC = () => {
             >
               <Wrench className="h-4 w-4 mr-2" />
               Create Maintenance Work Order
+            </Button>
+          </div>
+        )}
+
+        {incident.status === 'waiting_approval' && (user?.role === 'admin' || user?.role === 'manager') && (
+          <div className="mt-4 pt-4 border-t">
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-4">
+              <h3 className="font-semibold text-yellow-800">Cost Approval Required</h3>
+              <p className="text-sm text-yellow-700">This incident has pending maintenance costs that require approval.</p>
+            </div>
+            <Button
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+              onClick={() => approveCostMutation.mutate()}
+              disabled={approveCostMutation.isPending}
+            >
+              {approveCostMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+              Approve Cost & Resolve
             </Button>
           </div>
         )}
