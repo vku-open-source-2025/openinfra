@@ -57,7 +57,21 @@ const IncidentCreate: React.FC = () => {
       return
     }
 
-    createMutation.mutate(formData as IncidentCreateRequest)
+    const submitData = {
+      ...formData,
+      location: {
+        address: formData.location?.address,
+        geometry: {
+          type: "Point",
+          coordinates: [
+            formData.location?.coordinates?.longitude || 0,
+            formData.location?.coordinates?.latitude || 0,
+          ],
+        },
+      },
+    }
+
+    createMutation.mutate(submitData as IncidentCreateRequest)
   }
 
   return (

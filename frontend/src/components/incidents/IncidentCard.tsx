@@ -22,7 +22,7 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
       <div className="flex items-center gap-4 text-xs text-slate-500">
         <div className="flex items-center gap-1">
           <MapPin className="h-3 w-3" />
-          <span>{incident.location.address || "Location not specified"}</span>
+          <span>{incident.location?.address || "Location not specified"}</span>
         </div>
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />

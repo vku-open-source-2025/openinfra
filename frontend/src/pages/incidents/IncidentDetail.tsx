@@ -109,7 +109,7 @@ const IncidentDetail: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <MapPin className="h-4 w-4" />
-            <span>{incident.location.address || "Location not specified"}</span>
+            <span>{incident.location?.address || "Location not specified"}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <Clock className="h-4 w-4" />

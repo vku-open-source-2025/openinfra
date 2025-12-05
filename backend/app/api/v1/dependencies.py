@@ -129,7 +129,15 @@ async def get_incident_service():
         maintenance_service = await get_maintenance_service()
     except:
         maintenance_service = None
-    return IncidentService(repository, maintenance_service)
+        
+    # Asset service is optional but recommended for location population
+    try:
+        from app.api.v1.dependencies import get_asset_service
+        asset_service = await get_asset_service()
+    except:
+        asset_service = None
+        
+    return IncidentService(repository, maintenance_service, asset_service)
 
 
 async def get_budget_repository():
