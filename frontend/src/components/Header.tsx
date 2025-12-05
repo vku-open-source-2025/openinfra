@@ -20,7 +20,7 @@ const navigationItems: NavigationItem[] = [
         to: "/docs",
     },
     {
-        label: "Bắt đầu",
+        label: "Get Started",
         to: "/admin",
         search: { assetId: undefined },
         isButton: true,

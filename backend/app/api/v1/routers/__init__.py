@@ -1,6 +1,6 @@
 """API v1 routers."""
 from fastapi import APIRouter
-from app.api.v1.routers import assets, maintenance, ingest, auth, users, geo, iot, alerts, incidents, budgets, public, notifications, reports
+from app.api.v1.routers import assets, maintenance, ingest, auth, users, geo, iot, alerts, incidents, budgets, public, notifications, reports, linked_data
 
 api_router = APIRouter()
 
@@ -17,3 +17,4 @@ api_router.include_router(budgets.router, prefix="/budgets", tags=["Budgets"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(public.router, prefix="/public", tags=["Public"])
+api_router.include_router(linked_data.router, prefix="/ld", tags=["Linked Data (JSON-LD)"])

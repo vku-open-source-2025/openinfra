@@ -21,7 +21,8 @@ interface Endpoint {
     testPath?: string;
 }
 
-const endpoints: Endpoint[] = [
+// Open Data Endpoints
+const openDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/opendata/",
@@ -65,6 +66,86 @@ const endpoints: Endpoint[] = [
     },
 ];
 
+// IoT Linked Data (JSON-LD) Endpoints
+const iotLinkedDataEndpoints: Endpoint[] = [
+    {
+        method: "GET",
+        path: "/api/v1/ld/context",
+        title: "JSON-LD Context",
+        description: "Get the JSON-LD context document with SOSA/SSN ontology mappings for semantic interoperability",
+        testPath: "/api/v1/ld/context",
+    },
+    {
+        method: "GET",
+        path: "/api/v1/ld/sensors",
+        title: "IoT Sensors (JSON-LD)",
+        description: "List all IoT sensors in JSON-LD format following SOSA ontology (sosa:Sensor)",
+        params: [
+            { name: "skip", type: "integer", desc: "Number of records to skip", default: "0" },
+            { name: "limit", type: "integer", desc: "Maximum number of records (max: 500)", default: "100" },
+            { name: "asset_id", type: "string", desc: "Filter by asset ID" },
+            { name: "sensor_type", type: "string", desc: "Filter by type: temperature, humidity, pressure, vibration" },
+            { name: "status", type: "string", desc: "Filter by status: online, offline, maintenance" },
+        ],
+        testPath: "/api/v1/ld/sensors?limit=5",
+    },
+    {
+        method: "GET",
+        path: "/api/v1/ld/sensors/{sensor_id}",
+        title: "Single Sensor (JSON-LD)",
+        description: "Get a single sensor with full semantic annotations as sosa:Sensor. Sample ID: 6931b938c2f7cb7eba01df64",
+        params: [{ name: "sensor_id", type: "string", desc: "Sensor ID (MongoDB ObjectId). Sample: 6931b938c2f7cb7eba01df64" }],
+        testPath: "/api/v1/ld/sensors/6931b938c2f7cb7eba01df64",
+    },
+    {
+        method: "GET",
+        path: "/api/v1/ld/sensors/{sensor_id}/observations",
+        title: "Sensor Observations (JSON-LD)",
+        description: "Get sensor readings as sosa:Observation with time range filtering. Sample sensor: 6931b938c2f7cb7eba01df64",
+        params: [
+            { name: "sensor_id", type: "string", desc: "Sensor ID. Sample: 6931b938c2f7cb7eba01df64" },
+            { name: "from_time", type: "string", desc: "Start time (ISO 8601, e.g., 2024-01-01T00:00:00Z)" },
+            { name: "to_time", type: "string", desc: "End time (ISO 8601)" },
+            { name: "limit", type: "integer", desc: "Max observations (max: 10000)", default: "1000" },
+        ],
+        testPath: "/api/v1/ld/sensors/6931b938c2f7cb7eba01df64/observations?from_time=2024-01-01T00:00:00Z&to_time=2025-12-31T23:59:59Z&limit=10",
+    },
+    {
+        method: "GET",
+        path: "/api/v1/ld/assets/{asset_id}",
+        title: "Asset with IoT Data (JSON-LD)",
+        description: "Get an infrastructure asset (sosa:FeatureOfInterest) with all associated sensors and recent observations. Sample: 6925b9001b74e89f7dab169a",
+        params: [
+            { name: "asset_id", type: "string", desc: "Asset ID. Sample: 6925b9001b74e89f7dab169a" },
+            { name: "hours", type: "integer", desc: "Hours of historical data (max: 168)", default: "24" },
+        ],
+        testPath: "/api/v1/ld/assets/6925b9001b74e89f7dab169a?hours=24",
+    },
+    {
+        method: "GET",
+        path: "/api/v1/ld/observations",
+        title: "All Observations (JSON-LD)",
+        description: "Get recent observations from all sensors for building complete datasets",
+        params: [
+            { name: "hours", type: "integer", desc: "Hours of data to retrieve (max: 24)", default: "1" },
+            { name: "asset_id", type: "string", desc: "Filter by asset ID" },
+            { name: "sensor_type", type: "string", desc: "Filter by sensor type" },
+            { name: "limit", type: "integer", desc: "Max observations (max: 5000)", default: "500" },
+        ],
+        testPath: "/api/v1/ld/observations?hours=1&limit=10",
+    },
+    {
+        method: "GET",
+        path: "/api/v1/ld/vocab",
+        title: "OpenInfra Vocabulary",
+        description: "Get the OpenInfra vocabulary definition extending SOSA/SSN/Schema.org",
+        testPath: "/api/v1/ld/vocab",
+    },
+];
+
+// Combine all endpoints for backward compatibility
+const endpoints: Endpoint[] = [...openDataEndpoints];
+
 const codeExamples = {
     curl: `curl -X GET "${API_BASE_URL}/api/opendata/assets?limit=10" \\
   -H "Accept: application/json"`,
@@ -87,6 +168,57 @@ data = response.json()
 for feature in data['features']:
     print(feature['properties']['feature_type'])
     print(feature['geometry']['coordinates'])`,
+};
+
+// JSON-LD IoT code examples
+const jsonLdCodeExamples = {
+    curl: `# Get IoT sensors in JSON-LD format
+curl -X GET "${API_BASE_URL}/api/v1/ld/sensors?limit=10" \\
+  -H "Accept: application/ld+json"
+
+# Get observations for a specific sensor
+curl -X GET "${API_BASE_URL}/api/v1/ld/sensors/{sensor_id}/observations?from_time=2024-01-01T00:00:00Z&to_time=2024-12-31T23:59:59Z" \\
+  -H "Accept: application/ld+json"`,
+    javascript: `// Fetch IoT sensors as JSON-LD (SOSA ontology)
+const response = await fetch('${API_BASE_URL}/api/v1/ld/sensors?limit=10', {
+  headers: { 'Accept': 'application/ld+json' }
+});
+const data = await response.json();
+
+// JSON-LD with SOSA/SSN context
+console.log('@context:', data['@context']);
+console.log('Sensors:', data['schema:itemListElement']);
+
+// Each sensor is a sosa:Sensor
+data['schema:itemListElement'].forEach(sensor => {
+  console.log('Sensor:', sensor.sensorCode);
+  console.log('Type:', sensor.sensorType);
+  console.log('Asset:', sensor.hasFeatureOfInterest.assetId);
+});`,
+    python: `import requests
+from rdflib import Graph
+
+# Fetch JSON-LD data
+response = requests.get(
+    '${API_BASE_URL}/api/v1/ld/sensors',
+    params={'limit': 10},
+    headers={'Accept': 'application/ld+json'}
+)
+data = response.json()
+
+# Parse with RDFLib for SPARQL queries
+g = Graph()
+g.parse(data=response.text, format='json-ld')
+
+# Query using SPARQL
+query = """
+SELECT ?sensor ?type WHERE {
+  ?sensor a sosa:Sensor ;
+          ssn:hasProperty ?type .
+}
+"""
+for row in g.query(query):
+    print(f"Sensor: {row.sensor}, Type: {row.type}")`,
 };
 
 function CopyButton({ text }: { text: string }) {
@@ -347,14 +479,50 @@ export default function ApiDocsPage() {
                 <section className="max-w-6xl mx-auto px-4 mb-16">
                     <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                         <Code size={28} className="text-blue-600" />
-                        API Endpoints
+                        Open Data Endpoints
                     </h2>
                     <p className="text-slate-500 mb-8">
                         Click the <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white text-xs font-medium rounded"><Play size={12} /> Test</span> button to try it directly
                     </p>
 
                     <div className="space-y-4">
-                        {endpoints.map((endpoint) => (
+                        {openDataEndpoints.map((endpoint) => (
+                            <EndpointCard key={endpoint.path} endpoint={endpoint} />
+                        ))}
+                    </div>
+                </section>
+
+                {/* IoT Linked Data (JSON-LD) Section */}
+                <section className="max-w-6xl mx-auto px-4 mb-16">
+                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-8 mb-8">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+                            <Database size={28} className="text-purple-600" />
+                            IoT Sensor Data - JSON-LD (Linked Data)
+                        </h2>
+                        <p className="text-slate-700 mb-4">
+                            Access IoT sensor data in <strong>JSON-LD</strong> format following W3C standards:
+                        </p>
+                        <div className="grid md:grid-cols-3 gap-4 mb-4">
+                            <div className="bg-white/80 rounded-lg p-4">
+                                <h4 className="font-semibold text-purple-700 mb-1">SOSA Ontology</h4>
+                                <p className="text-sm text-slate-600">Sensor, Observation, Sample, and Actuator</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-4">
+                                <h4 className="font-semibold text-purple-700 mb-1">SSN Ontology</h4>
+                                <p className="text-sm text-slate-600">Semantic Sensor Network</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-4">
+                                <h4 className="font-semibold text-purple-700 mb-1">Schema.org</h4>
+                                <p className="text-sm text-slate-600">General-purpose vocabulary</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-600">
+                            Ideal for semantic web applications, SPARQL endpoints, and RDF data integration.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {iotLinkedDataEndpoints.map((endpoint) => (
                             <EndpointCard key={endpoint.path} endpoint={endpoint} />
                         ))}
                     </div>
@@ -386,6 +554,40 @@ export default function ApiDocsPage() {
                             </div>
                             <pre className="text-sm text-slate-300 overflow-x-auto">
                                 <code>{codeExamples[activeTab]}</code>
+                            </pre>
+                        </div>
+                    </div>
+                </section>
+
+                {/* JSON-LD Code Examples */}
+                <section className="max-w-6xl mx-auto px-4 mb-16">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">JSON-LD / Linked Data Examples</h2>
+                    <p className="text-slate-600 mb-8">
+                        Examples for working with IoT sensor data using JSON-LD and semantic web tools.
+                    </p>
+
+                    <div className="bg-slate-900 rounded-2xl overflow-hidden">
+                        <div className="flex border-b border-slate-700">
+                            {(["javascript", "python", "curl"] as const).map((tab) => (
+                                <button
+                                    key={`ld-${tab}`}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-6 py-3 text-sm font-medium transition-colors ${
+                                        activeTab === tab
+                                            ? "bg-slate-800 text-white"
+                                            : "text-slate-400 hover:text-white"
+                                    }`}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="relative p-6">
+                            <div className="absolute top-2 right-2">
+                                <CopyButton text={jsonLdCodeExamples[activeTab]} />
+                            </div>
+                            <pre className="text-sm text-slate-300 overflow-x-auto">
+                                <code>{jsonLdCodeExamples[activeTab]}</code>
                             </pre>
                         </div>
                     </div>
