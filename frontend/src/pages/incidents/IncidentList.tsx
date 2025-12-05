@@ -34,7 +34,7 @@ const IncidentList: React.FC = () => {
     return (
       incident.title.toLowerCase().includes(searchLower) ||
       incident.description.toLowerCase().includes(searchLower) ||
-      incident.location.address?.toLowerCase().includes(searchLower)
+      incident.location?.address?.toLowerCase().includes(searchLower)
     )
   })
 

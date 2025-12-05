@@ -3,8 +3,12 @@ export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type ReporterType = 'citizen' | 'technician' | 'admin' | 'manager';
 
 export interface IncidentLocation {
-  address: string;
-  coordinates: {
+  address?: string;
+  geometry?: {
+    type: string;
+    coordinates: number[] | number[][] | number[][][];
+  };
+  coordinates?: {
     longitude: number;
     latitude: number;
   };
@@ -27,7 +31,7 @@ export interface Incident {
   severity: IncidentSeverity;
   status: IncidentStatus;
   asset_id?: string;
-  location: IncidentLocation;
+  location?: IncidentLocation;
   reported_by?: string;
   reporter_type: ReporterType;
   assigned_to?: string;

@@ -20,10 +20,12 @@ class IncidentService:
     def __init__(
         self,
         incident_repository: IncidentRepository,
-        maintenance_service: Optional[MaintenanceService] = None
+        maintenance_service: Optional[MaintenanceService] = None,
+        asset_service: Optional[Any] = None
     ):
         self.repository = incident_repository
         self.maintenance_service = maintenance_service
+        self.asset_service = asset_service
 
     def _generate_incident_number(self) -> str:
         """Generate unique incident number."""
@@ -48,6 +50,29 @@ class IncidentService:
             incident_number = self._generate_incident_number()  # Retry
 
         incident_dict = incident_data.dict(exclude_unset=True)
+        
+        # Populate location from asset if missing
+        if incident_data.asset_id and not incident_data.location and self.asset_service:
+            try:
+                asset = await self.asset_service.get_asset_by_id(incident_data.asset_id)
+                if asset:
+                    # Construct location from asset
+                    geometry = asset.geometry if asset.geometry else {"type": "Point", "coordinates": [0, 0]}
+                    
+                    # Get address from asset location if available
+                    address = "Location not specified"
+                    if asset.location and hasattr(asset.location, 'address'):
+                        address = asset.location.address
+                    elif asset.location and isinstance(asset.location, dict):
+                        address = asset.location.get('address', "Location not specified")
+                        
+                    incident_dict["location"] = {
+                        "geometry": geometry,
+                        "address": address
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to fetch asset location for incident: {e}")
+
         incident_dict["incident_number"] = incident_number
         incident_dict["reported_by"] = reported_by
         incident_dict["reporter_type"] = reporter_type
