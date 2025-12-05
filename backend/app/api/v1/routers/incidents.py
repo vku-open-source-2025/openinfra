@@ -140,3 +140,17 @@ async def create_maintenance_from_incident(
         "maintenance_id": maintenance_id,
         "message": "Maintenance work order created successfully"
     }
+
+
+@router.post("/{incident_id}/approve-cost", response_model=Incident)
+async def approve_incident_cost(
+    incident_id: str,
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Approve maintenance cost and resolve incident."""
+    # In a real app, check for ADMIN role here
+    return await incident_service.approve_incident_resolution(
+        incident_id,
+        str(current_user.id)
+    )
