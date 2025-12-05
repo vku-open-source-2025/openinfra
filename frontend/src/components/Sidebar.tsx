@@ -138,6 +138,10 @@ const Sidebar: React.FC<SidebarProps> = () => {
     };
 
     const isActive = (path: string) => {
+        // Exact match for /admin (Dashboard), prefix match for other routes
+        if (path === "/admin") {
+            return location.pathname === "/admin";
+        }
         return (
             location.pathname === path ||
             location.pathname.startsWith(path + "/")
