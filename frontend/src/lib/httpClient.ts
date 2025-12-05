@@ -7,8 +7,17 @@ import { useAuthStore } from "../stores";
 import type { AxiosResponse } from "axios";
 
 // Create main API instance
+// Force HTTPS in production
+const getApiBaseUrl = () => {
+    const url = import.meta.env.VITE_BASE_API_URL || "/api/v1";
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+        return url.replace('http://', 'https://');
+    }
+    return url;
+};
+
 export const httpClient: AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_BASE_API_URL || "/api/v1",
+    baseURL: getApiBaseUrl(),
     timeout: 30000,
     headers: {
         "Content-Type": "application/json",

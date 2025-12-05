@@ -21,11 +21,11 @@ export const SensorCard: React.FC<SensorCardProps> = ({ sensor, onClick }) => {
         <SensorStatusBadge status={sensor.status} lastSeen={sensor.last_seen} />
       </div>
       <div className="flex items-center gap-4 text-xs text-slate-500">
-        {sensor.last_reading !== undefined && (
+        {sensor.last_reading !== undefined && sensor.last_reading !== null && (
           <div className="flex items-center gap-1">
             <Activity className="h-3 w-3" />
             <span>
-              {typeof sensor.last_reading === 'object'
+              {typeof sensor.last_reading === 'object' && sensor.last_reading !== null
                 ? sensor.last_reading.value
                 : sensor.last_reading} {sensor.measurement_unit || ""}
             </span>

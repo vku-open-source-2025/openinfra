@@ -1,8 +1,17 @@
 import { httpClient, leaderboardApi } from "./lib/httpClient";
 import axios from "axios";
 
+// Force HTTPS in production
+const getApiBaseUrl = () => {
+    const url = import.meta.env.VITE_BASE_API_URL || "/api";
+    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+        return url.replace('http://', 'https://');
+    }
+    return url;
+};
+
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_BASE_API_URL || "/api",
+    baseURL: getApiBaseUrl(),
 });
 
 export interface Asset {
