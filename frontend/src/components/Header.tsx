@@ -21,8 +21,7 @@ const navigationItems: NavigationItem[] = [
     },
     {
         label: "Get Started",
-        to: "/admin",
-        search: { assetId: undefined },
+        to: "/map",
         isButton: true,
     },
 ];

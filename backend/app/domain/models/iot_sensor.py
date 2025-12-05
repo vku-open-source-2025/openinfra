@@ -1,6 +1,6 @@
 """IoT Sensor domain model."""
 from pydantic import BaseModel, Field, field_serializer, field_validator
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
 from datetime import datetime
 from enum import Enum
 from bson import ObjectId
@@ -69,7 +69,7 @@ class IoTSensor(BaseModel):
     # Status
     status: SensorStatus = SensorStatus.OFFLINE
     last_seen: Optional[datetime] = None
-    last_reading: Optional[Dict[str, Any]] = None
+    last_reading: Optional[Union[float, int, Dict[str, Any]]] = None
 
     # Calibration
     calibration_date: Optional[datetime] = None
