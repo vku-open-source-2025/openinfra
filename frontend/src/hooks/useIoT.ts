@@ -2,14 +2,27 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Asset } from '../api';
 import { api } from '../api';
 
-// Types for IoT data
+// Types for IoT data - matching actual API response
 export interface Sensor {
-    _id: string;
-    sensor_id: string;
+    id: string;
+    _id?: string;
+    sensor_code: string;
     asset_id: string;
     sensor_type: string;
+    manufacturer?: string;
+    model?: string;
+    measurement_unit?: string;
     status: string;
-    config: {
+    thresholds?: {
+        min_value?: number;
+        max_value?: number;
+        critical_min?: number;
+        critical_max?: number;
+        warning_min?: number;
+        warning_max?: number;
+    };
+    // Legacy config format
+    config?: {
         thresholds: {
             min: number;
             max: number;
@@ -19,21 +32,25 @@ export interface Sensor {
         sampling_interval: number;
     };
     last_seen?: string;
+    last_reading?: number;
     created_at: string;
 }
 
 export interface SensorReading {
-    _id: string;
+    id?: string;
+    _id?: string;
     sensor_id: string;
-    asset_id: string;
+    asset_id?: string;
     timestamp: string;
-    readings: {
+    value?: number;
+    readings?: {
         water_level?: number;
         flow_rate?: number;
         [key: string]: number | undefined;
     };
     battery?: number;
     rssi?: number;
+    metadata?: Record<string, unknown>;
 }
 
 export interface IoTAlert {

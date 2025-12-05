@@ -148,3 +148,61 @@ async def get_sensor_statistics(
     from_time_dt = datetime.fromisoformat(from_time.replace('Z', '+00:00'))
     to_time_dt = datetime.fromisoformat(to_time.replace('Z', '+00:00'))
     return await iot_service.get_sensor_statistics(sensor_id, from_time_dt, to_time_dt, granularity)
+
+
+@router.get("/assets/{asset_id}/iot-data")
+async def get_asset_iot_data(
+    asset_id: str,
+    hours: int = Query(24, ge=1, le=168),
+    iot_service: IoTService = Depends(get_iot_service)
+):
+    """Get IoT data for an asset including sensors, readings and alerts."""
+    from datetime import timedelta
+    
+    # Get sensors for this asset
+    sensors = await iot_service.list_sensors(0, 100, asset_id=asset_id)
+    
+    if not sensors:
+        return {
+            "asset_id": asset_id,
+            "asset": {"id": asset_id, "feature_type": "Unknown", "feature_code": "unknown"},
+            "sensors": [],
+            "readings": [],
+            "alerts": [],
+            "summary": {"total_sensors": 0, "total_readings": 0, "active_alerts": 0}
+        }
+    
+    # Get readings for all sensors in time range
+    from_time = datetime.utcnow() - timedelta(hours=hours)
+    to_time = datetime.utcnow()
+    
+    all_readings = []
+    for sensor in sensors:
+        try:
+            readings = await iot_service.get_sensor_readings(
+                str(sensor.id), from_time, to_time, limit=500
+            )
+            all_readings.extend(readings)
+        except Exception:
+            pass
+    
+    # Sort readings by timestamp descending
+    all_readings.sort(key=lambda r: r.timestamp if r.timestamp else datetime.min, reverse=True)
+    
+    return {
+        "asset_id": asset_id,
+        "asset": {
+            "id": asset_id,
+            "feature_type": sensors[0].sensor_type if sensors else "Unknown",
+            "feature_code": sensors[0].asset_id if sensors else "unknown"
+        },
+        "sensors": sensors,
+        "readings": all_readings[:200],  # Limit to 200 most recent
+        "alerts": [],  # TODO: implement alerts
+        "summary": {
+            "total_sensors": len(sensors),
+            "total_readings": len(all_readings),
+            "active_alerts": 0
+        }
+    }
+

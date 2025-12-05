@@ -172,19 +172,24 @@ const StatCard = ({ label, value, unit, status }: { label: string; value: string
 
 export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartProps) {
     const { data, loading, error, refetch } = useSensorData(assetId, 60000);
-    const [selectedMetric, setSelectedMetric] = useState<'water_level' | 'flow_rate'>('water_level');
 
-    // Process readings for chart
+    // Process readings for chart - handle both new and legacy formats
     const chartData = useMemo(() => {
-        if (!data?.readings) return [];
+        if (!data?.readings || data.readings.length === 0) return [];
         
         return data.readings
-            .filter(r => r.readings[selectedMetric] !== undefined)
+            .filter(r => {
+                // Check for value in new format or readings object in legacy format
+                if (r.value !== undefined && r.value !== null) return true;
+                if (r.readings && Object.values(r.readings).some(v => v !== undefined && v !== null)) return true;
+                return false;
+            })
             .slice(0, 100) // Last 100 readings
             .reverse()
             .map(r => ({
                 time: r.timestamp,
-                value: r.readings[selectedMetric] || 0
+                // Prefer direct value, fallback to readings object
+                value: r.value ?? r.readings?.[selectedMetric] ?? r.readings?.water_level ?? 0
             }));
     }, [data?.readings, selectedMetric]);
 
@@ -194,18 +199,54 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
         return data.readings[0];
     }, [data?.readings]);
 
-    // Get thresholds from sensor config
+    // Get thresholds from sensor - handle both formats
     const thresholds = useMemo(() => {
         if (!data?.sensors?.length) return undefined;
-        return data.sensors[0]?.config?.thresholds;
+        const sensor = data.sensors[0];
+        // New format
+        if (sensor.thresholds) {
+            return {
+                max: sensor.thresholds.warning_max ?? sensor.thresholds.max_value,
+                critical_max: sensor.thresholds.critical_max ?? sensor.thresholds.max_value
+            };
+        }
+        // Legacy format
+        if (sensor.config?.thresholds) {
+            return sensor.config.thresholds;
+        }
+        return undefined;
+    }, [data?.sensors]);
+
+    // Get sensor info
+    const sensorInfo = useMemo(() => {
+        if (!data?.sensors?.length) return null;
+        const sensor = data.sensors[0];
+        return {
+            id: sensor.sensor_code || sensor.id,
+            type: sensor.sensor_type,
+            unit: sensor.measurement_unit || 'm',
+            status: sensor.status
+        };
     }, [data?.sensors]);
 
     // Determine status based on thresholds
-    const getValueStatus = (value: number | undefined): 'normal' | 'warning' | 'critical' => {
-        if (value === undefined || !thresholds) return 'normal';
+    const getValueStatus = (value: number | undefined | null): 'normal' | 'warning' | 'critical' => {
+        if (value === undefined || value === null || !thresholds) return 'normal';
         if (thresholds.critical_max && value >= thresholds.critical_max) return 'critical';
         if (thresholds.max && value >= thresholds.max) return 'warning';
         return 'normal';
+    };
+
+    // Get latest value - handle both formats
+    const getLatestValue = (): number | null => {
+        if (!latestReading) return null;
+        if (latestReading.value !== undefined && latestReading.value !== null) {
+            return latestReading.value;
+        }
+        if (latestReading.readings) {
+            return latestReading.readings.water_level ?? latestReading.readings.flow_rate ?? null;
+        }
+        return null;
     };
 
     if (!assetId) {
@@ -268,61 +309,53 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
                         IoT Sensor Data
                     </h3>
                     <p className="text-sm text-gray-400">
-                        {assetName || data.asset.feature_type} • {data.sensors[0]?.sensor_id}
+                        {assetName || data.asset.feature_type} • {sensorInfo?.id || 'N/A'}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${data.sensors[0]?.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full ${sensorInfo?.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                     <span className="text-sm text-gray-400">
-                        {data.sensors[0]?.status === 'active' ? 'Online' : 'Offline'}
+                        {sensorInfo?.status === 'online' ? 'Online' : 'Offline'}
                     </span>
                 </div>
             </div>
 
-            {/* Metric selector */}
-            <div className="flex gap-2">
-                <button
-                    onClick={() => setSelectedMetric('water_level')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                        selectedMetric === 'water_level' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                >
-                    Water Level
-                </button>
-                <button
-                    onClick={() => setSelectedMetric('flow_rate')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                        selectedMetric === 'flow_rate' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                >
-                    Flow Rate
-                </button>
+            {/* Sensor type info */}
+            <div className="flex gap-2 flex-wrap">
+                {data.sensors.map((sensor, idx) => (
+                    <span 
+                        key={sensor.id || idx}
+                        className="px-3 py-1 bg-gray-800 rounded-full text-sm text-gray-300"
+                    >
+                        {sensor.sensor_type} ({sensor.measurement_unit || 'unit'})
+                    </span>
+                ))}
             </div>
 
             {/* Chart */}
             <div className="bg-gray-800/50 rounded-lg p-4">
                 <div className="text-sm text-gray-400 mb-2">
-                    {selectedMetric === 'water_level' ? 'Water Level (m)' : 'Flow Rate (m³/s)'} - Last 24 Hours
+                    {sensorInfo?.type || 'Sensor'} ({sensorInfo?.unit || 'value'}) - Last 24 Hours
                 </div>
                 <LineChart 
                     data={chartData} 
-                    color={selectedMetric === 'water_level' ? '#3B82F6' : '#10B981'}
-                    thresholds={selectedMetric === 'water_level' ? thresholds : undefined}
+                    color="#3B82F6"
+                    thresholds={thresholds}
                 />
-                {thresholds && selectedMetric === 'water_level' && (
+                {thresholds && (
                     <div className="flex gap-4 mt-2 text-xs">
-                        <span className="flex items-center gap-1">
-                            <span className="w-3 h-0.5 bg-yellow-500"></span>
-                            Warning: {thresholds.max}m
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <span className="w-3 h-0.5 bg-red-500"></span>
-                            Critical: {thresholds.critical_max}m
-                        </span>
+                        {thresholds.max && (
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-0.5 bg-yellow-500"></span>
+                                Warning: {thresholds.max}{sensorInfo?.unit || ''}
+                            </span>
+                        )}
+                        {thresholds.critical_max && (
+                            <span className="flex items-center gap-1">
+                                <span className="w-3 h-0.5 bg-red-500"></span>
+                                Critical: {thresholds.critical_max}{sensorInfo?.unit || ''}
+                            </span>
+                        )}
                     </div>
                 )}
             </div>
@@ -330,35 +363,31 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
             {/* Stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <StatCard 
-                    label="Current Level" 
-                    value={latestReading?.readings.water_level?.toFixed(2) || '--'} 
-                    unit="m"
-                    status={getValueStatus(latestReading?.readings.water_level)}
+                    label="Current Value" 
+                    value={getLatestValue()?.toFixed(2) || '--'} 
+                    unit={sensorInfo?.unit || ''}
+                    status={getValueStatus(getLatestValue())}
                 />
                 <StatCard 
-                    label="Flow Rate" 
-                    value={latestReading?.readings.flow_rate?.toFixed(2) || '--'} 
-                    unit="m³/s"
+                    label="Sensor Type" 
+                    value={sensorInfo?.type || '--'} 
                 />
                 <StatCard 
-                    label="Battery" 
-                    value={latestReading?.battery || '--'} 
-                    unit="%"
-                    status={latestReading?.battery && latestReading.battery < 20 ? 'warning' : 'normal'}
+                    label="Total Readings" 
+                    value={data.summary.total_readings || 0} 
                 />
                 <StatCard 
-                    label="Signal" 
-                    value={latestReading?.rssi || '--'} 
-                    unit="dBm"
+                    label="Sensors" 
+                    value={data.summary.total_sensors || 0} 
                 />
             </div>
 
             {/* Alerts */}
-            {data.alerts.length > 0 && (
+            {data.alerts && data.alerts.length > 0 && (
                 <div className="space-y-2">
                     <h4 className="text-sm font-medium text-gray-300">Active Alerts</h4>
-                    {data.alerts.slice(0, 3).map(alert => (
-                        <AlertBadge key={alert._id} alert={alert} />
+                    {data.alerts.slice(0, 3).map((alert, idx) => (
+                        <AlertBadge key={alert._id || idx} alert={alert} />
                     ))}
                 </div>
             )}
