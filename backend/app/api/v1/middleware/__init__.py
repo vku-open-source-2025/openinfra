@@ -11,6 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -54,6 +55,17 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
+
+
+async def get_optional_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
+    user_service: UserService = Depends(get_user_service),
+):
+    """Get current user if authenticated, else None."""
+    if not credentials:
+        return None
+    
+    return await get_current_user(credentials, user_service)
 
 
 def require_permission(permission: str):

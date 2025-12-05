@@ -6,7 +6,7 @@ from app.domain.models.incident import (
 )
 from app.domain.services.incident_service import IncidentService
 from app.api.v1.dependencies import get_incident_service
-from app.api.v1.middleware import get_current_user
+from app.api.v1.middleware import get_current_user, get_optional_current_user
 from app.domain.models.user import User
 from app.domain.models.incident import ResolutionType
 
@@ -29,7 +29,7 @@ async def list_incidents(
 @router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)
 async def create_incident(
     incident_data: IncidentCreate,
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     incident_service: IncidentService = Depends(get_incident_service)
 ):
     """Create a new incident (can be anonymous)."""
