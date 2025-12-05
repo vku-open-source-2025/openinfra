@@ -1,5 +1,5 @@
 """Incident service for managing incidents."""
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 from app.domain.models.incident import (
     Incident, IncidentCreate, IncidentUpdate, IncidentComment,
