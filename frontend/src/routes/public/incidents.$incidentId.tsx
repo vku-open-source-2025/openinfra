@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { publicApi } from '../../api/public';
-import { Incident } from '../../types/incident';
-import { Loader2, CheckCircle, Clock, Tool, Wrench } from 'lucide-react';
+import type { Incident } from '../../types/incident';
+import { Loader2, CheckCircle, Clock, Wrench } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
 export const Route = createFileRoute('/public/incidents/$incidentId')({

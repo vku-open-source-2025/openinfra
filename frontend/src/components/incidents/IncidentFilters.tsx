@@ -1,6 +1,5 @@
 import { Select } from "../ui/select"
 import { Input } from "../ui/input"
-import { Input } from "../ui/input"
 
 interface IncidentFiltersProps {
   status?: string
