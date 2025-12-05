@@ -13,6 +13,11 @@ class SensorType(str, Enum):
     PRESSURE = "pressure"
     VIBRATION = "vibration"
     POWER = "power"
+    VOLTAGE = "voltage"
+    CURRENT = "current"
+    FLOW_RATE = "flow_rate"
+    WATER_LEVEL = "water_level"
+    AIR_QUALITY = "air_quality"
     CUSTOM = "custom"
 
 
