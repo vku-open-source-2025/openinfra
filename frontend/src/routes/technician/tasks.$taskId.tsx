@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { incidentsApi } from '../../api/incidents';
 import { maintenanceApi } from '../../api/maintenance'; // Need to ensure this exists and has methods
-import { Incident } from '../../types/incident';
+import type { Incident } from '../../types/incident';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';

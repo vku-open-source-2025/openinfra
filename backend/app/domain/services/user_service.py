@@ -77,8 +77,12 @@ class UserService:
         return user
 
     async def authenticate(self, username: str, password: str) -> Optional[User]:
-        """Authenticate user."""
+        """Authenticate user by username or email."""
+        # Try to find by username first
         user = await self.repository.find_by_username(username)
+        # If not found, try by email
+        if not user:
+            user = await self.repository.find_by_email(username)
         if not user:
             return None
 
