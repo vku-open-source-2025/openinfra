@@ -79,11 +79,22 @@ class ReporterContact(BaseModel):
     phone: Optional[str] = None
 
 
+class AssetSummary(BaseModel):
+    """Embedded asset summary for incident responses."""
+    id: str
+    asset_code: Optional[str] = None
+    name: Optional[str] = None
+    feature_type: str
+    category: Optional[str] = None
+    status: Optional[str] = None
+
+
 class Incident(BaseModel):
     """Incident domain entity."""
     id: Optional[str] = Field(validation_alias="_id", serialization_alias="id", default=None)
     incident_number: str
     asset_id: Optional[str] = None
+    asset: Optional[AssetSummary] = None  # Populated asset info
 
     # Incident Details
     title: str

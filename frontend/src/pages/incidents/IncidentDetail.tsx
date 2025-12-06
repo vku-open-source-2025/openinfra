@@ -137,12 +137,44 @@ const IncidentDetail: React.FC = () => {
         </div>
 
         {incident.asset_id && (
-          <div className="mb-6">
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h2 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+              <Wrench className="h-4 w-4" />
+              Related Asset
+            </h2>
+            {incident.asset ? (
+              <div className="space-y-1">
+                <p className="text-blue-800 font-medium">
+                  {incident.asset.name || incident.asset.asset_code || incident.asset.feature_type}
+                </p>
+                <div className="flex flex-wrap gap-2 text-sm text-blue-700">
+                  {incident.asset.asset_code && (
+                    <span className="bg-blue-100 px-2 py-0.5 rounded">
+                      Code: {incident.asset.asset_code}
+                    </span>
+                  )}
+                  {incident.asset.category && (
+                    <span className="bg-blue-100 px-2 py-0.5 rounded">
+                      {incident.asset.category}
+                    </span>
+                  )}
+                  {incident.asset.status && (
+                    <span className="bg-blue-100 px-2 py-0.5 rounded capitalize">
+                      {incident.asset.status}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-blue-700 text-sm">Asset ID: {incident.asset_id}</p>
+            )}
             <Button
               variant="outline"
+              size="sm"
+              className="mt-3"
               onClick={() => navigate({ to: `/admin/assets/${incident.asset_id}` })}
             >
-              View Related Asset
+              View Asset Details
             </Button>
           </div>
         )}

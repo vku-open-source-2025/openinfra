@@ -13,7 +13,7 @@ class IncidentRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_id(self, incident_id: str) -> Optional[Incident]:
+    async def find_by_id(self, incident_id: str, populate_asset: bool = False) -> Optional[Incident]:
         """Find incident by ID."""
         pass
 
@@ -35,7 +35,8 @@ class IncidentRepository(ABC):
         status: Optional[str] = None,
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
-        reported_by: Optional[str] = None
+        reported_by: Optional[str] = None,
+        populate_asset: bool = False
     ) -> List[Incident]:
         """List incidents with filtering."""
         pass
