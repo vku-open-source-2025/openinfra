@@ -3,6 +3,9 @@
 **Urban Infrastructure Asset Management System**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Data License](https://img.shields.io/badge/data%20license-ODC--BY-brightgreen.svg)](https://opendatacommons.org/licenses/by/1.0/)
+[![Demo](https://img.shields.io/badge/demo-openinfra.space-orange.svg)](https://openinfra.space/)
+[![API Docs](https://img.shields.io/badge/API-docs-blueviolet.svg)](https://openinfra.space/docs)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
@@ -545,19 +548,6 @@ For detailed deployment instructions, see [backend/docs/deployment.md](backend/d
 
 ---
 
-## 📊 Data Sources
-
-OpenInfra integrates data from multiple Vietnamese telecommunications sources:
-
-1. **nPerf.com** - Mobifone 3G/4G/5G speed data
-2. **Open Network (Viettel)** - Network infrastructure data
-3. **MobiMap** (Mobifone Band Map) - BTS station locations
-4. **Da Nang Public Service Portal** - BTS station data (crawled)
-5. **Certification Data Lookup** - BTS station information
-6. **OpenStreetMap** - Geospatial data and geocoding
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions from the community! Here's how you can help:
@@ -612,7 +602,16 @@ npm run test:e2e
 
 ## 📄 License
 
+### Code License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+### Data License
+All open data provided by OpenInfra is licensed under the [Open Data Commons Attribution License (ODC-BY)](https://opendatacommons.org/licenses/by/1.0/). You are free to:
+- **Share**: Copy, distribute and use the data
+- **Create**: Produce works from the data
+- **Adapt**: Modify, transform and build upon the data
+
+As long as you **attribute** the source: *"Data provided by OpenInfra (https://openinfra.space)"*
 
 ---
 
@@ -631,9 +630,11 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 📞 Support & Contact
 
+- **Live Demo**: [https://openinfra.space](https://openinfra.space/)
+- **API Documentation**: [https://openinfra.space/docs](https://openinfra.space/docs)
 - **Documentation**: [backend/docs/](backend/docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/openinfra/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/openinfra/discussions)
+- **Issues**: [GitHub Issues](https://github.com/vku-open-source-2025/openinfra/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/vku-open-source-2025/openinfra/discussions)
 
 ---
 
@@ -687,6 +688,6 @@ OpenInfra is designed to handle city-scale deployments:
 
 **Built with ❤️ for better urban infrastructure management**
 
-[⭐ Star us on GitHub](https://github.com/your-org/openinfra) | [🐛 Report Bug](https://github.com/your-org/openinfra/issues) | [💡 Request Feature](https://github.com/your-org/openinfra/issues)
+[⭐ Star us on GitHub](https://github.com/vku-open-source-2025/openinfra) | [🐛 Report Bug](https://github.com/vku-open-source-2025/openinfra/issues) | [💡 Request Feature](https://github.com/vku-open-source-2025/openinfra/issues)
 
 </div>
