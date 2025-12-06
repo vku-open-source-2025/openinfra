@@ -20,7 +20,8 @@ export interface IncidentComment {
   user_id?: string;
   user_name?: string;
   is_internal: boolean;
-  created_at: string;
+  posted_at: string;
+  created_at?: string; // For backwards compatibility
 }
 
 export interface Incident {

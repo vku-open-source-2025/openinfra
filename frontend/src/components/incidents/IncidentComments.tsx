@@ -62,7 +62,12 @@ export const IncidentComments: React.FC<IncidentCommentsProps> = ({
                 )}
               </div>
               <span className="text-xs text-slate-500">
-                {format(new Date(comment.created_at), "MMM d, yyyy HH:mm")}
+                {(() => {
+                  const dateStr = comment.posted_at || comment.created_at;
+                  if (!dateStr) return "Unknown";
+                  const date = new Date(dateStr);
+                  return isNaN(date.getTime()) ? "Unknown" : format(date, "MMM d, yyyy HH:mm");
+                })()}
               </span>
             </div>
             <p className="text-sm text-slate-700">{comment.comment}</p>

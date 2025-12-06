@@ -284,22 +284,29 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
                 <div>
                   <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Activity Log</label>
                   <div className="space-y-2">
-                    {selectedIncident.comments.map((comment, idx) => (
-                      <div key={idx} className="bg-slate-50 p-3 rounded">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-slate-900">
-                            {comment.user_name || "System"}
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            {format(new Date(comment.created_at), "dd/MM/yyyy HH:mm")}
-                          </span>
+                    {selectedIncident.comments.map((comment, idx) => {
+                      const dateStr = comment.posted_at || comment.created_at;
+                      const date = dateStr ? new Date(dateStr) : null;
+                      const formattedDate = date && !isNaN(date.getTime()) 
+                        ? format(date, "dd/MM/yyyy HH:mm") 
+                        : "Unknown";
+                      return (
+                        <div key={idx} className="bg-slate-50 p-3 rounded">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-slate-900">
+                              {comment.user_name || "System"}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              {formattedDate}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-700">{comment.comment}</p>
+                          {comment.is_internal && (
+                            <span className="text-xs text-amber-600 mt-1 inline-block">Internal Note</span>
+                          )}
                         </div>
-                        <p className="text-sm text-slate-700">{comment.comment}</p>
-                        {comment.is_internal && (
-                          <span className="text-xs text-amber-600 mt-1 inline-block">Internal Note</span>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

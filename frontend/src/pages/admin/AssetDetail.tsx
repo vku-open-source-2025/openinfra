@@ -17,6 +17,7 @@ import {
     Edit,
     Plus,
     AlertTriangle,
+    Map,
 } from "lucide-react";
 import {
     getHealthScoreColor,
@@ -194,13 +195,27 @@ const AssetDetail: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate({ to: "/admin" })}
-                    >
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                navigate({
+                                    to: "/admin/map",
+                                    search: { assetId: id },
+                                })
+                            }
+                        >
+                            <Map className="h-4 w-4 mr-2" />
+                            View on Map
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate({ to: "/admin" })}
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
