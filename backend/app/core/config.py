@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     # External Services
     OSM_NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"
 
+    # Cloudflare Turnstile (Captcha)
+    TURNSTILE_SECRET_KEY: str = ""
+    TURNSTILE_SITE_KEY: str = ""
+    TURNSTILE_VERIFY_URL: str = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
     class Config:
         env_file = ".env"
 

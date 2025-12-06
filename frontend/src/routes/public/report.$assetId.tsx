@@ -5,8 +5,11 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
+import { Turnstile } from '../../components/Turnstile';
 
 import { Loader2, Camera, Upload } from 'lucide-react';
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
 export const Route = createFileRoute('/public/report/$assetId')({
     component: ReportIncidentPage,
@@ -19,6 +22,8 @@ function ReportIncidentPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [photos, setPhotos] = useState<File[]>([]);
+    const [turnstileToken, setTurnstileToken] = useState<string>("");
+    const [captchaError, setCaptchaError] = useState<string>("");
     const [incidentData, setIncidentData] = useState({
         title: 'Incident Report',
         description: '',
@@ -50,6 +55,14 @@ function ReportIncidentPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setCaptchaError("");
+        
+        // Validate captcha
+        if (TURNSTILE_SITE_KEY && !turnstileToken) {
+            setCaptchaError("Please complete the captcha verification");
+            return;
+        }
+        
         setSubmitting(true);
         try {
             // 1. Create Incident
@@ -57,23 +70,7 @@ function ReportIncidentPage() {
                 title: incidentData.title,
                 description: `${incidentData.description}\n\nReporter: ${incidentData.reporter_name} (${incidentData.reporter_contact})`,
                 severity: incidentData.severity as any,
-                asset_id: assetId, // Note: This expects ID, but we might have code from URL. Backend handles lookup?
-                // Wait, backend expects asset_id (ID) but URL likely has Code. 
-                // We need to resolve Code to ID if createAnonymousIncident expects ID.
-                // Actually public API create_anonymous_incident expects IncidentCreate which has asset_id (str).
-                // publicApi.getPublicAsset returns PublicAssetInfo which likely has code, but maybe no ID?
-                // Let's assume asset_id in create wants the DB ID. 
-                // We might need to ask backend to accept code, or get ID from asset info.
-                // Looking at PublicAssetInfo interface... it only has asset_code.
-                // Issue: We need asset ID for creation, but public API gives code.
-                // WORKAROUND: Pass asset_code as asset_id if backend supports it OR incident creation should accept asset_code.
-                // Checking backend model... IncidentCreate has asset_id.
-                // CHECK: Does PublicAssetInfo have ID? 
-                // It has asset_code.
-                // I will assume for now we pass assetId (which is code from URL) and backend handles it or we need to fix backend.
-                // Re-reading backend `create_incident`: it verifies asset existence via `asset_service.get_asset_by_id`.
-                // This implies it expects an ID.
-                // We might need `getPublicAsset` to return ID too.
+                asset_id: assetId,
                 location: asset?.location ? {
                     address: asset.location.address,
                     geometry: {
@@ -81,7 +78,7 @@ function ReportIncidentPage() {
                         coordinates: [asset.location.coordinates.longitude, asset.location.coordinates.latitude]
                     }
                 } : undefined
-            });
+            }, turnstileToken);
 
             // 2. Upload Photos
             if (photos.length > 0 && incident.id) {
@@ -177,7 +174,25 @@ function ReportIncidentPage() {
                     )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={submitting}>
+                {/* Cloudflare Turnstile Captcha */}
+                {TURNSTILE_SITE_KEY && (
+                    <div>
+                        <Label>Verify you're human</Label>
+                        <Turnstile
+                            siteKey={TURNSTILE_SITE_KEY}
+                            onVerify={(token) => setTurnstileToken(token)}
+                            onExpire={() => setTurnstileToken("")}
+                            onError={() => setCaptchaError("Captcha verification failed. Please try again.")}
+                            theme="auto"
+                            className="mt-2"
+                        />
+                        {captchaError && (
+                            <p className="text-sm text-red-500 mt-1">{captchaError}</p>
+                        )}
+                    </div>
+                )}
+
+                <Button type="submit" className="w-full" disabled={submitting || (TURNSTILE_SITE_KEY ? !turnstileToken : false)}>
                     {submitting ? <Loader2 className="animate-spin mr-2" /> : null}
                     Submit Report
                 </Button>

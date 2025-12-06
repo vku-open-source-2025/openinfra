@@ -77,6 +77,7 @@ class ReporterContact(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    id_card_number: Optional[str] = None
 
 
 class AssetSummary(BaseModel):

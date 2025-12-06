@@ -105,6 +105,12 @@ export const IncidentSeverity = {
 } as const;
 export type IncidentSeverity = typeof IncidentSeverity[keyof typeof IncidentSeverity];
 
+export interface ContactInfo {
+    name?: string;
+    phone_number?: string;
+    id_card_number?: string;
+}
+
 export interface IncidentCreate {
     asset_id?: string;
     title: string;
@@ -113,10 +119,22 @@ export interface IncidentCreate {
     severity: IncidentSeverity;
     reported_via?: string;
     public_visible?: boolean;
+    contact_info?: ContactInfo;
 }
 
-export const createIncident = async (data: IncidentCreate) => {
-    const response = await httpClient.post("/incidents", data);
+export const createIncident = async (data: IncidentCreate, image?: File, turnstileToken?: string) => {
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(data));
+    if (image) {
+        formData.append("image", image);
+    }
+    const headers: Record<string, string> = { "Content-Type": "multipart/form-data" };
+    if (turnstileToken) {
+        headers["CF-Turnstile-Response"] = turnstileToken;
+    }
+    const response = await httpClient.post("/incidents", formData, {
+        headers,
+    });
     return response.data;
 };
 

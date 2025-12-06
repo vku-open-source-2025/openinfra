@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { X, Send, AlertTriangle } from 'lucide-react';
-import { createIncident, IncidentCategory, IncidentSeverity, type Asset } from '../api';
+import React, { useState, useRef } from 'react';
+import { X, Send, AlertTriangle, Upload, User, Phone, CreditCard } from 'lucide-react';
+import { createIncident, IncidentCategory, IncidentSeverity, type Asset, type ContactInfo } from '../api';
+import { Turnstile } from './Turnstile';
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
 interface ReportModalProps {
     isOpen: boolean;
@@ -16,15 +19,62 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    
+    // Contact information
+    const [contactName, setContactName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [idCardNumber, setIdCardNumber] = useState('');
+    
+    // Image upload
+    const [image, setImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    // Turnstile captcha
+    const [turnstileToken, setTurnstileToken] = useState<string>("");
+    const [captchaError, setCaptchaError] = useState<string>("");
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     if (!isOpen || !asset) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitting(true);
         setError(null);
+        setCaptchaError("");
+        
+        // Validate captcha
+        if (TURNSTILE_SITE_KEY && !turnstileToken) {
+            setCaptchaError("Please complete the captcha verification");
+            return;
+        }
+        
+        setIsSubmitting(true);
 
         try {
+            const contactInfo: ContactInfo = {};
+            if (contactName) contactInfo.name = contactName;
+            if (phoneNumber) contactInfo.phone_number = phoneNumber;
+            if (idCardNumber) contactInfo.id_card_number = idCardNumber;
+
             await createIncident({
                 asset_id: asset._id,
                 title,
@@ -32,8 +82,9 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                 category,
                 severity,
                 reported_via: 'web',
-                public_visible: true
-            });
+                public_visible: true,
+                contact_info: Object.keys(contactInfo).length > 0 ? contactInfo : undefined
+            }, image || undefined, turnstileToken || undefined);
             setSuccess(true);
             setTimeout(() => {
                 onClose();
@@ -42,6 +93,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                 setDescription('');
                 setCategory(IncidentCategory.MALFUNCTION);
                 setSeverity(IncidentSeverity.LOW);
+                setContactName('');
+                setPhoneNumber('');
+                setIdCardNumber('');
+                setImage(null);
+                setImagePreview(null);
             }, 2000);
         } catch (err) {
             console.error("Failed to submit report:", err);
@@ -147,6 +203,104 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                             />
                         </div>
 
+                        {/* Image Upload */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Upload Image (Optional)
+                            </label>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleImageChange}
+                                accept="image/*"
+                                className="hidden"
+                            />
+                            {imagePreview ? (
+                                <div className="relative">
+                                    <img
+                                        src={imagePreview}
+                                        alt="Preview"
+                                        className="w-full h-32 object-cover rounded-lg border border-slate-300"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={removeImage}
+                                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-full py-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all flex flex-col items-center gap-2 text-slate-500"
+                                >
+                                    <Upload size={24} />
+                                    <span className="text-sm">Click to upload image</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Contact Information Section */}
+                        <div className="border-t border-slate-200 pt-4 mt-4">
+                            <h4 className="text-sm font-medium text-slate-700 mb-3">Contact Information (Optional)</h4>
+                            
+                            <div className="space-y-3">
+                                <div className="relative">
+                                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        value={contactName}
+                                        onChange={(e) => setContactName(e.target.value)}
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        placeholder="Your Name"
+                                    />
+                                </div>
+                                
+                                <div className="relative">
+                                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="tel"
+                                        value={phoneNumber}
+                                        onChange={(e) => setPhoneNumber(e.target.value)}
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        placeholder="Phone Number"
+                                    />
+                                </div>
+                                
+                                <div className="relative">
+                                    <CreditCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        value={idCardNumber}
+                                        onChange={(e) => setIdCardNumber(e.target.value)}
+                                        className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        placeholder="ID Card Number"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Cloudflare Turnstile Captcha */}
+                        {TURNSTILE_SITE_KEY && (
+                            <div className="border-t border-slate-200 pt-4 mt-4">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Verify you're human
+                                </label>
+                                <Turnstile
+                                    siteKey={TURNSTILE_SITE_KEY}
+                                    onVerify={(token) => setTurnstileToken(token)}
+                                    onExpire={() => setTurnstileToken("")}
+                                    onError={() => setCaptchaError("Captcha verification failed. Please try again.")}
+                                    theme="auto"
+                                />
+                                {captchaError && (
+                                    <p className="text-sm text-red-500 mt-1">{captchaError}</p>
+                                )}
+                            </div>
+                        )}
+
                         {error && (
                             <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
                                 {error}
@@ -156,7 +310,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                         <div className="pt-2">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || (TURNSTILE_SITE_KEY ? !turnstileToken : false)}
                                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors shadow-sm"
                             >
                                 {isSubmitting ? (

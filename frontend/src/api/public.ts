@@ -37,8 +37,12 @@ export const publicApi = {
    * Create an anonymous incident (no authentication required)
    * POST /public/incidents
    */
-  createAnonymousIncident: async (data: IncidentCreateRequest): Promise<Incident> => {
-    const response = await httpClient.post<Incident>('/public/incidents', data);
+  createAnonymousIncident: async (data: IncidentCreateRequest, turnstileToken?: string): Promise<Incident> => {
+    const headers: Record<string, string> = {};
+    if (turnstileToken) {
+      headers['CF-Turnstile-Response'] = turnstileToken;
+    }
+    const response = await httpClient.post<Incident>('/public/incidents', data, { headers });
     return response.data;
   },
 
