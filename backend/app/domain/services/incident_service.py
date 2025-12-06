@@ -1,5 +1,5 @@
 """Incident service for managing incidents."""
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 from app.domain.models.incident import (
     Incident, IncidentCreate, IncidentUpdate, IncidentComment,
@@ -7,7 +7,7 @@ from app.domain.models.incident import (
 )
 from app.domain.repositories.incident_repository import IncidentRepository
 from app.domain.services.maintenance_service import MaintenanceService
-from app.core.exceptions import NotFoundError, ConflictError
+from app.core.exceptions import NotFoundError, ConflictError, ValidationError
 import logging
 import uuid
 
@@ -82,9 +82,9 @@ class IncidentService:
         logger.info(f"Created incident: {incident.incident_number}")
         return incident
 
-    async def get_incident_by_id(self, incident_id: str) -> Incident:
+    async def get_incident_by_id(self, incident_id: str, populate_asset: bool = True) -> Incident:
         """Get incident by ID."""
-        incident = await self.repository.find_by_id(incident_id)
+        incident = await self.repository.find_by_id(incident_id, populate_asset=populate_asset)
         if not incident:
             raise NotFoundError("Incident", incident_id)
         return incident
@@ -295,10 +295,11 @@ class IncidentService:
         status: Optional[str] = None,
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
-        reported_by: Optional[str] = None
+        reported_by: Optional[str] = None,
+        populate_asset: bool = True
     ) -> List[Incident]:
         """List incidents with filtering."""
-        return await self.repository.list(skip, limit, status, severity, asset_id, reported_by)
+        return await self.repository.list(skip, limit, status, severity, asset_id, reported_by, populate_asset)
 
     async def update_incident(
         self,

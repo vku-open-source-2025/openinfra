@@ -14,6 +14,15 @@ export interface IncidentLocation {
   };
 }
 
+export interface AssetSummary {
+  id: string;
+  asset_code?: string;
+  name?: string;
+  feature_type: string;
+  category?: string;
+  status?: string;
+}
+
 export interface IncidentComment {
   id: string;
   comment: string;
@@ -31,6 +40,7 @@ export interface Incident {
   severity: IncidentSeverity;
   status: IncidentStatus;
   asset_id?: string;
+  asset?: AssetSummary;
   location?: IncidentLocation;
   reported_by?: string;
   reporter_type: ReporterType;

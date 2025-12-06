@@ -22,8 +22,10 @@ async def list_incidents(
     asset_id: Optional[str] = None,
     incident_service: IncidentService = Depends(get_incident_service)
 ):
-    """List incidents with filtering."""
-    return await incident_service.list_incidents(skip, limit, status, severity, asset_id, None)
+    """List incidents with filtering, including asset information."""
+    return await incident_service.list_incidents(
+        skip, limit, status, severity, asset_id, None, populate_asset=True
+    )
 
 
 @router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)

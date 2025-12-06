@@ -2,7 +2,7 @@
 from typing import Optional, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
-from app.domain.models.incident import Incident
+from app.domain.models.incident import Incident, AssetSummary
 from app.domain.repositories.incident_repository import IncidentRepository
 from app.infrastructure.database.repositories.base_repository import convert_objectid_to_str
 from datetime import datetime
@@ -14,6 +14,25 @@ class MongoIncidentRepository(IncidentRepository):
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
         self.collection = db["incidents"]
+        self.assets_collection = db["assets"]
+
+    async def _populate_asset(self, incident_doc: dict) -> dict:
+        """Populate asset summary for an incident."""
+        if incident_doc.get("asset_id") and ObjectId.is_valid(incident_doc["asset_id"]):
+            asset_doc = await self.assets_collection.find_one(
+                {"_id": ObjectId(incident_doc["asset_id"])},
+                {"_id": 1, "asset_code": 1, "name": 1, "feature_type": 1, "category": 1, "status": 1}
+            )
+            if asset_doc:
+                incident_doc["asset"] = {
+                    "id": str(asset_doc["_id"]),
+                    "asset_code": asset_doc.get("asset_code"),
+                    "name": asset_doc.get("name"),
+                    "feature_type": asset_doc.get("feature_type", "Unknown"),
+                    "category": asset_doc.get("category"),
+                    "status": asset_doc.get("status")
+                }
+        return incident_doc
 
     async def create(self, incident_data: dict) -> Incident:
         """Create a new incident."""
@@ -24,12 +43,14 @@ class MongoIncidentRepository(IncidentRepository):
         incident_doc = convert_objectid_to_str(incident_doc)
         return Incident(**incident_doc)
 
-    async def find_by_id(self, incident_id: str) -> Optional[Incident]:
+    async def find_by_id(self, incident_id: str, populate_asset: bool = False) -> Optional[Incident]:
         """Find incident by ID."""
         if not ObjectId.is_valid(incident_id):
             return None
         incident_doc = await self.collection.find_one({"_id": ObjectId(incident_id)})
         if incident_doc:
+            if populate_asset:
+                incident_doc = await self._populate_asset(incident_doc)
             incident_doc = convert_objectid_to_str(incident_doc)
             return Incident(**incident_doc)
         return None
@@ -59,7 +80,8 @@ class MongoIncidentRepository(IncidentRepository):
         status: Optional[str] = None,
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
-        reported_by: Optional[str] = None
+        reported_by: Optional[str] = None,
+        populate_asset: bool = False
     ) -> List[Incident]:
         """List incidents with filtering."""
         query = {}
@@ -75,6 +97,8 @@ class MongoIncidentRepository(IncidentRepository):
         cursor = self.collection.find(query).sort("reported_at", -1).skip(skip).limit(limit)
         incidents = []
         async for incident_doc in cursor:
+            if populate_asset:
+                incident_doc = await self._populate_asset(incident_doc)
             incident_doc = convert_objectid_to_str(incident_doc)
             incidents.append(Incident(**incident_doc))
         return incidents
