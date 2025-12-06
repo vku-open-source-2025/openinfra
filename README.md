@@ -4,8 +4,8 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Data License](https://img.shields.io/badge/data%20license-ODC--BY-brightgreen.svg)](https://opendatacommons.org/licenses/by/1.0/)
-[![Demo](https://img.shields.io/badge/demo-openinfra.space-orange.svg)](https://openinfra.space/)
-[![API Docs](https://img.shields.io/badge/API-docs-blueviolet.svg)](https://openinfra.space/docs)
+[![Cloud Service](https://img.shields.io/badge/cloud-openinfra.space-orange.svg)](https://openinfra.space/)
+[![Open API](https://img.shields.io/badge/Open%20API-docs-blueviolet.svg)](https://openinfra.space/docs)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
@@ -630,8 +630,8 @@ As long as you **attribute** the source: *"Data provided by OpenInfra (https://o
 
 ## 📞 Support & Contact
 
-- **Live Demo**: [https://openinfra.space](https://openinfra.space/)
-- **API Documentation**: [https://openinfra.space/docs](https://openinfra.space/docs)
+- **Cloud Service**: [https://openinfra.space](https://openinfra.space/)
+- **Open API Documentation**: [https://openinfra.space/docs](https://openinfra.space/docs)
 - **Documentation**: [backend/docs/](backend/docs/)
 - **Issues**: [GitHub Issues](https://github.com/vku-open-source-2025/openinfra/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/vku-open-source-2025/openinfra/discussions)
