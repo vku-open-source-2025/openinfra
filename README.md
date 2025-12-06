@@ -324,6 +324,7 @@ MQTT_PASSWORD=change-this
 # Celery
 CELERY_BROKER_URL=redis://localhost:6379/1
 CELERY_RESULT_BACKEND=redis://localhost:6379/2
+
 ```
 
 #### Frontend Configuration (`.env`)

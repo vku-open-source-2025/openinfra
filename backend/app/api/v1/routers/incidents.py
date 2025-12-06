@@ -1,14 +1,18 @@
 """Incidents API router."""
-from fastapi import APIRouter, Query, Depends, HTTPException, status
+import json
+from fastapi import APIRouter, Query, Depends, HTTPException, status, UploadFile, File, Form, Header, Request
 from typing import List, Optional
 from app.domain.models.incident import (
     Incident, IncidentCreate, IncidentUpdate, IncidentCommentRequest
 )
 from app.domain.services.incident_service import IncidentService
-from app.api.v1.dependencies import get_incident_service
+from app.api.v1.dependencies import get_incident_service, get_storage_service
 from app.api.v1.middleware import get_current_user, get_optional_current_user
 from app.domain.models.user import User
 from app.domain.models.incident import ResolutionType
+from app.infrastructure.storage.storage_service import StorageService
+from app.infrastructure.services.turnstile_service import turnstile_service
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -30,11 +34,69 @@ async def list_incidents(
 
 @router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)
 async def create_incident(
-    incident_data: IncidentCreate,
+    request: Request,
+    data: str = Form(...),
+    image: Optional[UploadFile] = File(None),
+    cf_turnstile_response: Optional[str] = Header(None, alias="CF-Turnstile-Response"),
     current_user: Optional[User] = Depends(get_optional_current_user),
-    incident_service: IncidentService = Depends(get_incident_service)
+    incident_service: IncidentService = Depends(get_incident_service),
+    storage_service: StorageService = Depends(get_storage_service)
 ):
-    """Create a new incident (can be anonymous)."""
+    """Create a new incident (can be anonymous) with optional image upload."""
+    # Verify Cloudflare Turnstile captcha for anonymous users
+    if not current_user and settings.TURNSTILE_SECRET_KEY:
+        if not cf_turnstile_response:
+            raise HTTPException(
+                status_code=400,
+                detail="Captcha verification required"
+            )
+        
+        # Get client IP from request
+        client_ip = request.client.host if request.client else None
+        
+        # Verify token
+        is_valid = await turnstile_service.verify_token(cf_turnstile_response, client_ip)
+        if not is_valid:
+            raise HTTPException(
+                status_code=400,
+                detail="Captcha verification failed"
+            )
+    
+    try:
+        incident_dict = json.loads(data)
+        
+        # Map contact_info to reporter_contact if provided
+        if "contact_info" in incident_dict:
+            contact_info = incident_dict.pop("contact_info")
+            incident_dict["reporter_contact"] = {
+                "name": contact_info.get("name"),
+                "phone": contact_info.get("phone_number"),
+                "id_card_number": contact_info.get("id_card_number")
+            }
+        
+        incident_data = IncidentCreate(**incident_dict)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON data")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid incident data: {str(e)}")
+    
+    # Handle image upload
+    photos = list(incident_data.photos)
+    if image:
+        try:
+            image_url = await storage_service.upload_file(
+                file=image,
+                bucket="incidents"
+            )
+            photos.append(image_url)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+    
+    # Update photos in incident data
+    incident_data = IncidentCreate(
+        **{**incident_data.model_dump(), "photos": photos}
+    )
+    
     reported_by = str(current_user.id) if current_user else None
     reporter_type = current_user.role.value if current_user else "citizen"
     return await incident_service.create_incident(incident_data, reported_by, reporter_type)

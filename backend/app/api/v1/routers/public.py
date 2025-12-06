@@ -1,5 +1,5 @@
 """Public API router (no authentication required)."""
-from fastapi import APIRouter, Query, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, Query, HTTPException, Depends, UploadFile, File, Header, Request
 from typing import Optional, List
 from app.domain.models.asset import Asset
 from app.domain.models.incident import Incident, IncidentCreate
@@ -8,6 +8,7 @@ from app.domain.services.incident_service import IncidentService
 from app.infrastructure.storage.storage_service import StorageService
 from app.api.v1.dependencies import get_asset_service, get_incident_service, get_storage_service
 from app.infrastructure.services.qr_service import QRCodeService
+from app.infrastructure.services.turnstile_service import turnstile_service
 from app.core.config import settings
 from pydantic import BaseModel
 
@@ -62,10 +63,30 @@ async def get_public_asset_info(
 @router.post("/incidents", response_model=Incident, status_code=201)
 async def create_anonymous_incident(
     incident_data: IncidentCreate,
+    request: Request,
+    cf_turnstile_response: Optional[str] = Header(None, alias="CF-Turnstile-Response"),
     incident_service: IncidentService = Depends(get_incident_service)
 ):
     """Create an anonymous incident report (no authentication required)."""
-    # Rate limiting should be implemented here in production
+    # Verify Cloudflare Turnstile captcha
+    if settings.TURNSTILE_SECRET_KEY:
+        if not cf_turnstile_response:
+            raise HTTPException(
+                status_code=400,
+                detail="Captcha verification required"
+            )
+        
+        # Get client IP from request
+        client_ip = request.client.host if request.client else None
+        
+        # Verify token
+        is_valid = await turnstile_service.verify_token(cf_turnstile_response, client_ip)
+        if not is_valid:
+            raise HTTPException(
+                status_code=400,
+                detail="Captcha verification failed"
+            )
+    
     return await incident_service.create_incident(
         incident_data,
         reported_by=None,

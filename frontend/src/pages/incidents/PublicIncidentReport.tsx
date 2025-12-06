@@ -7,7 +7,10 @@ import { Input } from "../../components/ui/input"
 import { Textarea } from "../../components/ui/textarea"
 import { Select } from "../../components/ui/select"
 import { Button } from "../../components/ui/button"
+import { Turnstile } from "../../components/Turnstile"
 import type { IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ""
 
 const PublicIncidentReport: React.FC = () => {
   const navigate = useNavigate()
@@ -24,9 +27,10 @@ const PublicIncidentReport: React.FC = () => {
     },
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [turnstileToken, setTurnstileToken] = useState<string>("")
 
   const createMutation = useMutation({
-    mutationFn: (data: IncidentCreateRequest) => publicApi.createAnonymousIncident(data),
+    mutationFn: (data: IncidentCreateRequest) => publicApi.createAnonymousIncident(data, turnstileToken),
     onSuccess: (incident) => {
       navigate({ to: `/public/incidents/${incident.id}` })
     },
@@ -51,6 +55,10 @@ const PublicIncidentReport: React.FC = () => {
     }
     if (!formData.location?.address?.trim()) {
       setErrors({ address: "Address is required" })
+      return
+    }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setErrors({ captcha: "Please complete the captcha verification" })
       return
     }
 
@@ -165,6 +173,22 @@ const PublicIncidentReport: React.FC = () => {
           </div>
 
           {errors.submit && <FormError>{errors.submit}</FormError>}
+
+          {/* Cloudflare Turnstile Captcha */}
+          {TURNSTILE_SITE_KEY && (
+            <FormField>
+              <FormLabel required>Verify you're human</FormLabel>
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken("")}
+                onError={() => setErrors({ captcha: "Captcha verification failed. Please try again." })}
+                theme="auto"
+                className="mt-2"
+              />
+              {errors.captcha && <FormError>{errors.captcha}</FormError>}
+            </FormField>
+          )}
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending} className="flex-1">
