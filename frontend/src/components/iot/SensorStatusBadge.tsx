@@ -8,7 +8,7 @@ interface SensorStatusBadgeProps {
 
 export const SensorStatusBadge: React.FC<SensorStatusBadgeProps> = ({ status, lastSeen }) => {
   const getStatusInfo = () => {
-    if (status === "active") {
+    if (status === "active" || status === "online") {
       if (lastSeen) {
         const lastSeenDate = new Date(lastSeen)
         const now = new Date()
@@ -25,6 +25,12 @@ export const SensorStatusBadge: React.FC<SensorStatusBadgeProps> = ({ status, la
     }
     if (status === "maintenance") {
       return { label: "Maintenance", variant: "warning" as const }
+    }
+    if (status === "offline") {
+      return { label: "Offline", variant: "destructive" as const }
+    }
+    if (status === "error") {
+      return { label: "Error", variant: "destructive" as const }
     }
     return { label: "Inactive", variant: "outline" as const }
   }

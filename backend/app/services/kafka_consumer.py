@@ -18,7 +18,7 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_IOT_TOPIC", "iot-sensor-data")
 KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "openinfra-iot-consumer")
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-MONGODB_DB = os.getenv("MONGODB_DB", "openinfra")
+MONGODB_DB = os.getenv("DATABASE_NAME", os.getenv("MONGODB_DB", "gis_db"))
 
 
 async def get_database():
@@ -29,7 +29,7 @@ async def get_database():
 
 async def check_thresholds_and_alert(db, reading: dict):
     """Check if reading exceeds thresholds and create alerts"""
-    sensor = await db["sensors"].find_one({"sensor_id": reading["sensor_id"]})
+    sensor = await db["iot_sensors"].find_one({"sensor_id": reading["sensor_id"]})
     if not sensor or not sensor.get("config"):
         return
     
@@ -90,36 +90,97 @@ async def process_message(db, message_value: bytes):
     """Process a Kafka message and store in MongoDB"""
     try:
         data = json.loads(message_value.decode("utf-8"))
-        logger.info(f"Processing message from sensor: {data.get('sensor_id')}")
+        sensor_code = data.get('sensor_id')
+        logger.info(f"Processing message from sensor: {sensor_code}")
         
         # Validate required fields
-        if not data.get("sensor_id") or not data.get("asset_id"):
+        if not sensor_code or not data.get("asset_id"):
             logger.error("Missing required fields: sensor_id or asset_id")
             return
         
-        # Prepare reading document
+        # Lookup sensor by sensor_code to get the MongoDB ObjectId
+        sensor = await db["iot_sensors"].find_one({"sensor_code": sensor_code})
+        if sensor:
+            # Use sensor's ObjectId as sensor_id for consistency with API
+            actual_sensor_id = str(sensor["_id"])
+            actual_asset_id = sensor.get("asset_id", data["asset_id"])
+        else:
+            # Fallback to the raw sensor_id if sensor not registered
+            actual_sensor_id = sensor_code
+            actual_asset_id = data["asset_id"]
+            logger.warning(f"Sensor {sensor_code} not found in iot_sensors collection, using raw id")
+        
+        timestamp = datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.utcnow()
+        readings_data = data.get("readings", {})
+        
+        # Determine the primary value and unit from readings
+        # Support multiple reading types
+        value = None
+        unit = "m"  # default unit
+        
+        if "water_level" in readings_data:
+            value = readings_data["water_level"]
+            unit = "m"
+        elif "temperature" in readings_data:
+            value = readings_data["temperature"]
+            unit = "°C"
+        elif "humidity" in readings_data:
+            value = readings_data["humidity"]
+            unit = "%"
+        elif "pressure" in readings_data:
+            value = readings_data["pressure"]
+            unit = "kPa"
+        elif readings_data:
+            # Use first available reading
+            first_key = list(readings_data.keys())[0]
+            value = readings_data[first_key]
+            unit = ""
+        
+        if value is None:
+            logger.warning(f"No reading value found in message: {data}")
+            return
+        
+        # Prepare reading document in standard SensorReading format
         reading = {
-            "sensor_id": data["sensor_id"],
-            "asset_id": data["asset_id"],
-            "timestamp": datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") else datetime.utcnow(),
-            "readings": data.get("readings", {}),
-            "battery": data.get("battery"),
-            "rssi": data.get("rssi"),
-            "metadata": data.get("metadata", {})
+            "sensor_id": actual_sensor_id,
+            "asset_id": actual_asset_id,
+            "timestamp": timestamp,
+            "value": float(value),
+            "unit": unit,
+            "quality": "good",
+            "quality_flags": [],
+            "status": "normal",
+            "threshold_exceeded": False,
+            "metadata": {
+                "readings": readings_data,
+                "battery": data.get("battery"),
+                "rssi": data.get("rssi"),
+                **data.get("metadata", {})
+            }
         }
         
         # Store reading
         result = await db["sensor_readings"].insert_one(reading)
         logger.info(f"Stored reading with ID: {result.inserted_id}")
         
-        # Update sensor last_seen
-        await db["sensors"].update_one(
-            {"sensor_id": data["sensor_id"]},
-            {"$set": {"last_seen": reading["timestamp"]}}
+        # Update sensor last_seen and last_reading (by sensor_code or _id)
+        update_query = {"sensor_code": sensor_code} if sensor else {"_id": actual_sensor_id}
+        await db["iot_sensors"].update_one(
+            update_query,
+            {"$set": {
+                "last_seen": reading["timestamp"],
+                "last_reading": reading["value"],
+                "status": "online"
+            }}
         )
         
         # Check thresholds and create alerts if needed
-        await check_thresholds_and_alert(db, reading)
+        await check_thresholds_and_alert(db, {
+            **reading,
+            "sensor_code": sensor_code,
+            "readings": readings_data,
+            "battery": data.get("battery")
+        })
         
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON: {e}")
