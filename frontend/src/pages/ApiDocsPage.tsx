@@ -337,7 +337,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                             Enter asset_id to test:
                         </label>
                         <p className="text-xs text-slate-500 mb-2">
-                            Sample: <code 
+                            Sample: <code
                                 className="bg-slate-100 px-2 py-1 rounded cursor-pointer hover:bg-slate-200 transition-colors"
                                 onClick={() => setAssetId("6927235efbcca60d69c3bf97")}
                                 title="Click to use sample ID"
@@ -410,10 +410,56 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
 export default function ApiDocsPage() {
     const [activeTab, setActiveTab] = useState<"curl" | "javascript" | "python">("javascript");
 
+    const sidebarItems = [
+        { id: "opendata", label: "Open Data API", icon: "📦" },
+        { id: "iot", label: "IoT Linked Data", icon: "📡" },
+        { id: "examples", label: "Code Examples", icon: "💻" },
+        { id: "mcp", label: "MCP Server", icon: "🤖" },
+    ];
+
+    const scrollToSection = (id: string) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             <Header />
-            <main className="pt-24 pb-16">
+
+            {/* Sidebar - fixed on desktop */}
+            <aside className="hidden lg:block fixed left-0 top-20 w-56 h-[calc(100vh-5rem)] bg-white border-r border-slate-200 p-4 overflow-y-auto z-40">
+                <nav className="space-y-1">
+                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">Navigation</h3>
+                    {sidebarItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => scrollToSection(item.id)}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-colors text-left"
+                        >
+                            <span>{item.icon}</span>
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">Quick Links</h3>
+                    <a
+                        href="https://opendatacommons.org/licenses/by/1-0/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                    >
+                        <Key size={14} />
+                        ODC-BY License
+                    </a>
+                </div>
+            </aside>
+
+            {/* Main content with left margin for sidebar */}
+            <main className="pt-24 pb-16 lg:ml-56">
                 {/* Hero Section */}
                 <section className="max-w-6xl mx-auto px-4 mb-16">
                     <div className="text-center mb-12">
@@ -425,7 +471,7 @@ export default function ApiDocsPage() {
                             API Documentation
                         </h1>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            Access open GIS infrastructure data in JSON-LD format. 
+                            Access open GIS infrastructure data in JSON-LD format.
                             Free to use under ODC-BY license.
                         </p>
                     </div>
@@ -461,9 +507,9 @@ export default function ApiDocsPage() {
                                 </h2>
                                 <p className="text-slate-700">
                                     Data is provided free under{" "}
-                                    <a 
-                                        href="https://opendatacommons.org/licenses/by/1-0/" 
-                                        target="_blank" 
+                                    <a
+                                        href="https://opendatacommons.org/licenses/by/1-0/"
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-600 hover:underline font-medium"
                                     >
@@ -476,7 +522,7 @@ export default function ApiDocsPage() {
                 </section>
 
                 {/* Endpoints */}
-                <section className="max-w-6xl mx-auto px-4 mb-16">
+                <section id="opendata" className="max-w-6xl mx-auto px-4 mb-16 scroll-mt-24">
                     <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                         <Code size={28} className="text-blue-600" />
                         Open Data Endpoints
@@ -493,7 +539,7 @@ export default function ApiDocsPage() {
                 </section>
 
                 {/* IoT Linked Data (JSON-LD) Section */}
-                <section className="max-w-6xl mx-auto px-4 mb-16">
+                <section id="iot" className="max-w-6xl mx-auto px-4 mb-16 scroll-mt-24">
                     <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-8 mb-8">
                         <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                             <Database size={28} className="text-purple-600" />
@@ -529,7 +575,7 @@ export default function ApiDocsPage() {
                 </section>
 
                 {/* Code Examples */}
-                <section className="max-w-6xl mx-auto px-4 mb-16">
+                <section id="examples" className="max-w-6xl mx-auto px-4 mb-16 scroll-mt-24">
                     <h2 className="text-2xl font-bold text-slate-900 mb-8">Code Examples</h2>
 
                     <div className="bg-slate-900 rounded-2xl overflow-hidden">
@@ -538,11 +584,10 @@ export default function ApiDocsPage() {
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`px-6 py-3 text-sm font-medium transition-colors ${
-                                        activeTab === tab
-                                            ? "bg-slate-800 text-white"
-                                            : "text-slate-400 hover:text-white"
-                                    }`}
+                                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
+                                        ? "bg-slate-800 text-white"
+                                        : "text-slate-400 hover:text-white"
+                                        }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                                 </button>
@@ -572,11 +617,10 @@ export default function ApiDocsPage() {
                                 <button
                                     key={`ld-${tab}`}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`px-6 py-3 text-sm font-medium transition-colors ${
-                                        activeTab === tab
-                                            ? "bg-slate-800 text-white"
-                                            : "text-slate-400 hover:text-white"
-                                    }`}
+                                    className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
+                                        ? "bg-slate-800 text-white"
+                                        : "text-slate-400 hover:text-white"
+                                        }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                                 </button>
@@ -593,7 +637,193 @@ export default function ApiDocsPage() {
                     </div>
                 </section>
 
-                {/* Base URL Info */}
+                {/* MCP Server Section */}
+                <section id="mcp" className="max-w-6xl mx-auto px-4 mb-16 scroll-mt-24">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-8 mb-8">
+                        <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+                            <svg className="w-7 h-7 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                            MCP Server (Model Context Protocol)
+                        </h2>
+                        <p className="text-slate-700 mb-4">
+                            Integrate OpenInfra data directly into AI assistants like <strong>Claude Desktop</strong>, <strong>Cursor</strong>,
+                            or any MCP-compatible client.
+                        </p>
+
+                        <div className="grid md:grid-cols-2 gap-6 mb-6">
+                            <div className="bg-white/80 rounded-lg p-4">
+                                <h4 className="font-semibold text-green-700 mb-3">🔗 Connection URL</h4>
+                                <code className="block bg-slate-100 px-4 py-3 rounded-lg text-sm font-mono text-slate-800 break-all">
+                                    https://mcp.openinfra.space/sse
+                                </code>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-4">
+                                <h4 className="font-semibold text-green-700 mb-3">📦 Transport</h4>
+                                <p className="text-slate-600">SSE (Server-Sent Events)</p>
+                                <p className="text-sm text-slate-500 mt-1">Compatible with all MCP 2.0+ clients</p>
+                            </div>
+                        </div>
+
+                        <h4 className="font-semibold text-slate-800 mb-3">📚 Available Resources</h4>
+                        <div className="grid md:grid-cols-2 gap-3 mb-6">
+                            <div className="bg-white/80 rounded-lg p-3">
+                                <code className="text-green-700 font-mono text-sm">openapi://spec</code>
+                                <p className="text-sm text-slate-600 mt-1">Full OpenAPI specification</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-3">
+                                <code className="text-green-700 font-mono text-sm">docs://endpoints</code>
+                                <p className="text-sm text-slate-600 mt-1">List of all endpoints</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-3">
+                                <code className="text-green-700 font-mono text-sm">docs://opendata</code>
+                                <p className="text-sm text-slate-600 mt-1">Open Data API docs</p>
+                            </div>
+                            <div className="bg-white/80 rounded-lg p-3">
+                                <code className="text-green-700 font-mono text-sm">docs://iot</code>
+                                <p className="text-sm text-slate-600 mt-1">IoT Sensors API docs</p>
+                            </div>
+                        </div>
+
+                        <h4 className="font-semibold text-slate-800 mb-3">🔧 Available Tools</h4>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm bg-white/80 rounded-lg overflow-hidden">
+                                <thead className="bg-green-100">
+                                    <tr>
+                                        <th className="text-left px-4 py-2 font-semibold text-green-800">Tool</th>
+                                        <th className="text-left px-4 py-2 font-semibold text-green-800">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-green-100">
+                                    <tr>
+                                        <td className="px-4 py-2 font-mono text-green-700">call_api</td>
+                                        <td className="px-4 py-2 text-slate-600">Call any OpenInfra API endpoint</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2 font-mono text-green-700">list_endpoints</td>
+                                        <td className="px-4 py-2 text-slate-600">List all available API endpoints</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2 font-mono text-green-700">get_feature_types</td>
+                                        <td className="px-4 py-2 text-slate-600">Get infrastructure types and counts</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2 font-mono text-green-700">get_assets</td>
+                                        <td className="px-4 py-2 text-slate-600">Query assets with filters</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-4 py-2 font-mono text-green-700">get_sensors</td>
+                                        <td className="px-4 py-2 text-slate-600">Query IoT sensors</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* MCP Client Configurations */}
+                    <div className="space-y-4">
+                        {/* Claude Desktop */}
+                        <div className="bg-slate-900 rounded-2xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
+                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill="#D97757" d="M17.303 4.24c-1.403-.464-2.963-.073-4.093.993l-.166.161-.455.47-.456-.47-.165-.161c-1.131-1.066-2.69-1.457-4.094-.992C5.777 4.919 4.5 6.796 4.5 8.945c0 1.545.637 3.057 1.756 4.319C7.64 14.813 9.52 16.388 12 18.88v.002c2.48-2.493 4.36-4.068 5.744-5.616 1.119-1.262 1.756-2.774 1.756-4.319 0-2.15-1.277-4.026-3.374-4.703c-.418-.139-.857-.207-1.295-.207-.438 0-.877.068-1.294.206l-.166.162.166-.162c.417-.138.856-.206 1.294-.206.438 0 .877.068 1.295.207z" />
+                                </svg>
+                                <h4 className="text-white font-semibold">Claude Desktop</h4>
+                            </div>
+                            <div className="relative p-6">
+                                <p className="text-slate-400 text-sm mb-3">
+                                    Add to <code className="text-blue-400">claude_desktop_config.json</code>
+                                </p>
+                                <div className="absolute top-2 right-2">
+                                    <CopyButton text={`{
+  "mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}`} />
+                                </div>
+                                <pre className="text-sm text-slate-300 overflow-x-auto bg-slate-950 p-4 rounded-lg">
+                                    <code>{`{
+  "mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}`}</code>
+                                </pre>
+                            </div>
+                        </div>
+
+                        {/* GitHub Copilot */}
+                        <div className="bg-slate-900 rounded-2xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
+                                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                                </svg>
+                                <h4 className="text-white font-semibold">GitHub Copilot (VS Code)</h4>
+                            </div>
+                            <div className="relative p-6">
+                                <p className="text-slate-400 text-sm mb-3">
+                                    Add to VS Code <code className="text-blue-400">settings.json</code>
+                                </p>
+                                <div className="absolute top-2 right-2">
+                                    <CopyButton text={`{
+  "github.copilot.chat.mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}`} />
+                                </div>
+                                <pre className="text-sm text-slate-300 overflow-x-auto bg-slate-950 p-4 rounded-lg">
+                                    <code>{`{
+  "github.copilot.chat.mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}`}</code>
+                                </pre>
+                            </div>
+                        </div>
+
+                        {/* Cursor */}
+                        <div className="bg-slate-900 rounded-2xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-3">
+                                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                                    <rect width="24" height="24" rx="4" fill="#1E1E1E" />
+                                    <path d="M7 7h10v10H7V7z" stroke="#00D8FF" strokeWidth="2" />
+                                    <circle cx="12" cy="12" r="2" fill="#00D8FF" />
+                                </svg>
+                                <h4 className="text-white font-semibold">Cursor</h4>
+                            </div>
+                            <div className="relative p-6">
+                                <p className="text-slate-400 text-sm mb-3">
+                                    Add to MCP configuration
+                                </p>
+                                <div className="absolute top-2 right-2">
+                                    <CopyButton text={`{
+  "mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}`} />
+                                </div>
+                                <pre className="text-sm text-slate-300 overflow-x-auto bg-slate-950 p-4 rounded-lg">
+                                    <code>{`{
+  "mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}`}</code>
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
                 <section className="max-w-6xl mx-auto px-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-2xl p-8 text-center">
                         <h3 className="text-lg font-semibold text-slate-900 mb-2">Base URL</h3>
