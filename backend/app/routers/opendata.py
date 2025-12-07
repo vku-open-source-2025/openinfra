@@ -5,7 +5,7 @@ License: ODC-BY (Open Data Commons Attribution License)
 
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Any, Dict
-from app.db.mongodb import get_database
+from app.infrastructure.database.mongodb import get_database
 from bson import ObjectId
 from datetime import datetime
 

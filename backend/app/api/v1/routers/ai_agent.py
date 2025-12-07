@@ -152,7 +152,7 @@ async def agent_status():
     
     return {
         "status": "ready" if api_key else "not_configured",
-        "model": "gemini-2.0-flash",
+        "model": "gemini-2.5-flash",
         "features": [
             "Database querying (assets, sensors, incidents)",
             "API documentation and code examples",
