@@ -1,11 +1,13 @@
 """
 AI Agent Service using LangChain and Google Gemini
 Provides intelligent querying of infrastructure data and API assistance
+With real API calling tools
 """
 import os
 import json
 import asyncio
 import logging
+import httpx
 from typing import AsyncGenerator, Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
@@ -16,13 +18,78 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 logger = logging.getLogger(__name__)
 
+# API Base URL
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+
+# Define available API endpoints with their schemas
+API_ENDPOINTS = {
+    "opendata_assets": {
+        "path": "/api/opendata/assets",
+        "method": "GET",
+        "description": "Lấy danh sách tất cả tài sản hạ tầng (assets) dạng JSON-LD GeoJSON",
+        "params": {
+            "skip": {"type": "int", "default": 0, "description": "Số bản ghi bỏ qua"},
+            "limit": {"type": "int", "default": 100, "description": "Số bản ghi tối đa (1-1000)"},
+            "feature_type": {"type": "str", "default": None, "description": "Lọc theo loại (vd: Trạm điện)"},
+            "feature_code": {"type": "str", "default": None, "description": "Lọc theo mã (vd: tram_dien)"}
+        }
+    },
+    "opendata_feature_types": {
+        "path": "/api/opendata/feature-types",
+        "method": "GET",
+        "description": "Lấy danh sách các loại tài sản và số lượng của mỗi loại",
+        "params": {}
+    },
+    "opendata_asset_detail": {
+        "path": "/api/opendata/assets/{asset_id}",
+        "method": "GET",
+        "description": "Lấy chi tiết một tài sản theo ID",
+        "params": {
+            "asset_id": {"type": "str", "required": True, "description": "ID của tài sản"}
+        }
+    },
+    "v1_assets": {
+        "path": "/api/v1/assets",
+        "method": "GET",
+        "description": "Lấy danh sách assets từ API v1",
+        "params": {
+            "skip": {"type": "int", "default": 0, "description": "Số bản ghi bỏ qua"},
+            "limit": {"type": "int", "default": 50, "description": "Số bản ghi tối đa"},
+            "feature_type": {"type": "str", "default": None, "description": "Lọc theo loại"}
+        }
+    },
+    "v1_sensors": {
+        "path": "/api/v1/iot/sensors",
+        "method": "GET",
+        "description": "Lấy danh sách cảm biến IoT",
+        "params": {
+            "skip": {"type": "int", "default": 0, "description": "Số bản ghi bỏ qua"},
+            "limit": {"type": "int", "default": 50, "description": "Số bản ghi tối đa"},
+            "sensor_type": {"type": "str", "default": None, "description": "Loại cảm biến"},
+            "status": {"type": "str", "default": None, "description": "Trạng thái (online/offline)"}
+        }
+    },
+    "v1_incidents": {
+        "path": "/api/v1/incidents",
+        "method": "GET",
+        "description": "Lấy danh sách sự cố hạ tầng",
+        "params": {
+            "skip": {"type": "int", "default": 0, "description": "Số bản ghi bỏ qua"},
+            "limit": {"type": "int", "default": 50, "description": "Số bản ghi tối đa"},
+            "status": {"type": "str", "default": None, "description": "Trạng thái (open/in_progress/resolved)"},
+            "severity": {"type": "str", "default": None, "description": "Mức độ (low/medium/high/critical)"}
+        }
+    }
+}
+
 
 class AIAgentService:
-    """AI Agent for infrastructure data querying and API assistance"""
+    """AI Agent for infrastructure data querying and API assistance with real API calling"""
     
     def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
         self.api_key = os.getenv("GEMINI_API_KEY")
+        self.http_client = httpx.AsyncClient(timeout=30.0)
         
         if not self.api_key:
             logger.warning("GEMINI_API_KEY not set, AI agent will not work")
@@ -30,31 +97,176 @@ class AIAgentService:
             return
             
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             google_api_key=self.api_key,
             temperature=0.7,
         )
         
         self.system_prompt = """Bạn là trợ lý AI cho hệ thống OpenInfra - Quản lý hạ tầng GIS thông minh.
 
-Nhiệm vụ của bạn:
-1. Trả lời câu hỏi về dữ liệu hạ tầng (assets, sensors, incidents)
-2. Hướng dẫn sử dụng API với JSON-LD format
-3. Cung cấp code examples khi được yêu cầu
+Bạn có khả năng:
+1. **Gọi API thực sự** - Dùng tool call_api để gọi các endpoint
+2. **Liệt kê API** - Dùng tool list_available_apis để xem các API có sẵn
+3. Trả lời câu hỏi về dữ liệu hạ tầng (assets, sensors, incidents)
+4. Hướng dẫn sử dụng API với JSON-LD format
+5. Cung cấp code examples khi được yêu cầu
 
-API Endpoints chính (base URL: https://api.openinfra.space/api/v1):
-- GET /assets - Lấy danh sách tài sản hạ tầng
-- GET /assets/{id} - Chi tiết tài sản
-- GET /iot/sensors - Danh sách cảm biến IoT
-- GET /iot/sensors/{id}/data - Dữ liệu cảm biến (query params: from_time, to_time, limit)
-- GET /incidents - Danh sách sự cố
-- GET /linked-data/assets - Assets dạng JSON-LD (Linked Data format)
-- GET /linked-data/sensors - Sensors dạng JSON-LD
+KHI NGƯỜI DÙNG YÊU CẦU TEST/GỌI/THỬ API:
+1. Đầu tiên dùng list_available_apis để xem các API có sẵn
+2. Chọn API phù hợp với yêu cầu
+3. Dùng call_api để gọi API với params phù hợp
+4. Trả về kết quả kèm API_CARD để người dùng có thể tương tác
 
-Khi cung cấp code examples, hãy dùng Python, cURL và JavaScript.
-Luôn trả lời bằng tiếng Việt, thân thiện và chi tiết.
+QUAN TRỌNG: Khi trả về kết quả API, hãy format theo cấu trúc:
+- Mô tả ngắn về những gì bạn đã làm
+- Hiển thị kết quả quan trọng
+- Cuối cùng thêm block ```api_card với thông tin API
 
-Dữ liệu hiện có trong hệ thống sẽ được cung cấp dựa trên câu hỏi của người dùng."""
+Luôn trả lời bằng tiếng Việt, thân thiện và chi tiết."""
+    
+    async def _call_real_api(self, endpoint_key: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Actually call a real API endpoint"""
+        if endpoint_key not in API_ENDPOINTS:
+            return {"error": f"API endpoint '{endpoint_key}' không tồn tại"}
+        
+        endpoint = API_ENDPOINTS[endpoint_key]
+        path = endpoint["path"]
+        
+        # Handle path parameters
+        if params:
+            for key, value in params.items():
+                if f"{{{key}}}" in path:
+                    path = path.replace(f"{{{key}}}", str(value))
+        
+        # Build query params
+        query_params = {}
+        if params:
+            for key, value in params.items():
+                if f"{{{key}}}" not in endpoint["path"] and value is not None:
+                    query_params[key] = value
+        
+        url = f"{API_BASE_URL}{path}"
+        
+        try:
+            response = await self.http_client.get(url, params=query_params)
+            response.raise_for_status()
+            return {
+                "success": True,
+                "status_code": response.status_code,
+                "endpoint": endpoint_key,
+                "url": str(response.url),
+                "data": response.json()
+            }
+        except httpx.HTTPStatusError as e:
+            return {
+                "success": False,
+                "error": f"HTTP {e.response.status_code}: {e.response.text}",
+                "url": url
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "url": url
+            }
+    
+    def _get_tools(self):
+        """Create tools for the agent"""
+        
+        async def list_available_apis() -> str:
+            """Liệt kê tất cả API endpoints có sẵn trong hệ thống OpenInfra.
+            Sử dụng tool này để biết có những API nào có thể gọi."""
+            result = []
+            for key, endpoint in API_ENDPOINTS.items():
+                params_desc = ", ".join([
+                    f"{name}: {info['description']}" 
+                    for name, info in endpoint.get("params", {}).items()
+                ])
+                result.append(f"- **{key}**: {endpoint['method']} {endpoint['path']}\n  Mô tả: {endpoint['description']}\n  Params: {params_desc if params_desc else 'Không có'}")
+            return "\n\n".join(result)
+        
+        async def call_api(endpoint_key: str, skip: int = 0, limit: int = 10, 
+                          feature_type: str = None, feature_code: str = None,
+                          sensor_type: str = None, status: str = None, 
+                          severity: str = None, asset_id: str = None) -> str:
+            """Gọi một API endpoint thực sự và trả về kết quả.
+            
+            Args:
+                endpoint_key: Tên của API endpoint (vd: opendata_assets, opendata_feature_types, v1_sensors)
+                skip: Số bản ghi bỏ qua (mặc định 0)
+                limit: Số bản ghi tối đa trả về (mặc định 10)
+                feature_type: Lọc theo loại tài sản
+                feature_code: Lọc theo mã tài sản
+                sensor_type: Lọc theo loại cảm biến
+                status: Lọc theo trạng thái
+                severity: Lọc theo mức độ nghiêm trọng
+                asset_id: ID của tài sản (cho API chi tiết)
+            
+            Returns:
+                Kết quả JSON từ API
+            """
+            params = {
+                "skip": skip,
+                "limit": limit,
+                "feature_type": feature_type,
+                "feature_code": feature_code,
+                "sensor_type": sensor_type,
+                "status": status,
+                "severity": severity,
+                "asset_id": asset_id
+            }
+            # Remove None values
+            params = {k: v for k, v in params.items() if v is not None}
+            
+            result = await self._call_real_api(endpoint_key, params)
+            
+            # Format result for LLM
+            if result.get("success"):
+                data = result.get("data", {})
+                # Truncate data if too large
+                data_str = json.dumps(data, ensure_ascii=False, indent=2, default=str)
+                if len(data_str) > 3000:
+                    data_str = data_str[:3000] + "\n... (đã cắt bớt)"
+                
+                return f"""✅ API gọi thành công!
+URL: {result.get('url')}
+Status: {result.get('status_code')}
+
+Kết quả:
+```json
+{data_str}
+```
+
+API_CARD_DATA:
+endpoint_key: {endpoint_key}
+url: {result.get('url')}
+params_used: {json.dumps(params, ensure_ascii=False)}"""
+            else:
+                return f"❌ Lỗi khi gọi API: {result.get('error')}\nURL: {result.get('url')}"
+        
+        # Create sync wrappers for tools
+        def sync_list_apis() -> str:
+            """Liệt kê tất cả API endpoints có sẵn trong hệ thống OpenInfra."""
+            return asyncio.get_event_loop().run_until_complete(list_available_apis())
+        
+        def sync_call_api(endpoint_key: str, skip: int = 0, limit: int = 10,
+                         feature_type: str = None, feature_code: str = None,
+                         sensor_type: str = None, status: str = None,
+                         severity: str = None, asset_id: str = None) -> str:
+            """Gọi một API endpoint thực sự và trả về kết quả."""
+            return asyncio.get_event_loop().run_until_complete(
+                call_api(endpoint_key, skip, limit, feature_type, feature_code,
+                        sensor_type, status, severity, asset_id)
+            )
+        
+        # Store async versions for direct use
+        self._async_list_apis = list_available_apis
+        self._async_call_api = call_api
+        
+        return [
+            tool(sync_list_apis),
+            tool(sync_call_api)
+        ]
     
     async def _query_assets(self, feature_type: str = None, limit: int = 5) -> List[Dict]:
         """Query assets from database"""
@@ -168,6 +380,12 @@ console.log(data);'''
         query_lower = query.lower()
         context_data = {}
         
+        # Check for API testing requests - let the agent handle this
+        if any(word in query_lower for word in ["test api", "thử api", "gọi api", "call api", "feature-type", "feature type"]):
+            context_data["is_api_test"] = True
+            context_data["available_apis"] = await self._async_list_apis()
+            return context_data
+        
         # Check for statistics/overview requests
         if any(word in query_lower for word in ["thống kê", "tổng quan", "overview", "statistics", "bao nhiêu", "số lượng"]):
             context_data["stats"] = await self._get_stats()
@@ -223,7 +441,87 @@ console.log(data);'''
             return
         
         try:
-            # Analyze query and get relevant data
+            # Check if this is an API test request
+            query_lower = query.lower()
+            is_api_test = any(word in query_lower for word in ["test api", "thử api", "gọi api", "call api", "feature-type", "feature type"])
+            
+            if is_api_test:
+                # Use tool calling for API tests
+                yield {"type": "tool_start", "tool": "analyzing_api_request", "input": query}
+                
+                # Determine which API to call based on query
+                endpoint_key = None
+                params = {}
+                
+                if "feature-type" in query_lower or "feature type" in query_lower or "loại" in query_lower:
+                    endpoint_key = "opendata_feature_types"
+                elif "sensor" in query_lower or "cảm biến" in query_lower:
+                    endpoint_key = "v1_sensors"
+                    params = {"limit": 10}
+                elif "incident" in query_lower or "sự cố" in query_lower:
+                    endpoint_key = "v1_incidents"
+                    params = {"limit": 10}
+                else:
+                    endpoint_key = "opendata_assets"
+                    params = {"limit": 5}
+                
+                yield {"type": "tool_end", "output": f"Đang gọi API: {endpoint_key}"}
+                
+                # Call the API
+                yield {"type": "tool_start", "tool": "call_api", "input": endpoint_key}
+                api_result = await self._call_real_api(endpoint_key, params)
+                yield {"type": "tool_end", "output": f"API response received"}
+                
+                # Format response
+                if api_result.get("success"):
+                    data = api_result.get("data", {})
+                    endpoint_info = API_ENDPOINTS.get(endpoint_key, {})
+                    
+                    # Create summary
+                    summary = f"✅ **Đã gọi API thành công!**\n\n"
+                    summary += f"**Endpoint:** `{endpoint_info.get('path', '')}`\n"
+                    summary += f"**URL:** `{api_result.get('url')}`\n\n"
+                    
+                    # Analyze data
+                    if isinstance(data, dict):
+                        if "features" in data:
+                            summary += f"📊 **Kết quả:** {len(data['features'])} features\n"
+                            if "totalCount" in data:
+                                summary += f"📈 **Tổng số:** {data['totalCount']}\n"
+                        elif "itemListElement" in data:
+                            items = data["itemListElement"]
+                            summary += f"📊 **Số loại tài sản:** {len(items)}\n\n"
+                            summary += "| Loại | Mã | Số lượng |\n|------|-----|----------|\n"
+                            for item in items[:10]:
+                                summary += f"| {item.get('feature_type', 'N/A')} | {item.get('feature_code', 'N/A')} | {item.get('count', 0)} |\n"
+                    
+                    # Add API card data
+                    summary += f"\n\n---\n\n💡 **Bạn có thể chỉnh sửa params và gọi lại API:**\n\n"
+                    summary += f"```api_card\n"
+                    summary += json.dumps({
+                        "endpoint": endpoint_info.get("path", ""),
+                        "method": endpoint_info.get("method", "GET"),
+                        "description": endpoint_info.get("description", ""),
+                        "params": endpoint_info.get("params", {}),
+                        "last_result": {
+                            "url": api_result.get("url"),
+                            "status": api_result.get("status_code"),
+                            "data_preview": str(data)[:500] + "..." if len(str(data)) > 500 else data
+                        }
+                    }, ensure_ascii=False, indent=2)
+                    summary += "\n```"
+                    
+                    yield {"type": "token", "content": summary}
+                    yield {"type": "final", "content": summary}
+                else:
+                    error_msg = f"❌ **Lỗi khi gọi API:**\n\n{api_result.get('error')}\n\nURL: {api_result.get('url')}"
+                    yield {"type": "token", "content": error_msg}
+                    yield {"type": "final", "content": error_msg}
+                
+                yield {"type": "done"}
+                return
+            
+            # Regular query handling
             yield {"type": "tool_start", "tool": "analyze_query", "input": query}
             context_data = await self._analyze_query(query)
             yield {"type": "tool_end", "output": f"Found {len(context_data)} relevant data sources"}
@@ -242,6 +540,9 @@ console.log(data);'''
             
             if "api_example" in context_data:
                 context_parts.append(f"💻 Code example:\n{context_data['api_example']}")
+            
+            if "available_apis" in context_data:
+                context_parts.append(f"🔌 API có sẵn:\n{context_data['available_apis']}")
             
             context_message = "\n\n".join(context_parts) if context_parts else "Không tìm thấy dữ liệu liên quan."
             
@@ -303,3 +604,7 @@ Hãy trả lời dựa trên dữ liệu trên. Nếu người dùng hỏi về 
         except Exception as e:
             logger.error(f"Query error: {e}")
             return f"Error: {str(e)}"
+    
+    async def close(self):
+        """Close HTTP client"""
+        await self.http_client.aclose()
