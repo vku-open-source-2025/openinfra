@@ -61,6 +61,10 @@ app.add_middleware(LoggingMiddleware)
 # API routes
 app.include_router(api_router, prefix="/api/v1")
 
+# AI Agent WebSocket router (separate from REST API)
+from app.api.v1.routers.ai_agent import router as ai_agent_router
+app.include_router(ai_agent_router, prefix="/api/v1")
+
 # app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
 # app.include_router(maintenance.router, prefix="/api/maintenance", tags=["Maintenance"])
 # app.include_router(ingest.router, prefix="/api/ingest", tags=["Ingestion"])

@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     TURNSTILE_SITE_KEY: str = ""
     TURNSTILE_VERIFY_URL: str = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
+    # AI Agent - Gemini API
+    GEMINI_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
 

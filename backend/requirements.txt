@@ -26,3 +26,10 @@ passlib
 passlib[bcrypt]
 email-validator
 minio>=7.2.0
+
+# AI Agent - LangChain with Gemini
+langchain-google-genai>=2.0.0
+langchain-core>=0.3.0
+langchain>=0.3.0
+langchain-google-genai>=2.0.0
+langchain-core>=0.3.0

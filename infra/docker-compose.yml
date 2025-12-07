@@ -103,6 +103,7 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - REDIS_URL=${REDIS_URL}
       - CSV_IMPORT_URL=${CSV_IMPORT_URL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - mongo
       - redis
