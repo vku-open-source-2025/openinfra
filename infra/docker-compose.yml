@@ -166,6 +166,19 @@ services:
     networks:
       - app_network
 
+  # MCP Server - Model Context Protocol for AI assistants
+  mcp-server:
+    build: ../mcp-server
+    ports:
+      - "${MCP_PORT:-8003}:8000"
+    environment:
+      - OPENINFRA_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - app_network
+    restart: unless-stopped
+
 volumes:
   mongo_data:
   zookeeper_data:

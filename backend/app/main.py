@@ -43,7 +43,13 @@ async def lifespan(app: FastAPI):
     await cache.close()
 
 
-app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan, version="1.0.0")
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    lifespan=lifespan,
+    version="1.0.0",
+    docs_url=None,  # Disable Swagger UI
+    redoc_url=None,  # Disable ReDoc
+)
 
 # CORS
 app.add_middleware(
