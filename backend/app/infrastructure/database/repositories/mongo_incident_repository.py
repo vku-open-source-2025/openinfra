@@ -81,7 +81,8 @@ class MongoIncidentRepository(IncidentRepository):
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
-        populate_asset: bool = False
+        populate_asset: bool = False,
+        verification_status: Optional[str] = None
     ) -> List[Incident]:
         """List incidents with filtering."""
         query = {}
@@ -93,6 +94,8 @@ class MongoIncidentRepository(IncidentRepository):
             query["asset_id"] = asset_id
         if reported_by:
             query["reported_by"] = reported_by
+        if verification_status:
+            query["ai_verification_status"] = verification_status
 
         cursor = self.collection.find(query).sort("reported_at", -1).skip(skip).limit(limit)
         incidents = []

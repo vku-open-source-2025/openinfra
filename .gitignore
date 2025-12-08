@@ -19,3 +19,6 @@ notes/
 infra/mqtt/data/
 infra/mqtt/log/
 infra/mqtt/config/passwd
+
+# Uploaded files
+backend/uploads/

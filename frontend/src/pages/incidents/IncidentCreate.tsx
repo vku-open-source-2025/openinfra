@@ -1,13 +1,14 @@
 import { useState } from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { incidentsApi } from "../../api/incidents"
+import { assetsApi } from "../../api/assets"
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
 import { Textarea } from "../../components/ui/textarea"
 import { Select } from "../../components/ui/select"
 import { Button } from "../../components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Search, Box } from "lucide-react"
 import type { IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
 
 const IncidentCreate: React.FC = () => {
@@ -26,6 +27,27 @@ const IncidentCreate: React.FC = () => {
     },
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [assetSearch, setAssetSearch] = useState("")
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
+
+  // Fetch assets for dropdown
+  const { data: assets, isLoading: assetsLoading } = useQuery({
+    queryKey: ["assets", "list"],
+    queryFn: () => assetsApi.list({ limit: 500 }),
+  })
+
+  // Filter assets based on search
+  const filteredAssets = assets?.filter(asset => {
+    if (!assetSearch) return true
+    const searchLower = assetSearch.toLowerCase()
+    return (
+      asset.feature_type?.toLowerCase().includes(searchLower) ||
+      asset.asset_code?.toLowerCase().includes(searchLower) ||
+      asset.name?.toLowerCase().includes(searchLower)
+    )
+  }).slice(0, 20) // Limit to 20 results
+
+  const selectedAsset = assets?.find(a => a.id === selectedAssetId)
 
   const createMutation = useMutation({
     mutationFn: (data: IncidentCreateRequest) => incidentsApi.create(data),
@@ -59,6 +81,7 @@ const IncidentCreate: React.FC = () => {
 
     const submitData = {
       ...formData,
+      asset_id: selectedAssetId || undefined,
       location: {
         address: formData.location?.address,
         geometry: {
@@ -74,6 +97,27 @@ const IncidentCreate: React.FC = () => {
     createMutation.mutate(submitData as IncidentCreateRequest)
   }
 
+  const handleAssetSelect = (assetId: string) => {
+    setSelectedAssetId(assetId)
+    const asset = assets?.find(a => a.id === assetId)
+    if (asset) {
+      // Auto-fill location from asset if available
+      if (asset.geometry?.type === "Point" && asset.geometry?.coordinates) {
+        setFormData(prev => ({
+          ...prev,
+          location: {
+            ...prev.location!,
+            coordinates: {
+              longitude: asset.geometry.coordinates[0] as number,
+              latitude: asset.geometry.coordinates[1] as number,
+            },
+          },
+        }))
+      }
+    }
+    setAssetSearch("")
+  }
+
   return (
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/incidents" })}>
@@ -85,6 +129,69 @@ const IncidentCreate: React.FC = () => {
         <h1 className="text-2xl font-bold text-slate-900 mb-6">Report New Incident</h1>
 
         <Form onSubmit={handleSubmit}>
+          {/* Asset Selector */}
+          <FormField>
+            <FormLabel>Related Asset</FormLabel>
+            {selectedAsset ? (
+              <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <Box className="h-5 w-5 text-blue-600" />
+                <div className="flex-1">
+                  <p className="font-medium text-blue-900">
+                    {selectedAsset.name || selectedAsset.asset_code || selectedAsset.feature_type}
+                  </p>
+                  <p className="text-xs text-blue-600">{selectedAsset.feature_type}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedAssetId(null)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Change
+                </Button>
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    value={assetSearch}
+                    onChange={(e) => setAssetSearch(e.target.value)}
+                    placeholder="Search assets by name, code, or type..."
+                    className="pl-10"
+                  />
+                </div>
+                {assetSearch && filteredAssets && filteredAssets.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredAssets.map(asset => (
+                      <button
+                        key={asset.id}
+                        type="button"
+                        onClick={() => handleAssetSelect(asset.id)}
+                        className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center gap-3 border-b border-slate-100 last:border-0"
+                      >
+                        <Box className="h-4 w-4 text-slate-400" />
+                        <div>
+                          <p className="font-medium text-sm">{asset.name || asset.asset_code || asset.feature_type}</p>
+                          <p className="text-xs text-slate-500">{asset.feature_type}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {assetSearch && filteredAssets && filteredAssets.length === 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-4 text-center text-slate-500 text-sm">
+                    No assets found matching "{assetSearch}"
+                  </div>
+                )}
+              </div>
+            )}
+            <p className="text-xs text-slate-500 mt-1">
+              Optional: Link this incident to a specific asset
+            </p>
+          </FormField>
+
           <FormField>
             <FormLabel required>Title</FormLabel>
             <Input
@@ -204,3 +311,4 @@ const IncidentCreate: React.FC = () => {
 }
 
 export default IncidentCreate
+
