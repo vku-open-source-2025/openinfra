@@ -1,4 +1,4 @@
-# OpenInfra 🏗️
+# OpenInfra - VKU.OneLove🏗️
 
 **Urban Infrastructure Asset Management System**
 
@@ -618,6 +618,7 @@ As long as you **attribute** the source: *"Data provided by OpenInfra (https://o
 
 ## 🙏 Acknowledgments
 
+- **VKU.OneLove** - Development Team
 - **OpenStreetMap** - Geospatial data and mapping services
 - **FastAPI** - Modern, fast web framework
 - **MongoDB** - Flexible, scalable database
