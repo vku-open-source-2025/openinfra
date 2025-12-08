@@ -2,7 +2,9 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import os
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.infrastructure.database.mongodb import db
@@ -79,6 +81,13 @@ from app.routers import opendata
 app.include_router(opendata.router, prefix="/api/opendata", tags=["Open Data (JSON-LD)"])
 # app.include_router(iot.router, prefix="/api/iot", tags=["IoT Sensors"])
 
+# Mount static files for uploads
+uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+if os.path.exists(uploads_dir):
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+else:
+    os.makedirs(uploads_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 @app.get("/")
 async def root():

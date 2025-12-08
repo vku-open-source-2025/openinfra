@@ -1,6 +1,8 @@
 """Incidents API router."""
 import json
-from fastapi import APIRouter, Query, Depends, HTTPException, status, UploadFile, File, Form, Header, Request
+import logging
+from datetime import datetime
+from fastapi import APIRouter, Query, Depends, HTTPException, status, UploadFile, File, Form, Header, Request, BackgroundTasks
 from typing import List, Optional
 from app.domain.models.incident import (
     Incident, IncidentCreate, IncidentUpdate, IncidentCommentRequest
@@ -13,6 +15,9 @@ from app.domain.models.incident import ResolutionType
 from app.infrastructure.storage.storage_service import StorageService
 from app.infrastructure.services.turnstile_service import turnstile_service
 from app.core.config import settings
+from app.services.ai_verification_service import get_verification_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -24,17 +29,20 @@ async def list_incidents(
     status: Optional[str] = None,
     severity: Optional[str] = None,
     asset_id: Optional[str] = None,
+    verification_status: Optional[str] = Query(None, description="Filter by AI verification status: pending, verified, to_be_verified, failed"),
     incident_service: IncidentService = Depends(get_incident_service)
 ):
     """List incidents with filtering, including asset information."""
     return await incident_service.list_incidents(
-        skip, limit, status, severity, asset_id, None, populate_asset=True
+        skip, limit, status, severity, asset_id, None, 
+        populate_asset=True, verification_status=verification_status
     )
 
 
 @router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)
 async def create_incident(
     request: Request,
+    background_tasks: BackgroundTasks,
     data: str = Form(...),
     image: Optional[UploadFile] = File(None),
     cf_turnstile_response: Optional[str] = Header(None, alias="CF-Turnstile-Response"),
@@ -42,7 +50,14 @@ async def create_incident(
     incident_service: IncidentService = Depends(get_incident_service),
     storage_service: StorageService = Depends(get_storage_service)
 ):
-    """Create a new incident (can be anonymous) with optional image upload."""
+    """Create a new incident (can be anonymous) with REQUIRED image upload."""
+    # Image is required for anonymous users (public reports)
+    if not current_user and not image:
+        raise HTTPException(
+            status_code=400,
+            detail="Image upload is required for incident reports"
+        )
+    
     # Verify Cloudflare Turnstile captcha for anonymous users
     if not current_user and settings.TURNSTILE_SECRET_KEY:
         if not cf_turnstile_response:
@@ -82,6 +97,7 @@ async def create_incident(
     
     # Handle image upload
     photos = list(incident_data.photos)
+    image_url = None
     if image:
         try:
             image_url = await storage_service.upload_file(
@@ -99,7 +115,72 @@ async def create_incident(
     
     reported_by = str(current_user.id) if current_user else None
     reporter_type = current_user.role.value if current_user else "citizen"
-    return await incident_service.create_incident(incident_data, reported_by, reporter_type)
+    incident = await incident_service.create_incident(incident_data, reported_by, reporter_type)
+    
+    # Run AI verification in background
+    if image_url or photos:
+        background_tasks.add_task(
+            run_ai_verification,
+            incident_id=str(incident.id),
+            title=incident.title,
+            description=incident.description,
+            category=incident.category.value,
+            severity=incident.severity.value,
+            asset_type=incident.asset.feature_type if incident.asset else None,
+            asset_name=incident.asset.name if incident.asset else None,
+            image_url=image_url or (photos[0] if photos else None),
+            incident_service=incident_service
+        )
+    
+    return incident
+
+
+async def run_ai_verification(
+    incident_id: str,
+    title: str,
+    description: str,
+    category: str,
+    severity: str,
+    asset_type: Optional[str],
+    asset_name: Optional[str],
+    image_url: Optional[str],
+    incident_service: IncidentService
+) -> None:
+    """Background task to run AI verification on an incident."""
+    try:
+        verification_service = get_verification_service()
+        result = await verification_service.verify_incident_report(
+            incident_title=title,
+            incident_description=description,
+            incident_category=category,
+            incident_severity=severity,
+            asset_type=asset_type,
+            asset_name=asset_name,
+            image_url=image_url
+        )
+        
+        # Update incident with verification result
+        await incident_service.update_verification(
+            incident_id,
+            verification_status=result["verification_status"],
+            confidence_score=result["confidence_score"],
+            verification_reason=result["reason"]
+        )
+        
+        logger.info(f"AI verification completed for incident {incident_id}: {result['verification_status']}")
+        
+    except Exception as e:
+        logger.error(f"AI verification failed for incident {incident_id}: {e}")
+        # Update with failed status
+        try:
+            await incident_service.update_verification(
+                incident_id,
+                verification_status="failed",
+                confidence_score=None,
+                verification_reason=f"Verification error: {str(e)}"
+            )
+        except Exception as update_error:
+            logger.error(f"Failed to update verification status: {update_error}")
 
 
 @router.get("/{incident_id}", response_model=Incident)
@@ -215,6 +296,49 @@ async def approve_incident_cost(
     """Approve maintenance cost and resolve incident."""
     # In a real app, check for ADMIN role here
     return await incident_service.approve_incident_resolution(
+        incident_id,
+        str(current_user.id)
+    )
+
+
+@router.post("/{incident_id}/close", response_model=Incident)
+async def close_incident(
+    incident_id: str,
+    notes: str = Query(None, description="Optional closing notes"),
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Close a resolved incident."""
+    return await incident_service.close_incident(
+        incident_id,
+        str(current_user.id),
+        notes
+    )
+
+
+@router.post("/{incident_id}/reject", response_model=Incident)
+async def reject_incident(
+    incident_id: str,
+    reason: str = Query(..., description="Reason for rejection"),
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Reject an incident as invalid or spam."""
+    return await incident_service.reject_incident(
+        incident_id,
+        str(current_user.id),
+        reason
+    )
+
+
+@router.post("/{incident_id}/verify", response_model=Incident)
+async def verify_incident(
+    incident_id: str,
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Manually verify an incident (human verification)."""
+    return await incident_service.manual_verify_incident(
         incident_id,
         str(current_user.id)
     )

@@ -296,10 +296,14 @@ class IncidentService:
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
-        populate_asset: bool = True
+        populate_asset: bool = True,
+        verification_status: Optional[str] = None
     ) -> List[Incident]:
         """List incidents with filtering."""
-        return await self.repository.list(skip, limit, status, severity, asset_id, reported_by, populate_asset)
+        return await self.repository.list(
+            skip, limit, status, severity, asset_id, reported_by, 
+            populate_asset, verification_status
+        )
 
     async def update_incident(
         self,
@@ -311,4 +315,103 @@ class IncidentService:
         updated = await self.repository.update(incident_id, update_dict)
         if not updated:
             raise NotFoundError("Incident", incident_id)
+        return updated
+
+    async def update_verification(
+        self,
+        incident_id: str,
+        verification_status: str,
+        confidence_score: Optional[float],
+        verification_reason: Optional[str]
+    ) -> Incident:
+        """Update AI verification status for an incident."""
+        from datetime import datetime
+        
+        update_data = {
+            "ai_verification_status": verification_status,
+            "ai_confidence_score": confidence_score,
+            "ai_verification_reason": verification_reason,
+            "ai_verified_at": datetime.utcnow()
+        }
+        
+        updated = await self.repository.update(incident_id, update_data)
+        if not updated:
+            raise NotFoundError("Incident", incident_id)
+        
+        logger.info(
+            f"Updated verification for incident {incident_id}: "
+            f"status={verification_status}, score={confidence_score}"
+        )
+        return updated
+
+    async def close_incident(
+        self,
+        incident_id: str,
+        closed_by: str,
+        notes: Optional[str] = None
+    ) -> Incident:
+        """Close a resolved incident."""
+        incident = await self.repository.find_by_id(incident_id)
+        if not incident:
+            raise NotFoundError("Incident", incident_id)
+        
+        if incident.status not in ["resolved", "acknowledged", "reported"]:
+            raise ValueError(f"Cannot close incident in status: {incident.status}")
+        
+        update_data = {
+            "status": "closed",
+            "closed_at": datetime.now(),
+            "closed_by": closed_by
+        }
+        if notes:
+            update_data["resolution_notes"] = notes
+        
+        updated = await self.repository.update(incident_id, update_data)
+        logger.info(f"Incident {incident_id} closed by {closed_by}")
+        return updated
+
+    async def reject_incident(
+        self,
+        incident_id: str,
+        rejected_by: str,
+        reason: str
+    ) -> Incident:
+        """Reject an incident as invalid or spam."""
+        incident = await self.repository.find_by_id(incident_id)
+        if not incident:
+            raise NotFoundError("Incident", incident_id)
+        
+        update_data = {
+            "status": "closed",
+            "resolution_type": "not_an_issue",
+            "resolution_notes": f"Rejected: {reason}",
+            "resolved_at": datetime.now(),
+            "resolved_by": rejected_by,
+            "closed_at": datetime.now(),
+            "closed_by": rejected_by
+        }
+        
+        updated = await self.repository.update(incident_id, update_data)
+        logger.info(f"Incident {incident_id} rejected by {rejected_by}: {reason}")
+        return updated
+
+    async def manual_verify_incident(
+        self,
+        incident_id: str,
+        verified_by: str
+    ) -> Incident:
+        """Manually verify an incident by human admin."""
+        incident = await self.repository.find_by_id(incident_id)
+        if not incident:
+            raise NotFoundError("Incident", incident_id)
+        
+        update_data = {
+            "ai_verification_status": "verified",
+            "ai_confidence_score": 1.0,
+            "ai_verification_reason": f"Manually verified by admin",
+            "ai_verified_at": datetime.now()
+        }
+        
+        updated = await self.repository.update(incident_id, update_data)
+        logger.info(f"Incident {incident_id} manually verified by {verified_by}")
         return updated

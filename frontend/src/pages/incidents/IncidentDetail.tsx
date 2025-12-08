@@ -5,9 +5,10 @@ import { usersApi } from "../../api/users"
 import { IncidentStatusBadge } from "../../components/incidents/IncidentStatusBadge"
 import { IncidentComments } from "../../components/incidents/IncidentComments"
 import { IncidentActions } from "../../components/incidents/IncidentActions"
+import { IncidentWorkflowInfo } from "../../components/incidents/IncidentWorkflowInfo"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
-import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2 } from "lucide-react"
+import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X } from "lucide-react"
 import { format } from "date-fns"
 import { useAuthStore } from "../../stores/authStore"
 
@@ -75,6 +76,29 @@ const IncidentDetail: React.FC = () => {
     }
   })
 
+  const closeMutation = useMutation({
+    mutationFn: (notes?: string) => incidentsApi.close(id, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incident", id] })
+      queryClient.invalidateQueries({ queryKey: ["incidents"] })
+    }
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: (reason: string) => incidentsApi.reject(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incident", id] })
+      queryClient.invalidateQueries({ queryKey: ["incidents"] })
+    }
+  })
+
+  const verifyMutation = useMutation({
+    mutationFn: () => incidentsApi.verify(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incident", id] })
+      queryClient.invalidateQueries({ queryKey: ["incidents"] })
+    }
+  })
 
   if (isLoading) {
     return (
@@ -98,6 +122,9 @@ const IncidentDetail: React.FC = () => {
   const canResolve = (user?.role === "admin" || user?.role === "manager" || user?.role === "technician") &&
     (incident.status === "assigned" || incident.status === "in_progress")
   const canAddInternal = user?.role === "admin" || user?.role === "manager" || user?.role === "technician"
+  const canClose = (user?.role === "admin" || user?.role === "manager") && incident.status === "resolved"
+  const canReject = (user?.role === "admin" || user?.role === "manager")
+  const canVerify = (user?.role === "admin" || user?.role === "manager") && incident.ai_verification_status === "to_be_verified"
 
   return (
     <div className="p-6 space-y-6">
@@ -110,14 +137,27 @@ const IncidentDetail: React.FC = () => {
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-slate-900 mb-2">{incident.title}</h1>
-            <IncidentStatusBadge status={incident.status} severity={incident.severity} />
+            <div className="flex items-center gap-3">
+              <IncidentStatusBadge status={incident.status} severity={incident.severity} />
+              <IncidentWorkflowInfo currentStatus={incident.status} />
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <MapPin className="h-4 w-4" />
-            <span>{incident.location?.address || "Location not specified"}</span>
+            {incident.location?.geometry?.coordinates ? (
+              <a
+                href={`/map?lat=${incident.location.geometry.coordinates[1]}&lng=${incident.location.geometry.coordinates[0]}&zoom=18${incident.asset_id ? `&assetId=${incident.asset_id}` : ''}`}
+                className="text-blue-600 hover:text-blue-800 hover:underline"
+                title="View on map"
+              >
+                {incident.location.geometry.coordinates[1]?.toFixed(6)}, {incident.location.geometry.coordinates[0]?.toFixed(6)}
+              </a>
+            ) : (
+              <span>Location not specified</span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <Clock className="h-4 w-4" />
@@ -135,6 +175,33 @@ const IncidentDetail: React.FC = () => {
           <h2 className="font-semibold mb-2">Description</h2>
           <p className="text-slate-700 whitespace-pre-wrap">{incident.description}</p>
         </div>
+
+        {/* Photos Section */}
+        {incident.photos && incident.photos.length > 0 && (
+          <div className="mb-6">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Photos ({incident.photos.length})
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {incident.photos.map((photo, index) => (
+                <a
+                  key={index}
+                  href={photo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block aspect-square rounded-lg overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all"
+                >
+                  <img
+                    src={photo}
+                    alt={`Incident photo ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {incident.asset_id && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -203,10 +270,22 @@ const IncidentDetail: React.FC = () => {
           onResolve={async (notes, type) => {
             await resolveMutation.mutateAsync({ notes, type })
           }}
+          onClose={async (notes) => {
+            await closeMutation.mutateAsync(notes)
+          }}
+          onReject={async (reason) => {
+            await rejectMutation.mutateAsync(reason)
+          }}
+          onVerify={async () => {
+            await verifyMutation.mutateAsync()
+          }}
           availableUsers={users || []}
           canAcknowledge={canAcknowledge}
           canAssign={canAssign}
           canResolve={canResolve}
+          canClose={canClose}
+          canReject={canReject}
+          canVerify={canVerify}
         />
         {incident.status !== "resolved" && incident.status !== "closed" && (
           <div className="mt-4 pt-4 border-t">

@@ -55,6 +55,11 @@ export interface Incident {
   comments: IncidentComment[];
   created_at: string;
   updated_at: string;
+  // AI Verification
+  ai_verification_status?: 'pending' | 'verified' | 'to_be_verified' | 'failed';
+  ai_confidence_score?: number;
+  ai_verification_reason?: string;
+  ai_verified_at?: string;
 }
 
 export interface IncidentCreateRequest {

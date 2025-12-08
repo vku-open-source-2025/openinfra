@@ -19,20 +19,23 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    
+
     // Contact information
     const [contactName, setContactName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [idCardNumber, setIdCardNumber] = useState('');
-    
+
     // Image upload
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+
     // Turnstile captcha
     const [turnstileToken, setTurnstileToken] = useState<string>("");
     const [captchaError, setCaptchaError] = useState<string>("");
+
+    // Image validation
+    const [imageError, setImageError] = useState<string>("");
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -60,13 +63,20 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
         e.preventDefault();
         setError(null);
         setCaptchaError("");
-        
+        setImageError("");
+
+        // Validate image is uploaded
+        if (!image) {
+            setImageError("Please upload an image of the issue");
+            return;
+        }
+
         // Validate captcha
         if (TURNSTILE_SITE_KEY && !turnstileToken) {
             setCaptchaError("Please complete the captcha verification");
             return;
         }
-        
+
         setIsSubmitting(true);
 
         try {
@@ -76,7 +86,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
             if (idCardNumber) contactInfo.id_card_number = idCardNumber;
 
             await createIncident({
-                asset_id: asset._id,
+                asset_id: asset.id || asset._id,
                 title,
                 description,
                 category,
@@ -203,10 +213,10 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                             />
                         </div>
 
-                        {/* Image Upload */}
+                        {/* Image Upload - REQUIRED */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Upload Image (Optional)
+                                Upload Image <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="file"
@@ -237,15 +247,18 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                                     className="w-full py-4 border-2 border-dashed border-slate-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all flex flex-col items-center gap-2 text-slate-500"
                                 >
                                     <Upload size={24} />
-                                    <span className="text-sm">Click to upload image</span>
+                                    <span className="text-sm">Click to upload image (required)</span>
                                 </button>
+                            )}
+                            {imageError && (
+                                <p className="text-sm text-red-500 mt-1">{imageError}</p>
                             )}
                         </div>
 
                         {/* Contact Information Section */}
                         <div className="border-t border-slate-200 pt-4 mt-4">
                             <h4 className="text-sm font-medium text-slate-700 mb-3">Contact Information (Optional)</h4>
-                            
+
                             <div className="space-y-3">
                                 <div className="relative">
                                     <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -257,7 +270,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                                         placeholder="Your Name"
                                     />
                                 </div>
-                                
+
                                 <div className="relative">
                                     <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
@@ -268,7 +281,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, asset }) => 
                                         placeholder="Phone Number"
                                     />
                                 </div>
-                                
+
                                 <div className="relative">
                                     <CreditCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input

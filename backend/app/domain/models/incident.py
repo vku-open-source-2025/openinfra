@@ -148,6 +148,12 @@ class Incident(BaseModel):
     resolution_time_minutes: Optional[int] = None
     citizen_satisfaction: Optional[int] = None  # 1-5 rating
 
+    # AI Verification
+    ai_verification_status: str = "pending"  # "pending" | "verified" | "to_be_verified" | "failed"
+    ai_confidence_score: Optional[float] = None  # 0.0 to 1.0 (>=0.8 = verified)
+    ai_verification_reason: Optional[str] = None  # AI explanation
+    ai_verified_at: Optional[datetime] = None
+
     @field_validator("id", mode="before")
     @classmethod
     def validate_id(cls, v: Any):

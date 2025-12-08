@@ -17,6 +17,7 @@ export interface IncidentListParams {
   severity?: string;
   asset_id?: string;
   assigned_to?: string;
+  verification_status?: string;
 }
 
 export const incidentsApi = {
@@ -99,6 +100,25 @@ export const incidentsApi = {
 
   approveCost: async (id: string): Promise<Incident> => {
     const response = await httpClient.post<Incident>(`/incidents/${id}/approve-cost`);
+    return response.data;
+  },
+
+  close: async (id: string, notes?: string): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(`/incidents/${id}/close`, null, {
+      params: notes ? { notes } : undefined,
+    });
+    return response.data;
+  },
+
+  reject: async (id: string, reason: string): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(`/incidents/${id}/reject`, null, {
+      params: { reason },
+    });
+    return response.data;
+  },
+
+  verify: async (id: string): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(`/incidents/${id}/verify`);
     return response.data;
   },
 };
