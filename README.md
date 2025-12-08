@@ -1,4 +1,4 @@
-# OpenInfra 🏗️
+# OpenInfra - VKU.OneLove🏗️
 
 **Urban Infrastructure Asset Management System**
 
@@ -618,6 +618,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 🙏 Acknowledgments
 
+- **VKU.OneLove** - Development Team
 - **OpenStreetMap** - Geospatial data and mapping services
 - **FastAPI** - Modern, fast web framework
 - **MongoDB** - Flexible, scalable database
