@@ -1,7 +1,32 @@
 import { IncidentStatusBadge } from "./IncidentStatusBadge"
-import type { Incident } from "../../types/incident"
+import type { Incident, IncidentLocation } from "../../types/incident"
 import { MapPin, Clock, User, Box, CheckCircle, AlertTriangle, Clock as ClockIcon, XCircle } from "lucide-react"
 import { format } from "date-fns"
+
+// Helper function to get display string for incident location
+const getLocationDisplay = (location?: IncidentLocation): string => {
+  if (!location) return "Location not specified";
+  
+  // First, try geometry.coordinates [lng, lat] - more reliable than address
+  if (location.geometry?.coordinates && Array.isArray(location.geometry.coordinates)) {
+    const coords = location.geometry.coordinates;
+    if (coords.length >= 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+      return `${(coords[1] as number).toFixed(6)}, ${(coords[0] as number).toFixed(6)}`;
+    }
+  }
+  
+  // Then, try coordinates.latitude/longitude
+  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+    return `${location.coordinates.latitude.toFixed(6)}, ${location.coordinates.longitude.toFixed(6)}`;
+  }
+  
+  // Finally, try address (but skip if it's literally "Location not specified")
+  if (location.address && location.address !== "Location not specified") {
+    return location.address;
+  }
+  
+  return "Location not specified";
+};
 
 interface IncidentCardProps {
   incident: Incident
@@ -95,7 +120,7 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
       <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
         <div className="flex items-center gap-1">
           <MapPin className="h-3 w-3" />
-          <span>{incident.location?.address || "Location not specified"}</span>
+          <span>{getLocationDisplay(incident.location)}</span>
         </div>
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
