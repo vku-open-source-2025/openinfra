@@ -82,12 +82,12 @@ const Footer = () => {
                             Apache 2.0 (Code)
                         </a>
                         <a
-                            href="https://opendatacommons.org/licenses/by/1-0/"
+                            href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            ODC-BY (Data)
+                            OGL (Data)
                         </a>
                     </div>
                 </div>
@@ -105,12 +105,12 @@ const Footer = () => {
                     </a>
                     . Data licensed under{" "}
                     <a
-                        href="https://opendatacommons.org/licenses/by/1-0/"
+                        href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:underline"
                     >
-                        ODC-BY
+                        OGL
                     </a>
                     .
                 </p>

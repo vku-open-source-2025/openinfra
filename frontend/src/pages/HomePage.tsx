@@ -435,6 +435,15 @@ const HomePage = () => {
                             >
                                 Code: Apache 2.0
                             </a>
+                            <span className="text-slate-400">·</span>
+                            <a
+                                href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-[#4FACFE] transition-colors"
+                            >
+                                Data: OGL v3.0
+                            </a>
                         </div>
                     </div>
                 </section>

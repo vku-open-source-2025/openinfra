@@ -78,4 +78,4 @@ Once connected, ask your AI assistant:
 
 ## License
 
-Data accessed through the Open Data API is provided under the **ODC-BY (Open Data Commons Attribution)** license.
+Data accessed through the Open Data API is provided under the **OGL (Open Government Licence)** license.
