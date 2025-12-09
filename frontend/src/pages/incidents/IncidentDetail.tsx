@@ -1,28 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "@tanstack/react-router";
-import { format } from "date-fns";
-import {
-    AlertTriangle,
-    ArrowLeft,
-    CheckCircle,
-    Clock,
-    Image,
-    Loader2,
-    MapPin,
-    User,
-    Wrench,
-    X,
-} from "lucide-react";
-import { incidentsApi } from "../../api/incidents";
-import { usersApi } from "../../api/users";
-import { IncidentActions } from "../../components/incidents/IncidentActions";
-import { IncidentComments } from "../../components/incidents/IncidentComments";
-import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMergeSuggestions";
-import { IncidentStatusBadge } from "../../components/incidents/IncidentStatusBadge";
-import { IncidentWorkflowInfo } from "../../components/incidents/IncidentWorkflowInfo";
-import { Button } from "../../components/ui/button";
-import { Skeleton } from "../../components/ui/skeleton";
-import { useAuthStore } from "../../stores/authStore";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useParams, useNavigate } from "@tanstack/react-router"
+import { incidentsApi } from "../../api/incidents"
+import { usersApi } from "../../api/users"
+import { IncidentStatusBadge } from "../../components/incidents/IncidentStatusBadge"
+import { IncidentComments } from "../../components/incidents/IncidentComments"
+import { IncidentActions } from "../../components/incidents/IncidentActions"
+import { IncidentWorkflowInfo } from "../../components/incidents/IncidentWorkflowInfo"
+import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMergeSuggestions"
+import { IncidentHierarchy } from "../../components/incidents/IncidentHierarchy"
+import { Button } from "../../components/ui/button"
+import { Skeleton } from "../../components/ui/skeleton"
+import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X } from "lucide-react"
+import { format } from "date-fns"
+import { useAuthStore } from "../../stores/authStore"
 
 const IncidentDetail: React.FC = () => {
     const { id } = useParams({ from: "/admin/incidents/$id" });
@@ -541,6 +531,17 @@ const IncidentDetail: React.FC = () => {
                         />
                     </div>
                 </div>
+      {/* Incident Hierarchy - Show main ticket with sub-tickets */}
+      <IncidentHierarchy incidentId={id} incident={incident} />
+
+      {(user?.role === "admin" || user?.role === "technician") && (
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <IncidentMergeSuggestions
+            incidentId={id}
+            canManage={user?.role === "admin" || user?.role === "technician"}
+          />
+        </div>
+      )}
 
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <h2 className="font-semibold mb-4">Actions</h2>

@@ -42,58 +42,36 @@ export interface IncidentComment {
 }
 
 export interface Incident {
-    id: string;
-    incident_code: string;
-    incident_number?: string;
-    title: string;
-    description: string;
-    category?:
-        | "damage"
-        | "malfunction"
-        | "safety_hazard"
-        | "vandalism"
-        | "other";
-    severity: IncidentSeverity;
-    status: IncidentStatus;
-    asset_id?: string;
-    asset?: AssetSummary;
-    location?: IncidentLocation;
-    reported_by?: string;
-    reporter_type: ReporterType;
-    reporter_contact?: {
-        name?: string;
-        phone?: string;
-        id_card_number?: string;
-    };
-    assigned_to?: string;
-    acknowledged_at?: string;
-    acknowledged_by?: string;
-    resolved_at?: string;
-    resolved_by?: string;
-    maintenance_record_id?: string;
-    resolution_type?:
-        | "fixed"
-        | "duplicate"
-        | "invalid"
-        | "deferred"
-        | "not_an_issue";
-    resolution_notes?: string;
-    cost_status?: "pending" | "approved" | "rejected";
-    photos?: string[];
-    upvotes: number;
-    upvoted_by?: string[];
-    comments: IncidentComment[];
-    created_at: string;
-    updated_at: string;
-    // AI Verification
-    ai_verification_status?:
-        | "pending"
-        | "verified"
-        | "to_be_verified"
-        | "failed";
-    ai_confidence_score?: number;
-    ai_verification_reason?: string;
-    ai_verified_at?: string;
+  id: string;
+  incident_number?: string;
+  incident_code?: string;
+  title: string;
+  description: string;
+  severity: IncidentSeverity;
+  status: IncidentStatus;
+  asset_id?: string;
+  asset?: AssetSummary;
+  location?: IncidentLocation;
+  reported_by?: string;
+  reporter_type: ReporterType;
+  assigned_to?: string;
+  maintenance_record_id?: string;
+  resolution_type?: string;
+  resolution_notes?: string;
+  cost_status?: 'pending' | 'approved' | 'rejected';
+  photos?: string[];
+  upvotes: number;
+  comments: IncidentComment[];
+  created_at: string;
+  updated_at: string;
+  // Merge/Related incidents
+  merged_reporter_ids?: string[];
+  related_incidents?: string[];
+  // AI Verification
+  ai_verification_status?: 'pending' | 'verified' | 'to_be_verified' | 'failed';
+  ai_confidence_score?: number;
+  ai_verification_reason?: string;
+  ai_verified_at?: string;
 }
 
 export interface IncidentCreateRequest {

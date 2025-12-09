@@ -9,6 +9,9 @@ from app.infrastructure.database.repositories.base_repository import (
     convert_objectid_to_str,
 )
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MongoIncidentRepository(IncidentRepository):
@@ -170,8 +173,15 @@ class MongoIncidentRepository(IncidentRepository):
         severity: Optional[str] = None,
         exclude_incident_ids: Optional[List[str]] = None,
         limit: int = 50,
+        include_resolved: bool = True,
+        resolved_time_window_hours: int = 720  # 30 days for resolved incidents
     ) -> List[Incident]:
-        """Find potential duplicate incidents based on filters."""
+        """Find potential duplicate incidents based on filters.
+        
+        Args:
+            include_resolved: If True, also search resolved incidents (for recurrence detection)
+            resolved_time_window_hours: Time window for resolved incidents (longer than active ones)
+        """
         query = {}
 
         # Filter by asset_id if provided
@@ -186,8 +196,43 @@ class MongoIncidentRepository(IncidentRepository):
         if severity:
             query["severity"] = severity
 
-        # Exclude resolved/closed incidents
-        query["status"] = {"$nin": ["resolved", "closed"]}
+        # Handle status filtering - include resolved if requested
+        if include_resolved:
+            # Include all statuses except closed (closed means permanently resolved)
+            # But exclude incidents resolved as duplicates
+            # Use $or to handle different time windows for active vs resolved incidents
+            time_threshold_active = datetime.utcnow() - timedelta(hours=time_window_hours) if time_window_hours > 0 else None
+            time_threshold_resolved = datetime.utcnow() - timedelta(hours=resolved_time_window_hours)
+            
+            or_conditions = []
+            
+            # Active incidents (not resolved/closed) within time window
+            if time_threshold_active:
+                or_conditions.append({
+                    "status": {"$nin": ["resolved", "closed"]},
+                    "reported_at": {"$gte": time_threshold_active}
+                })
+            else:
+                or_conditions.append({
+                    "status": {"$nin": ["resolved", "closed"]}
+                })
+            
+            # Resolved incidents (not duplicates) within longer time window
+            resolved_condition = {
+                "status": "resolved",
+                "resolution_type": {"$ne": "duplicate"},
+                "reported_at": {"$gte": time_threshold_resolved}
+            }
+            or_conditions.append(resolved_condition)
+            
+            query["$or"] = or_conditions
+        else:
+            # Original behavior: exclude resolved/closed incidents
+            query["status"] = {"$nin": ["resolved", "closed"]}
+            # Filter by time window for active incidents
+            if time_window_hours > 0:
+                time_threshold = datetime.utcnow() - timedelta(hours=time_window_hours)
+                query["reported_at"] = {"$gte": time_threshold}
 
         # Exclude specific incident IDs
         if exclude_incident_ids:
@@ -199,35 +244,64 @@ class MongoIncidentRepository(IncidentRepository):
             if exclude_object_ids:
                 query["_id"] = {"$nin": exclude_object_ids}
 
-        # Filter by time window
-        if time_window_hours > 0:
-            time_threshold = datetime.utcnow() - timedelta(hours=time_window_hours)
-            query["reported_at"] = {"$gte": time_threshold}
-
         # Build geospatial query if location provided
-        # Note: MongoDB $near requires a 2dsphere index and must be the first field in query
-        # For now, we'll use $geoWithin with a simpler approach or filter in application layer
-        # The geospatial index is already created in init_db.py
-        if location and "geometry" in location:
+        # Note: MongoDB $near cannot be used with $or queries directly
+        # We'll use aggregation pipeline with $geoNear if $or is present, otherwise use $near
+        use_geospatial = location and "geometry" in location
+        geometry_coords = None
+        
+        if use_geospatial:
             geometry = location["geometry"]
             if geometry.get("type") == "Point" and "coordinates" in geometry:
-                coords = geometry["coordinates"]
-                # Use $geoWithin with a circular region
-                # Note: For production, consider using aggregation pipeline with $geoNear
-                # For now, we'll add location filter but MongoDB will use the 2dsphere index
-                query["location.geometry"] = {
-                    "$near": {
-                        "$geometry": {"type": "Point", "coordinates": coords},
-                        "$maxDistance": location_radius_meters,
+                geometry_coords = geometry["coordinates"]
+                # If we have $or query, we need to use aggregation pipeline
+                if "$or" in query:
+                    # Use aggregation pipeline with $geoNear for $or queries
+                    pipeline = [
+                        {
+                            "$geoNear": {
+                                "near": {
+                                    "type": "Point",
+                                    "coordinates": geometry_coords
+                                },
+                                "distanceField": "distance",
+                                "maxDistance": location_radius_meters,
+                                "spherical": True
+                            }
+                        },
+                        {"$match": query},
+                        {"$sort": {"reported_at": -1}},
+                        {"$limit": limit}
+                    ]
+                    incidents = []
+                    async for incident_doc in self.collection.aggregate(pipeline):
+                        incident_doc = convert_objectid_to_str(incident_doc)
+                        try:
+                            incidents.append(Incident(**incident_doc))
+                        except Exception as e:
+                            logger.warning(f"Error parsing incident document: {e}")
+                            continue
+                    return incidents
+                else:
+                    # Use simple $near query when no $or
+                    query["location.geometry"] = {
+                        "$near": {
+                            "$geometry": {
+                                "type": "Point",
+                                "coordinates": geometry_coords
+                            },
+                            "$maxDistance": location_radius_meters
+                        }
                     }
-                }
-                # Note: $near must be the only geospatial query in the filter
-                # If other filters exist, MongoDB may require restructuring the query
 
         # Execute query
         cursor = self.collection.find(query).sort("reported_at", -1).limit(limit)
         incidents = []
         async for incident_doc in cursor:
             incident_doc = convert_objectid_to_str(incident_doc)
-            incidents.append(Incident(**incident_doc))
+            try:
+                incidents.append(Incident(**incident_doc))
+            except Exception as e:
+                logger.warning(f"Error parsing incident document: {e}")
+                continue
         return incidents

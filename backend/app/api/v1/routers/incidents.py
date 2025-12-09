@@ -193,6 +193,40 @@ async def get_incident(
     return await incident_service.get_incident_by_id(incident_id)
 
 
+@router.get("/{incident_id}/related", response_model=List[Incident])
+async def get_related_incidents(
+    incident_id: str,
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of related incidents to return"),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Get related incidents (merged incidents, duplicates, etc.)."""
+    try:
+        incident = await incident_service.get_incident_by_id(incident_id)
+    except Exception as e:
+        logger.error(f"Failed to fetch incident {incident_id}: {e}")
+        raise HTTPException(status_code=404, detail=f"Incident not found: {incident_id}")
+    
+    related_ids = incident.related_incidents if incident.related_incidents else []
+    
+    if not related_ids:
+        return []
+    
+    # Limit the number of IDs to fetch
+    related_ids = related_ids[:limit]
+    
+    # Fetch all related incidents with error handling
+    related_incidents = []
+    for related_id in related_ids:
+        try:
+            related = await incident_service.get_incident_by_id(related_id, populate_asset=False)
+            related_incidents.append(related)
+        except Exception as e:
+            logger.warning(f"Failed to fetch related incident {related_id}: {e}")
+            continue
+    
+    return related_incidents
+
+
 @router.put("/{incident_id}", response_model=Incident)
 async def update_incident(
     incident_id: str,

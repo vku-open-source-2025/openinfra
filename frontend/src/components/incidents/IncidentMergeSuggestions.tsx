@@ -4,7 +4,7 @@ import { Button } from "../ui/button"
 import { Alert, AlertDescription } from "../ui/alert"
 import { Badge } from "../ui/badge"
 import { Skeleton } from "../ui/skeleton"
-import { AlertTriangle, CheckCircle, XCircle, RefreshCw, GitMerge } from "lucide-react"
+import { AlertTriangle, CheckCircle, XCircle, RefreshCw, GitMerge, Clock, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { useState } from "react"
 
@@ -121,11 +121,34 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
                 {suggestion.match_reasons && suggestion.match_reasons.length > 0 && (
                   <div>
                     <strong>Match Reasons:</strong>{" "}
-                    {suggestion.match_reasons.map((reason: string) => (
-                      <Badge key={reason} variant="outline" className="ml-1">
-                        {reason.replace(/_/g, " ")}
-                      </Badge>
-                    ))}
+                    {suggestion.match_reasons.map((reason: string) => {
+                      const isRecurrence = reason === "possible_recurrence"
+                      const isDuringWork = reason === "reported_during_work"
+                      return (
+                        <Badge 
+                          key={reason} 
+                          variant={isRecurrence ? "destructive" : isDuringWork ? "default" : "outline"} 
+                          className="ml-1"
+                        >
+                          {reason === "possible_recurrence" && <AlertCircle className="h-3 w-3 mr-1 inline" />}
+                          {reason === "reported_during_work" && <Clock className="h-3 w-3 mr-1 inline" />}
+                          {reason.replace(/_/g, " ")}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                )}
+                {suggestion.match_reasons?.includes("possible_recurrence") && (
+                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                    <AlertCircle className="h-3 w-3 inline mr-1" />
+                    This appears to be a recurrence - the same issue was reported and resolved previously.
+                    Consider investigating why the issue happened again.
+                  </div>
+                )}
+                {suggestion.match_reasons?.includes("reported_during_work") && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                    <Clock className="h-3 w-3 inline mr-1" />
+                    Multiple reports received while technician is working on this issue.
                   </div>
                 )}
                 <div className="text-xs text-slate-500">
