@@ -55,7 +55,18 @@ async def create_indexes(db):
     await db.incidents.create_index([("location.geometry", "2dsphere")])  # Geospatial index
     await db.incidents.create_index([("status", 1), ("severity", 1)])
     await db.incidents.create_index([("asset_id", 1), ("status", 1)])
+    # Compound index for duplicate detection queries
+    await db.incidents.create_index([("asset_id", 1), ("status", 1), ("reported_at", -1)])
+    await db.incidents.create_index([("category", 1), ("severity", 1), ("reported_at", -1)])
     logger.info("Created indexes for incidents collection")
+
+    # Merge suggestions collection
+    await db.merge_suggestions.create_index("primary_incident_id")
+    await db.merge_suggestions.create_index("status")
+    await db.merge_suggestions.create_index([("primary_incident_id", 1), ("status", 1)])
+    await db.merge_suggestions.create_index([("created_at", -1)])
+    await db.merge_suggestions.create_index([("status", 1), ("created_at", -1)])
+    logger.info("Created indexes for merge_suggestions collection")
 
     # IoT Sensors collection
     await db.iot_sensors.create_index("sensor_code", unique=True)

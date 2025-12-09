@@ -36,6 +36,16 @@ class Settings(BaseSettings):
 
     # AI Agent - Gemini API
     GEMINI_API_KEY: str = ""
+    GEMINI_TEXT_MODEL: str = "text-embedding-004"
+    GEMINI_VISION_MODEL: str = "gemini-2.5-flash"
+    
+    # Duplicate Detection Configuration
+    DUPLICATE_SIMILARITY_THRESHOLD: float = 0.85
+    DUPLICATE_TEXT_WEIGHT: float = 0.6
+    DUPLICATE_IMAGE_WEIGHT: float = 0.4
+    DUPLICATE_TIME_WINDOW_HOURS: int = 168  # 7 days
+    DUPLICATE_LOCATION_RADIUS_METERS: float = 50.0
+    GEMINI_MAX_IMAGES_PER_INCIDENT: int = 5
 
     class Config:
         env_file = ".env"

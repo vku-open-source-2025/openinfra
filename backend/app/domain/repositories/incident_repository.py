@@ -50,3 +50,18 @@ class IncidentRepository(ABC):
     async def upvote(self, incident_id: str, user_id: str) -> bool:
         """Upvote an incident."""
         pass
+
+    @abstractmethod
+    async def find_potential_duplicates(
+        self,
+        asset_id: Optional[str] = None,
+        location: Optional[dict] = None,
+        location_radius_meters: float = 50.0,
+        time_window_hours: int = 168,
+        category: Optional[str] = None,
+        severity: Optional[str] = None,
+        exclude_incident_ids: Optional[List[str]] = None,
+        limit: int = 50
+    ) -> List[Incident]:
+        """Find potential duplicate incidents based on filters."""
+        pass

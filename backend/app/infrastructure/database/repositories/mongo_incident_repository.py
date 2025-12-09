@@ -5,7 +5,7 @@ from bson import ObjectId
 from app.domain.models.incident import Incident, AssetSummary
 from app.domain.repositories.incident_repository import IncidentRepository
 from app.infrastructure.database.repositories.base_repository import convert_objectid_to_str
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class MongoIncidentRepository(IncidentRepository):
@@ -143,3 +143,77 @@ class MongoIncidentRepository(IncidentRepository):
                 }
             )
         return result.modified_count > 0
+
+    async def find_potential_duplicates(
+        self,
+        asset_id: Optional[str] = None,
+        location: Optional[dict] = None,
+        location_radius_meters: float = 50.0,
+        time_window_hours: int = 168,
+        category: Optional[str] = None,
+        severity: Optional[str] = None,
+        exclude_incident_ids: Optional[List[str]] = None,
+        limit: int = 50
+    ) -> List[Incident]:
+        """Find potential duplicate incidents based on filters."""
+        query = {}
+
+        # Filter by asset_id if provided
+        if asset_id:
+            query["asset_id"] = asset_id
+
+        # Filter by category if provided
+        if category:
+            query["category"] = category
+
+        # Filter by severity if provided
+        if severity:
+            query["severity"] = severity
+
+        # Exclude resolved/closed incidents
+        query["status"] = {"$nin": ["resolved", "closed"]}
+
+        # Exclude specific incident IDs
+        if exclude_incident_ids:
+            exclude_object_ids = [
+                ObjectId(inc_id) for inc_id in exclude_incident_ids
+                if ObjectId.is_valid(inc_id)
+            ]
+            if exclude_object_ids:
+                query["_id"] = {"$nin": exclude_object_ids}
+
+        # Filter by time window
+        if time_window_hours > 0:
+            time_threshold = datetime.utcnow() - timedelta(hours=time_window_hours)
+            query["reported_at"] = {"$gte": time_threshold}
+
+        # Build geospatial query if location provided
+        # Note: MongoDB $near requires a 2dsphere index and must be the first field in query
+        # For now, we'll use $geoWithin with a simpler approach or filter in application layer
+        # The geospatial index is already created in init_db.py
+        if location and "geometry" in location:
+            geometry = location["geometry"]
+            if geometry.get("type") == "Point" and "coordinates" in geometry:
+                coords = geometry["coordinates"]
+                # Use $geoWithin with a circular region
+                # Note: For production, consider using aggregation pipeline with $geoNear
+                # For now, we'll add location filter but MongoDB will use the 2dsphere index
+                query["location.geometry"] = {
+                    "$near": {
+                        "$geometry": {
+                            "type": "Point",
+                            "coordinates": coords
+                        },
+                        "$maxDistance": location_radius_meters
+                    }
+                }
+                # Note: $near must be the only geospatial query in the filter
+                # If other filters exist, MongoDB may require restructuring the query
+
+        # Execute query
+        cursor = self.collection.find(query).sort("reported_at", -1).limit(limit)
+        incidents = []
+        async for incident_doc in cursor:
+            incident_doc = convert_objectid_to_str(incident_doc)
+            incidents.append(Incident(**incident_doc))
+        return incidents

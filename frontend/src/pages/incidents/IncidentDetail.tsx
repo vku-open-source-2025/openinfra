@@ -6,6 +6,7 @@ import { IncidentStatusBadge } from "../../components/incidents/IncidentStatusBa
 import { IncidentComments } from "../../components/incidents/IncidentComments"
 import { IncidentActions } from "../../components/incidents/IncidentActions"
 import { IncidentWorkflowInfo } from "../../components/incidents/IncidentWorkflowInfo"
+import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMergeSuggestions"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
 import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X } from "lucide-react"
@@ -256,6 +257,15 @@ const IncidentDetail: React.FC = () => {
           />
         </div>
       </div>
+
+      {(user?.role === "admin" || user?.role === "technician") && (
+        <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <IncidentMergeSuggestions
+            incidentId={id}
+            canManage={user?.role === "admin" || user?.role === "technician"}
+          />
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
         <h2 className="font-semibold mb-4">Actions</h2>

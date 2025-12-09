@@ -119,6 +119,34 @@ async def get_incident_repository():
     return MongoIncidentRepository(db)
 
 
+async def get_gemini_service():
+    """Get Gemini service instance."""
+    from app.infrastructure.external.gemini_service import GeminiService
+    return GeminiService()
+
+
+async def get_duplicate_detection_service():
+    """Get duplicate detection service instance."""
+    from app.domain.services.duplicate_detection_service import DuplicateDetectionService
+    incident_repo = await get_incident_repository()
+    gemini_service = await get_gemini_service()
+    return DuplicateDetectionService(incident_repo, gemini_service)
+
+
+async def get_merge_service():
+    """Get incident merge service instance."""
+    from app.domain.services.incident_merge_service import IncidentMergeService
+    incident_repo = await get_incident_repository()
+    return IncidentMergeService(incident_repo)
+
+
+async def get_merge_suggestion_repository():
+    """Get merge suggestion repository instance."""
+    from app.infrastructure.database.repositories.mongo_merge_suggestion_repository import MongoMergeSuggestionRepository
+    db: AsyncIOMotorDatabase = await get_database()
+    return MongoMergeSuggestionRepository(db)
+
+
 async def get_incident_service():
     """Get incident service instance."""
     from app.domain.services.incident_service import IncidentService
@@ -129,15 +157,37 @@ async def get_incident_service():
         maintenance_service = await get_maintenance_service()
     except:
         maintenance_service = None
-        
+    
     # Asset service is optional but recommended for location population
     try:
         from app.api.v1.dependencies import get_asset_service
         asset_service = await get_asset_service()
     except:
         asset_service = None
-        
-    return IncidentService(repository, maintenance_service, asset_service)
+    
+    # Duplicate detection and merge services (optional, only if Gemini API key is configured)
+    duplicate_detection_service = None
+    merge_service = None
+    merge_suggestion_repo = None
+    try:
+        from app.core.config import settings
+        if settings.GEMINI_API_KEY:
+            duplicate_detection_service = await get_duplicate_detection_service()
+            merge_service = await get_merge_service()
+            merge_suggestion_repo = await get_merge_suggestion_repository()
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Could not initialize duplicate detection services: {e}")
+    
+    return IncidentService(
+        repository,
+        maintenance_service,
+        asset_service,
+        duplicate_detection_service,
+        merge_service,
+        merge_suggestion_repo
+    )
 
 
 async def get_budget_repository():
