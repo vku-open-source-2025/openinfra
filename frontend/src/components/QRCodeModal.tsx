@@ -3,7 +3,7 @@ import QRCode from 'react-qr-code';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { X, Download } from 'lucide-react';
-import type { Asset } from '../api';
+import { type Asset, getAssetId } from '../api';
 
 interface QRCodeModalProps {
     isOpen: boolean;
@@ -38,7 +38,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
 
             // Add Asset Info
             pdf.setFontSize(10);
-            pdf.text(`ID: ${asset._id}`, pdfWidth / 2, 25, { align: 'center' });
+            pdf.text(`ID: ${getAssetId(asset)}`, pdfWidth / 2, 25, { align: 'center' });
             pdf.text(`Type: ${asset.feature_type}`, pdfWidth / 2, 30, { align: 'center' });
 
             // Add QR Image
@@ -53,7 +53,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
             pdf.setFontSize(8);
             pdf.text('OpenInfra Asset Management', pdfWidth / 2, pdfHeight - 10, { align: 'center' });
 
-            pdf.save(`asset-qr-${asset._id}.pdf`);
+            pdf.save(`asset-qr-${getAssetId(asset)}.pdf`);
         } catch (err) {
             console.error("Error generating PDF:", err);
             alert("Failed to generate PDF");
@@ -73,7 +73,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
                 <div className="p-8 flex flex-col items-center gap-6">
                     <div ref={qrRef} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                         <QRCode
-                            value={`https://openinfra.space/map?assetId=${asset._id}`}
+                            value={`https://openinfra.space/map?assetId=${getAssetId(asset)}`}
                             size={200}
                             level="H"
                         />
@@ -81,8 +81,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
 
                     <div className="text-center">
                         <p className="font-bold text-slate-800">{asset.feature_type}</p>
-                        <p className="text-xs text-slate-500 font-mono mt-1">{asset._id}</p>
-                        <p className="text-[10px] text-slate-400 mt-1 truncate max-w-[200px]">https://openinfra.space/map?assetId={asset._id}</p>
+                        <p className="text-xs text-slate-500 font-mono mt-1">{getAssetId(asset)}</p>
+                        <p className="text-[10px] text-slate-400 mt-1 truncate max-w-[200px]">https://openinfra.space/map?assetId={getAssetId(asset)}</p>
                     </div>
 
                     <button

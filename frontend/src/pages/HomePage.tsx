@@ -7,11 +7,13 @@ import {
     MapPin,
     Award,
     Activity,
+    Download,
 } from "lucide-react";
 import { getAssets, getLeaderboard } from "../api";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import mapImage from "../assets/map.png";
+import { usePWA } from "../hooks/usePWA";
 
 const featureCards = [
     {
@@ -44,6 +46,7 @@ const dashboardImage =
     "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=80";
 
 const HomePage = () => {
+    const { canShowInstallButton, promptInstall } = usePWA();
     const [assetCount, setAssetCount] = useState<number | null>(null);
     const [contributorCount, setContributorCount] = useState<number | null>(
         null
@@ -94,12 +97,12 @@ const HomePage = () => {
     const assetCountLabel =
         assetCount !== null
             ? `${new Intl.NumberFormat("en-US", {
-                  notation: "compact",
-                  maximumFractionDigits: 1,
-              }).format(assetCount)} Active monitoring points`
+                notation: "compact",
+                maximumFractionDigits: 1,
+            }).format(assetCount)} Active monitoring points`
             : loadingAssets
-            ? "Loading monitoring points..."
-            : "200+ Active monitoring points";
+                ? "Loading monitoring points..."
+                : "200+ Active monitoring points";
 
     const statCards = [
         {
@@ -108,9 +111,9 @@ const HomePage = () => {
             value:
                 assetCount !== null
                     ? new Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          maximumFractionDigits: 1,
-                      }).format(assetCount)
+                        notation: "compact",
+                        maximumFractionDigits: 1,
+                    }).format(assetCount)
                     : "—",
             hint: loadingAssets ? "Loading..." : "Updated with latest data",
             color: "from-cyan-500 to-blue-500",
@@ -137,9 +140,9 @@ const HomePage = () => {
             value:
                 totalContributions !== null
                     ? new Intl.NumberFormat("en-US", {
-                          notation: "compact",
-                          maximumFractionDigits: 1,
-                      }).format(totalContributions)
+                        notation: "compact",
+                        maximumFractionDigits: 1,
+                    }).format(totalContributions)
                     : "—",
             hint: loadingLeaderboard ? "Loading..." : "Total data submissions",
             color: "from-emerald-500 to-teal-500",
@@ -196,6 +199,15 @@ const HomePage = () => {
                                 >
                                     Use API
                                 </Link>
+                                {canShowInstallButton && (
+                                    <button
+                                        onClick={promptInstall}
+                                        className="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-colors shadow-lg"
+                                    >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        Install App
+                                    </button>
+                                )}
                             </div>
                         </div>
                         <div className="relative">

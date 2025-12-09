@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Smartphone, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import type { Asset } from '../api';
+import { type Asset, getAssetId } from '../api';
 
 type NDEFReadingEvent = any;
 
@@ -56,7 +56,7 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({ isOpen, onClose, asset })
                 setMessage('Tag detected. Writing data...');
 
                 try {
-                    const url = `https://openinfra.space/map?assetId=${asset?._id}`;
+                    const url = `https://openinfra.space/map?assetId=${getAssetId(asset!)}`;
 
                     // Write URL record
                     await ndef.write({
