@@ -3,7 +3,6 @@
 **Urban Infrastructure Asset Management System**
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Data License](https://img.shields.io/badge/data%20license-ODC--BY-brightgreen.svg)](https://opendatacommons.org/licenses/by/1.0/)
 [![Cloud Service](https://img.shields.io/badge/cloud-openinfra.space-orange.svg)](https://openinfra.space/)
 [![Open API](https://img.shields.io/badge/Open%20API-docs-blueviolet.svg)](https://openinfra.space/docs)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -605,14 +604,6 @@ npm run test:e2e
 
 ### Code License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-### Data License
-All open data provided by OpenInfra is licensed under the [Open Data Commons Attribution License (ODC-BY)](https://opendatacommons.org/licenses/by/1.0/). You are free to:
-- **Share**: Copy, distribute and use the data
-- **Create**: Produce works from the data
-- **Adapt**: Modify, transform and build upon the data
-
-As long as you **attribute** the source: *"Data provided by OpenInfra (https://openinfra.space)"*
 
 ---
 
