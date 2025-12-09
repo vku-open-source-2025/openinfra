@@ -43,7 +43,8 @@ class Settings(BaseSettings):
     DUPLICATE_SIMILARITY_THRESHOLD: float = 0.85
     DUPLICATE_TEXT_WEIGHT: float = 0.6
     DUPLICATE_IMAGE_WEIGHT: float = 0.4
-    DUPLICATE_TIME_WINDOW_HOURS: int = 168  # 7 days
+    DUPLICATE_TIME_WINDOW_HOURS: int = 168  # 7 days for active incidents
+    DUPLICATE_RESOLVED_TIME_WINDOW_HOURS: int = 720  # 30 days for resolved incidents (recurrence detection)
     DUPLICATE_LOCATION_RADIUS_METERS: float = 50.0
     GEMINI_MAX_IMAGES_PER_INCIDENT: int = 5
 

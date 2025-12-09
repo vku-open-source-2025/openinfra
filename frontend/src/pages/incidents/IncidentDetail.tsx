@@ -7,6 +7,7 @@ import { IncidentComments } from "../../components/incidents/IncidentComments"
 import { IncidentActions } from "../../components/incidents/IncidentActions"
 import { IncidentWorkflowInfo } from "../../components/incidents/IncidentWorkflowInfo"
 import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMergeSuggestions"
+import { IncidentHierarchy } from "../../components/incidents/IncidentHierarchy"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
 import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X } from "lucide-react"
@@ -257,6 +258,9 @@ const IncidentDetail: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Incident Hierarchy - Show main ticket with sub-tickets */}
+      <IncidentHierarchy incidentId={id} incident={incident} />
 
       {(user?.role === "admin" || user?.role === "technician") && (
         <div className="bg-white rounded-lg border border-slate-200 p-6">
