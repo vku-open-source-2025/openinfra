@@ -121,4 +121,45 @@ export const incidentsApi = {
     const response = await httpClient.post<Incident>(`/incidents/${id}/verify`);
     return response.data;
   },
+
+  checkDuplicates: async (id: string): Promise<Array<{ incident_id: string; similarity_score: number; match_reasons: string[] }>> => {
+    const response = await httpClient.post<Array<{ incident_id: string; similarity_score: number; match_reasons: string[] }>>(
+      `/incidents/${id}/check-duplicates`
+    );
+    return response.data;
+  },
+
+  getMergeSuggestions: async (id: string, status?: string): Promise<Array<any>> => {
+    const response = await httpClient.get<Array<any>>(`/incidents/${id}/merge-suggestions`, {
+      params: status ? { status } : undefined,
+    });
+    return response.data;
+  },
+
+  mergeIncidents: async (
+    id: string,
+    duplicateIds: string[],
+    mergeNotes?: string
+  ): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(`/incidents/${id}/merge`, {
+      duplicate_ids: duplicateIds,
+      merge_notes: mergeNotes,
+    });
+    return response.data;
+  },
+
+  approveMergeSuggestion: async (suggestionId: string): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(
+      `/incidents/merge-suggestions/${suggestionId}/approve`
+    );
+    return response.data;
+  },
+
+  rejectMergeSuggestion: async (suggestionId: string, reviewNotes?: string): Promise<{ message: string }> => {
+    const response = await httpClient.post<{ message: string }>(
+      `/incidents/merge-suggestions/${suggestionId}/reject`,
+      reviewNotes ? { review_notes: reviewNotes } : undefined
+    );
+    return response.data;
+  },
 };

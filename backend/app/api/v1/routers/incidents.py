@@ -2,15 +2,16 @@
 import json
 import logging
 from datetime import datetime
-from fastapi import APIRouter, Query, Depends, HTTPException, status, UploadFile, File, Form, Header, Request, BackgroundTasks
+from fastapi import APIRouter, Query, Depends, HTTPException, status, UploadFile, File, Form, Header, Request, BackgroundTasks, Body
 from typing import List, Optional
 from app.domain.models.incident import (
     Incident, IncidentCreate, IncidentUpdate, IncidentCommentRequest
 )
+from app.domain.models.merge_suggestion import MergeSuggestion, MergeSuggestionStatus, MergeRequest
 from app.domain.services.incident_service import IncidentService
 from app.api.v1.dependencies import get_incident_service, get_storage_service
 from app.api.v1.middleware import get_current_user, get_optional_current_user
-from app.domain.models.user import User
+from app.domain.models.user import User, UserRole
 from app.domain.models.incident import ResolutionType
 from app.infrastructure.storage.storage_service import StorageService
 from app.infrastructure.services.turnstile_service import turnstile_service
@@ -342,3 +343,106 @@ async def verify_incident(
         incident_id,
         str(current_user.id)
     )
+
+
+@router.post("/{incident_id}/check-duplicates", response_model=List[dict])
+async def check_duplicates(
+    incident_id: str,
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Manually trigger duplicate detection for an incident."""
+    duplicates = await incident_service.check_duplicates(incident_id)
+    return [dup.dict() for dup in duplicates]
+
+
+@router.get("/{incident_id}/merge-suggestions", response_model=List[MergeSuggestion])
+async def get_merge_suggestions(
+    incident_id: str,
+    status: Optional[str] = Query(None, description="Filter by status: pending, approved, rejected"),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Get merge suggestions for an incident."""
+    suggestion_status = None
+    if status:
+        try:
+            suggestion_status = MergeSuggestionStatus(status.lower())
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
+    
+    suggestions = await incident_service.get_merge_suggestions(incident_id, suggestion_status)
+    return suggestions
+
+
+@router.post("/{incident_id}/merge", response_model=Incident)
+async def merge_incidents(
+    incident_id: str,
+    merge_request: MergeRequest = Body(...),
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Merge incidents (requires admin/technician role)."""
+    # Check permissions
+    if current_user.role not in [UserRole.ADMIN, UserRole.TECHNICIAN]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and technicians can merge incidents"
+        )
+    
+    # Input validation
+    if not merge_request.duplicate_ids:
+        raise HTTPException(status_code=400, detail="At least one duplicate ID is required")
+    if len(merge_request.duplicate_ids) > 10:
+        raise HTTPException(status_code=400, detail="Cannot merge more than 10 incidents at once")
+    if incident_id in merge_request.duplicate_ids:
+        raise HTTPException(status_code=400, detail="Primary incident cannot be in duplicate list")
+    
+    try:
+        return await incident_service.merge_incidents(
+            primary_id=incident_id,
+            duplicate_ids=merge_request.duplicate_ids,
+            merged_by=str(current_user.id),
+            merge_notes=merge_request.merge_notes
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error merging incidents: {str(e)}")
+
+
+@router.post("/merge-suggestions/{suggestion_id}/approve", response_model=Incident)
+async def approve_merge_suggestion(
+    suggestion_id: str,
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Approve a merge suggestion (requires admin/technician role)."""
+    # Check permissions
+    if current_user.role not in [UserRole.ADMIN, UserRole.TECHNICIAN]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and technicians can approve merge suggestions"
+        )
+    
+    return await incident_service.approve_merge(suggestion_id, str(current_user.id))
+
+
+@router.post("/merge-suggestions/{suggestion_id}/reject", response_model=dict)
+async def reject_merge_suggestion(
+    suggestion_id: str,
+    review_notes: Optional[str] = Body(None, embed=True),
+    current_user: User = Depends(get_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Reject a merge suggestion (requires admin/technician role)."""
+    # Check permissions
+    if current_user.role not in [UserRole.ADMIN, UserRole.TECHNICIAN]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only admins and technicians can reject merge suggestions"
+        )
+    
+    success = await incident_service.reject_merge(suggestion_id, str(current_user.id), review_notes)
+    if not success:
+        raise HTTPException(status_code=404, detail="Merge suggestion not found")
+    
+    return {"message": "Merge suggestion rejected successfully"}

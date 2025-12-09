@@ -113,6 +113,7 @@ class Incident(BaseModel):
     reporter_contact: Optional[ReporterContact] = None
     reported_via: str = "web"  # "web" | "mobile" | "qr_code" | "phone" | "system"
     reported_at: datetime = Field(default_factory=datetime.utcnow)
+    merged_reporter_ids: List[str] = Field(default_factory=list)  # Track all reporters for merged incidents
 
     # Assignment & Resolution
     assigned_to: Optional[str] = None

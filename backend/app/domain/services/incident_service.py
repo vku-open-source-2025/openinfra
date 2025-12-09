@@ -5,9 +5,14 @@ from app.domain.models.incident import (
     Incident, IncidentCreate, IncidentUpdate, IncidentComment,
     IncidentStatus, ResolutionType
 )
+from app.domain.models.merge_suggestion import MergeSuggestion, MergeSuggestionStatus
 from app.domain.repositories.incident_repository import IncidentRepository
 from app.domain.services.maintenance_service import MaintenanceService
+from app.domain.services.duplicate_detection_service import DuplicateDetectionService
+from app.domain.services.incident_merge_service import IncidentMergeService
+from app.infrastructure.database.repositories.mongo_merge_suggestion_repository import MongoMergeSuggestionRepository
 from app.core.exceptions import NotFoundError, ConflictError, ValidationError
+from app.core.config import settings
 import logging
 import uuid
 
@@ -21,11 +26,17 @@ class IncidentService:
         self,
         incident_repository: IncidentRepository,
         maintenance_service: Optional[MaintenanceService] = None,
-        asset_service: Optional[Any] = None
+        asset_service: Optional[Any] = None,
+        duplicate_detection_service: Optional[DuplicateDetectionService] = None,
+        merge_service: Optional[IncidentMergeService] = None,
+        merge_suggestion_repository: Optional[MongoMergeSuggestionRepository] = None
     ):
         self.repository = incident_repository
         self.maintenance_service = maintenance_service
         self.asset_service = asset_service
+        self.duplicate_detection_service = duplicate_detection_service
+        self.merge_service = merge_service
+        self.merge_suggestion_repository = merge_suggestion_repository
 
     def _generate_incident_number(self) -> str:
         """Generate unique incident number."""
@@ -80,6 +91,41 @@ class IncidentService:
 
         incident = await self.repository.create(incident_dict)
         logger.info(f"Created incident: {incident.incident_number}")
+
+        # Check for duplicates and create merge suggestions (async, don't block)
+        # Only create suggestion if incident has required fields
+        if (self.duplicate_detection_service and self.merge_suggestion_repository and 
+            incident.id and (incident.title or incident.description)):
+            try:
+                duplicates = await self.duplicate_detection_service.detect_duplicates(incident)
+                if duplicates:
+                    # Create merge suggestion for highest similarity match
+                    best_match = duplicates[0]
+                    if best_match.similarity_score >= settings.DUPLICATE_SIMILARITY_THRESHOLD:
+                        # Check if suggestion already exists
+                        existing_suggestions = await self.merge_suggestion_repository.find_by_primary_incident(
+                            str(incident.id),
+                            MergeSuggestionStatus.PENDING
+                        )
+                        # Check if this duplicate is already in a pending suggestion
+                        duplicate_already_suggested = any(
+                            best_match.incident_id in s.duplicate_incident_ids
+                            for s in existing_suggestions
+                        )
+                        if not duplicate_already_suggested:
+                            await self.merge_suggestion_repository.create({
+                                "primary_incident_id": str(incident.id),
+                                "duplicate_incident_ids": [best_match.incident_id],
+                                "similarity_score": best_match.similarity_score,
+                                "match_reasons": best_match.match_reasons,
+                                "suggested_by": "system",
+                                "status": MergeSuggestionStatus.PENDING.value
+                            })
+                            logger.info(f"Created merge suggestion for incident {incident.incident_number} with {best_match.incident_id}")
+            except Exception as e:
+                logger.error(f"Error detecting duplicates for incident {incident.id}: {e}", exc_info=True)
+                # Don't fail incident creation if duplicate detection fails
+
         return incident
 
     async def get_incident_by_id(self, incident_id: str, populate_asset: bool = True) -> Incident:
@@ -415,3 +461,127 @@ class IncidentService:
         updated = await self.repository.update(incident_id, update_data)
         logger.info(f"Incident {incident_id} manually verified by {verified_by}")
         return updated
+
+    async def check_duplicates(self, incident_id: str) -> List:
+        """Manually check for duplicate incidents."""
+        incident = await self.get_incident_by_id(incident_id)
+        if not self.duplicate_detection_service:
+            return []
+        return await self.duplicate_detection_service.detect_duplicates(incident)
+
+    async def get_merge_suggestions(
+        self,
+        incident_id: str,
+        status: Optional[MergeSuggestionStatus] = None
+    ) -> List[MergeSuggestion]:
+        """Get merge suggestions for an incident."""
+        if not self.merge_suggestion_repository:
+            return []
+        return await self.merge_suggestion_repository.find_by_primary_incident(incident_id, status)
+
+    async def approve_merge(
+        self,
+        suggestion_id: str,
+        approved_by: str
+    ) -> Incident:
+        """Approve and execute a merge suggestion."""
+        if not self.merge_suggestion_repository or not self.merge_service:
+            raise RuntimeError("Merge service not available")
+
+        suggestion = await self.merge_suggestion_repository.find_by_id(suggestion_id)
+        if not suggestion:
+            raise NotFoundError("MergeSuggestion", suggestion_id)
+
+        if suggestion.status != MergeSuggestionStatus.PENDING:
+            raise ConflictError("Merge suggestion is not pending")
+
+        # Validate that incidents still exist and are mergeable
+        primary = await self.repository.find_by_id(suggestion.primary_incident_id)
+        if not primary:
+            raise NotFoundError("Incident", suggestion.primary_incident_id)
+        
+        if primary.status in [IncidentStatus.RESOLVED, IncidentStatus.CLOSED]:
+            raise ConflictError(f"Primary incident {primary.incident_number} is already resolved/closed")
+
+        # Check if any duplicates are already resolved
+        valid_duplicate_ids = []
+        for dup_id in suggestion.duplicate_incident_ids:
+            dup = await self.repository.find_by_id(dup_id)
+            if dup and dup.status not in [IncidentStatus.RESOLVED, IncidentStatus.CLOSED]:
+                valid_duplicate_ids.append(dup_id)
+            elif dup:
+                logger.warning(f"Duplicate {dup_id} already resolved, skipping from merge")
+
+        if not valid_duplicate_ids:
+            raise ValueError("No valid duplicate incidents to merge (all already resolved)")
+
+        # Execute merge
+        try:
+            merged_incident = await self.merge_service.merge_incidents(
+                primary_id=suggestion.primary_incident_id,
+                duplicate_ids=valid_duplicate_ids,
+                merged_by=approved_by,
+                merge_notes=f"Approved merge suggestion {suggestion_id}"
+            )
+
+            # Update suggestion status
+            await self.merge_suggestion_repository.update(
+                suggestion_id,
+                {
+                    "status": MergeSuggestionStatus.APPROVED.value,
+                    "approved_by": approved_by,
+                    "reviewed_at": datetime.utcnow()
+                }
+            )
+
+            return merged_incident
+        except Exception as e:
+            logger.error(f"Error executing merge for suggestion {suggestion_id}: {e}", exc_info=True)
+            raise
+
+    async def reject_merge(
+        self,
+        suggestion_id: str,
+        rejected_by: str,
+        review_notes: Optional[str] = None
+    ) -> bool:
+        """Reject a merge suggestion."""
+        if not self.merge_suggestion_repository:
+            raise RuntimeError("Merge suggestion repository not available")
+
+        suggestion = await self.merge_suggestion_repository.find_by_id(suggestion_id)
+        if not suggestion:
+            raise NotFoundError("MergeSuggestion", suggestion_id)
+
+        if suggestion.status != MergeSuggestionStatus.PENDING:
+            raise ConflictError("Merge suggestion is not pending")
+
+        # Update suggestion status
+        updated = await self.merge_suggestion_repository.update(
+            suggestion_id,
+            {
+                "status": MergeSuggestionStatus.REJECTED.value,
+                "rejected_by": rejected_by,
+                "reviewed_at": datetime.utcnow(),
+                "review_notes": review_notes
+            }
+        )
+
+        return updated is not None
+
+    async def merge_incidents(
+        self,
+        primary_id: str,
+        duplicate_ids: List[str],
+        merged_by: str,
+        merge_notes: Optional[str] = None
+    ) -> Incident:
+        """Manually merge incidents."""
+        if not self.merge_service:
+            raise RuntimeError("Merge service not available")
+        return await self.merge_service.merge_incidents(
+            primary_id=primary_id,
+            duplicate_ids=duplicate_ids,
+            merged_by=merged_by,
+            merge_notes=merge_notes
+        )
