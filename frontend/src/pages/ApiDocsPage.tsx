@@ -46,7 +46,7 @@ const openDataEndpoints: Endpoint[] = [
         path: "/api/opendata/assets",
         title: "Infrastructure Assets List",
         description:
-            "Get all infrastructure assets as GeoJSON FeatureCollection (JSON-LD)",
+            "Get all infrastructure assets as GeoJSON FeatureCollection",
         params: [
             {
                 name: "skip",
@@ -102,22 +102,22 @@ const openDataEndpoints: Endpoint[] = [
     },
 ];
 
-// IoT Linked Data (JSON-LD) Endpoints
+// IoT NGSI-LD Endpoints
 const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/context",
-        title: "JSON-LD Context",
+        title: "NGSI-LD Context",
         description:
-            "Get the JSON-LD context document with SOSA/SSN ontology mappings for semantic interoperability",
+            "Get the NGSI-LD context document (ETSI standard for context information management)",
         testPath: "/api/v1/ld/context",
     },
     {
         method: "GET",
         path: "/api/v1/ld/sensors",
-        title: "IoT Sensors (JSON-LD)",
+        title: "IoT Sensors (NGSI-LD)",
         description:
-            "List all IoT sensors in JSON-LD format following SOSA ontology (sosa:Sensor)",
+            "List all IoT sensors in NGSI-LD format with Properties and Relationships",
         params: [
             {
                 name: "skip",
@@ -148,9 +148,9 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/sensors/{sensor_id}",
-        title: "Single Sensor (JSON-LD)",
+        title: "Single Sensor (NGSI-LD)",
         description:
-            "Get a single sensor with full semantic annotations as sosa:Sensor. Sample ID: 6931b938c2f7cb7eba01df64",
+            "Get a single sensor in NGSI-LD format with Properties and Relationships. Sample ID: 6931b938c2f7cb7eba01df64",
         params: [
             {
                 name: "sensor_id",
@@ -163,9 +163,9 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/sensors/{sensor_id}/observations",
-        title: "Sensor Observations (JSON-LD)",
+        title: "Sensor Observations (NGSI-LD)",
         description:
-            "Get sensor readings as sosa:Observation with time range filtering. Sample sensor: 6931b938c2f7cb7eba01df64",
+            "Get sensor readings in NGSI-LD format with time range filtering. Sample sensor: 6931b938c2f7cb7eba01df64",
         params: [
             {
                 name: "sensor_id",
@@ -191,9 +191,9 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/assets/{asset_id}",
-        title: "Asset with IoT Data (JSON-LD)",
+        title: "Asset with IoT Data (NGSI-LD)",
         description:
-            "Get an infrastructure asset (sosa:FeatureOfInterest) with all associated sensors and recent observations. Sample: 6925b9001b74e89f7dab169a",
+            "Get an infrastructure asset with all associated sensors and recent observations in NGSI-LD format. Sample: 6925b9001b74e89f7dab169a",
         params: [
             {
                 name: "asset_id",
@@ -212,9 +212,9 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/observations",
-        title: "All Observations (JSON-LD)",
+        title: "All Observations (NGSI-LD)",
         description:
-            "Get recent observations from all sensors for building complete datasets",
+            "Get recent observations from all sensors in NGSI-LD format for smart city platforms",
         params: [
             {
                 name: "hours",
@@ -242,7 +242,7 @@ const iotLinkedDataEndpoints: Endpoint[] = [
         path: "/api/v1/ld/vocab",
         title: "OpenInfra Vocabulary",
         description:
-            "Get the OpenInfra vocabulary definition extending SOSA/SSN/Schema.org",
+            "Get the OpenInfra vocabulary definition extending NGSI-LD and Schema.org",
         testPath: "/api/v1/ld/vocab",
     },
 ];
@@ -257,7 +257,7 @@ const codeExamples = {
 const response = await fetch('${API_BASE_URL}/api/opendata/assets?limit=10');
 const data = await response.json();
 
-// Response is GeoJSON FeatureCollection with JSON-LD context
+// Response is GeoJSON FeatureCollection
 console.log(data.features);
 console.log('License:', data.license);`,
     python: `import requests
@@ -268,61 +268,55 @@ response = requests.get(
 )
 data = response.json()
 
-# GeoJSON data with JSON-LD context
+# GeoJSON data
 for feature in data['features']:
     print(feature['properties']['feature_type'])
     print(feature['geometry']['coordinates'])`,
 };
 
-// JSON-LD IoT code examples
+// NGSI-LD IoT code examples
 const jsonLdCodeExamples = {
-    curl: `# Get IoT sensors in JSON-LD format
+    curl: `# Get IoT sensors in NGSI-LD format
 curl -X GET "${API_BASE_URL}/api/v1/ld/sensors?limit=10" \\
   -H "Accept: application/ld+json"
 
-# Get observations for a specific sensor
+# Get observations for a specific sensor (NGSI-LD)
 curl -X GET "${API_BASE_URL}/api/v1/ld/sensors/{sensor_id}/observations?from_time=2024-01-01T00:00:00Z&to_time=2024-12-31T23:59:59Z" \\
   -H "Accept: application/ld+json"`,
-    javascript: `// Fetch IoT sensors as JSON-LD (SOSA ontology)
+    javascript: `// Fetch IoT sensors in NGSI-LD format (ETSI standard)
 const response = await fetch('${API_BASE_URL}/api/v1/ld/sensors?limit=10', {
   headers: { 'Accept': 'application/ld+json' }
 });
-const data = await response.json();
+const sensors = await response.json();
 
-// JSON-LD with SOSA/SSN context
-console.log('@context:', data['@context']);
-console.log('Sensors:', data['schema:itemListElement']);
-
-// Each sensor is a sosa:Sensor
-data['schema:itemListElement'].forEach(sensor => {
-  console.log('Sensor:', sensor.sensorCode);
-  console.log('Type:', sensor.sensorType);
-  console.log('Asset:', sensor.hasFeatureOfInterest.assetId);
+// NGSI-LD format: array of entities
+sensors.forEach(sensorEntity => {
+  console.log('ID:', sensorEntity.id);  // urn:ngsi-ld:Sensor:xxx
+  console.log('Type:', sensorEntity.type);  // Sensor
+  console.log('Code:', sensorEntity.sensorCode.value);  // Property
+  console.log('Status:', sensorEntity.status.value);
+  console.log('Asset:', sensorEntity.refAsset.object);  // Relationship
 });`,
     python: `import requests
-from rdflib import Graph
 
-# Fetch JSON-LD data
+# Fetch NGSI-LD data
 response = requests.get(
     '${API_BASE_URL}/api/v1/ld/sensors',
     params={'limit': 10},
     headers={'Accept': 'application/ld+json'}
 )
-data = response.json()
+sensors = response.json()
 
-# Parse with RDFLib for SPARQL queries
-g = Graph()
-g.parse(data=response.text, format='json-ld')
-
-# Query using SPARQL
-query = """
-SELECT ?sensor ?type WHERE {
-  ?sensor a sosa:Sensor ;
-          ssn:hasProperty ?type .
-}
-"""
-for row in g.query(query):
-    print(f"Sensor: {row.sensor}, Type: {row.type}")`,
+# NGSI-LD entities with Properties and Relationships
+for sensor in sensors:
+    sensor_id = sensor['id']  # urn:ngsi-ld:Sensor:xxx
+    sensor_code = sensor['sensorCode']['value']  # Property
+    sensor_type = sensor['sensorType']['value']
+    status = sensor['status']['value']
+    asset_ref = sensor['refAsset']['object']  # Relationship
+    
+    print(f"Sensor {sensor_code}: {sensor_type} - {status}")
+    print(f"  Monitors asset: {asset_ref}")`,
 };
 
 function CopyButton({ text }: { text: string }) {
@@ -612,9 +606,8 @@ export default function ApiDocsPage() {
                             API Documentation
                         </h1>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            Access open GIS infrastructure data in JSON-LD
-                            format. Free to use under Open Government Licence
-                            v3.0 (OGL).
+                            Access open GIS infrastructure data and IoT sensors in NGSI-LD format.
+                            Free to use under Open Government Licence v3.0 (OGL).
                         </p>
                     </div>
 
@@ -704,7 +697,7 @@ export default function ApiDocsPage() {
                     </div>
                 </section>
 
-                {/* IoT Linked Data (JSON-LD) Section */}
+                {/* IoT NGSI-LD Section */}
                 <section
                     id="iot"
                     className="max-w-6xl mx-auto px-4 mb-16 scroll-mt-24"
@@ -712,27 +705,27 @@ export default function ApiDocsPage() {
                     <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-8 mb-8">
                         <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                             <Database size={28} className="text-purple-600" />
-                            IoT Sensor Data - JSON-LD (Linked Data)
+                            IoT Sensor Data - NGSI-LD
                         </h2>
                         <p className="text-slate-700 mb-4">
-                            Access IoT sensor data in <strong>JSON-LD</strong>{" "}
-                            format following W3C standards:
+                            Access IoT sensor data in <strong>NGSI-LD</strong>{" "}
+                            format (ETSI standard for context information management):
                         </p>
                         <div className="grid md:grid-cols-3 gap-4 mb-4">
                             <div className="bg-white/80 rounded-lg p-4">
                                 <h4 className="font-semibold text-purple-700 mb-1">
-                                    SOSA Ontology
+                                    NGSI-LD Core
                                 </h4>
                                 <p className="text-sm text-slate-600">
-                                    Sensor, Observation, Sample, and Actuator
+                                    ETSI standard for smart cities
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-4">
                                 <h4 className="font-semibold text-purple-700 mb-1">
-                                    SSN Ontology
+                                    Properties & Relationships
                                 </h4>
                                 <p className="text-sm text-slate-600">
-                                    Semantic Sensor Network
+                                    Structured entity attributes
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-4">
@@ -740,13 +733,12 @@ export default function ApiDocsPage() {
                                     Schema.org
                                 </h4>
                                 <p className="text-sm text-slate-600">
-                                    General-purpose vocabulary
+                                    Additional vocabulary support
                                 </p>
                             </div>
                         </div>
                         <p className="text-sm text-slate-600">
-                            Ideal for semantic web applications, SPARQL
-                            endpoints, and RDF data integration.
+                            Ideal for smart city platforms, context brokers, and IoT interoperability.
                         </p>
                     </div>
 
@@ -799,14 +791,14 @@ export default function ApiDocsPage() {
                     </div>
                 </section>
 
-                {/* JSON-LD Code Examples */}
+                {/* NGSI-LD Code Examples */}
                 <section className="max-w-6xl mx-auto px-4 mb-16">
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                        JSON-LD / Linked Data Examples
+                        NGSI-LD / IoT Sensor Examples
                     </h2>
                     <p className="text-slate-600 mb-8">
-                        Examples for working with IoT sensor data using JSON-LD
-                        and semantic web tools.
+                        Examples for working with IoT sensor data using NGSI-LD
+                        format for smart city integration.
                     </p>
 
                     <div className="bg-slate-900 rounded-2xl overflow-hidden">

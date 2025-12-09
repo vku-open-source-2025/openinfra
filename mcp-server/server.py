@@ -19,12 +19,14 @@ mcp = FastMCP(
     You are an AI assistant for OpenInfra Open Data API.
 
     This MCP server provides documentation for the PUBLIC Open Data API only.
-    It includes infrastructure assets and IoT sensor data in JSON-LD format.
+    It includes infrastructure assets (GeoJSON) and IoT sensor data (NGSI-LD format).
+
+    NGSI-LD is the ETSI standard for context information management.
 
     Available tools:
     - get_opendata_endpoints - List all Open Data API endpoints
     - get_opendata_docs - Open Data API documentation
-    - get_iot_docs - IoT Sensors API documentation
+    - get_iot_docs - IoT Sensors NGSI-LD API documentation
 
     License: OGL (Open Government Licence)
     """,
@@ -105,20 +107,20 @@ async def get_opendata_endpoints() -> str:
 async def get_opendata_docs() -> str:
     """
     Get Open Data API documentation.
-    Returns detailed documentation for accessing public infrastructure data in JSON-LD format.
+    Returns detailed documentation for accessing public infrastructure data in GeoJSON format.
     """
     return json.dumps(
         {
             "title": "OpenInfra Open Data API",
-            "description": "Open Data API provides public infrastructure data in JSON-LD format following Semantic Web standards",
+            "description": "Open Data API provides public infrastructure data in GeoJSON format following open standards",
             "license": "OGL (Open Government Licence)",
             "base_url": "https://openinfra.space/api/opendata",
-            "data_format": "GeoJSON-LD (JSON-LD + GeoJSON)",
+            "data_format": "GeoJSON",
             "endpoints": [
                 {
                     "path": "/api/opendata/assets",
                     "method": "GET",
-                    "description": "Get list of infrastructure assets in GeoJSON-LD format",
+                    "description": "Get list of infrastructure assets in GeoJSON format",
                     "params": [
                         {
                             "name": "skip",
@@ -168,19 +170,22 @@ async def get_opendata_docs() -> str:
 @mcp.tool()
 async def get_iot_docs() -> str:
     """
-    Get IoT Sensors API documentation.
-    Returns documentation for accessing public IoT sensor data.
+    Get IoT Sensors NGSI-LD API documentation.
+    Returns documentation for accessing IoT sensor data in NGSI-LD format.
     """
     return json.dumps(
         {
-            "title": "OpenInfra IoT Sensors API",
-            "description": "Public API for accessing IoT sensor data from infrastructure monitoring",
-            "base_url": "https://openinfra.space/api/v1/iot",
+            "title": "OpenInfra IoT Sensors NGSI-LD API",
+            "description": "Public API for accessing IoT sensor data in NGSI-LD format (ETSI standard). Regular IoT API at /api/v1/iot provides simple JSON. NGSI-LD format (semantic interoperability) at /api/v1/ld",
+            "license": "OGL (Open Government Licence)",
+            "base_url_standard": "https://openinfra.space/api/v1/iot",
+            "base_url_ngsi_ld": "https://openinfra.space/api/v1/ld",
+            "format": "NGSI-LD (ETSI CIM standard)",
             "endpoints": [
                 {
                     "path": "/api/v1/iot/sensors",
                     "method": "GET",
-                    "description": "Get list of IoT sensors",
+                    "description": "Get list of IoT sensors (standard JSON format)",
                     "params": [
                         {
                             "name": "skip",
@@ -207,12 +212,12 @@ async def get_iot_docs() -> str:
                 {
                     "path": "/api/v1/iot/sensors/{id}",
                     "method": "GET",
-                    "description": "Get detailed sensor information by ID",
+                    "description": "Get detailed sensor information by ID (standard JSON)",
                 },
                 {
                     "path": "/api/v1/iot/sensors/{id}/data",
                     "method": "GET",
-                    "description": "Get historical sensor readings",
+                    "description": "Get historical sensor readings (standard JSON)",
                     "params": [
                         {
                             "name": "from_time",
@@ -230,6 +235,39 @@ async def get_iot_docs() -> str:
                             "description": "Maximum readings to return",
                         },
                     ],
+                },
+                {
+                    "path": "/api/v1/ld/sensors",
+                    "method": "GET",
+                    "description": "Get list of sensors in NGSI-LD format (semantic web compatible)",
+                    "format": "NGSI-LD",
+                    "params": ["skip", "limit", "asset_id", "sensor_type", "status"],
+                },
+                {
+                    "path": "/api/v1/ld/sensors/{sensor_id}",
+                    "method": "GET",
+                    "description": "Get single sensor in NGSI-LD format",
+                    "format": "NGSI-LD",
+                },
+                {
+                    "path": "/api/v1/ld/sensors/{sensor_id}/observations",
+                    "method": "GET",
+                    "description": "Get sensor observations in NGSI-LD format",
+                    "format": "NGSI-LD",
+                    "params": ["from_time", "to_time", "limit"],
+                },
+                {
+                    "path": "/api/v1/ld/observations",
+                    "method": "GET",
+                    "description": "Get all recent observations in NGSI-LD format",
+                    "format": "NGSI-LD",
+                    "params": ["hours", "asset_id", "sensor_type", "limit"],
+                },
+                {
+                    "path": "/api/v1/ld/context",
+                    "method": "GET",
+                    "description": "Get NGSI-LD context document",
+                    "format": "NGSI-LD",
                 },
             ],
         },

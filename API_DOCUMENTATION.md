@@ -13,12 +13,13 @@ This document provides a comprehensive overview of all APIs available for fronte
 7. [Alerts](#alerts)
 8. [Budgets](#budgets)
 9. [IoT Sensors](#iot-sensors)
-10. [Notifications](#notifications)
-11. [Reports](#reports)
-12. [Geospatial](#geospatial)
-13. [Public APIs](#public-apis)
-14. [Data Ingestion](#data-ingestion)
-15. [Data Flow Diagrams](#data-flow-diagrams)
+10. [IoT NGSI-LD API](#iot-ngsi-ld-api)
+11. [Notifications](#notifications)
+12. [Reports](#reports)
+13. [Geospatial](#geospatial)
+14. [Public APIs](#public-apis)
+15. [Data Ingestion](#data-ingestion)
+16. [Data Flow Diagrams](#data-flow-diagrams)
 
 ---
 
@@ -1238,6 +1239,141 @@ headers: {
   ]
 }
 ```
+
+---
+
+## IoT NGSI-LD API
+
+**Base Path**: `/api/v1/ld`
+
+This API provides IoT sensor data in **NGSI-LD format**, which is the ETSI standard for context information management. NGSI-LD enables semantic interoperability for smart city and IoT applications.
+
+### Key Concepts
+
+**NGSI-LD Format**: Each entity has:
+- `id`: URN format (e.g., `urn:ngsi-ld:Sensor:sensor-001`)
+- `type`: Entity type (e.g., `Sensor`, `Observation`)
+- **Properties**: `{"type": "Property", "value": ...}`
+- **Relationships**: `{"type": "Relationship", "object": "urn:..."}`
+- `@context`: Link to NGSI-LD core context
+
+**Note**: For simple JSON responses, use the standard IoT API at `/api/v1/iot`. NGSI-LD is for semantic web integration and smart city platforms.
+
+### 1. Get NGSI-LD Context
+**GET** `/ld/context`
+
+Returns the NGSI-LD context document with vocabulary mappings.
+
+**Response** (200 OK):
+```json
+{
+  "@context": [
+    "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
+    {
+      "schema": "https://schema.org/",
+      "sensorCode": "schema:identifier",
+      ...
+    }
+  ]
+}
+```
+
+---
+
+### 2. List Sensors (NGSI-LD)
+**GET** `/ld/sensors?skip=0&limit=100&asset_id=xxx&sensor_type=temperature&status=active`
+
+**Query Parameters**: Same as standard IoT API
+
+**Response** (200 OK): Array of NGSI-LD Sensor entities
+
+**NGSI-LD Sensor Example**:
+```json
+{
+  "@context": [...],
+  "id": "urn:ngsi-ld:Sensor:sensor-001",
+  "type": "Sensor",
+  "sensorCode": {
+    "type": "Property",
+    "value": "TEMP-001"
+  },
+  "sensorType": {
+    "type": "Property",
+    "value": "temperature"
+  },
+  "status": {
+    "type": "Property",
+    "value": "active"
+  },
+  "refAsset": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:Asset:asset-123"
+  }
+}
+```
+
+---
+
+### 3. Get Sensor (NGSI-LD)
+**GET** `/ld/sensors/{sensor_id}`
+
+Returns a single sensor in NGSI-LD format.
+
+---
+
+### 4. Get Sensor Observations (NGSI-LD)
+**GET** `/ld/sensors/{sensor_id}/observations?from_time=2024-01-01T00:00:00Z&to_time=2024-01-31T23:59:59Z&limit=1000`
+
+**Query Parameters**:
+- `from_time`: ISO 8601 datetime (required)
+- `to_time`: ISO 8601 datetime (required)
+- `limit`: int (default: 1000, max: 10000)
+
+**Response** (200 OK): Array of NGSI-LD Observation entities
+
+**NGSI-LD Observation Example**:
+```json
+{
+  "@context": [...],
+  "id": "urn:ngsi-ld:Observation:obs-12345",
+  "type": "Observation",
+  "observedAt": "2024-01-15T10:30:00Z",
+  "value": {
+    "type": "Property",
+    "value": 25.5,
+    "unitCode": "°C",
+    "observedAt": "2024-01-15T10:30:00Z"
+  },
+  "refSensor": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:Sensor:sensor-001"
+  },
+  "refAsset": {
+    "type": "Relationship",
+    "object": "urn:ngsi-ld:Asset:asset-123"
+  }
+}
+```
+
+---
+
+### 5. List All Observations (NGSI-LD)
+**GET** `/ld/observations?hours=1&asset_id=xxx&sensor_type=temperature&limit=500`
+
+**Query Parameters**:
+- `hours`: int (default: 1, max: 24) - how far back to retrieve
+- `asset_id`: string (optional)
+- `sensor_type`: string (optional)
+- `limit`: int (default: 500, max: 5000)
+
+Returns recent observations from all sensors in NGSI-LD format.
+
+---
+
+### 6. Get Asset with IoT Data (NGSI-LD)
+**GET** `/ld/assets/{asset_id}?hours=24`
+
+Returns an infrastructure asset with associated sensor data in NGSI-LD format.
 
 ---
 

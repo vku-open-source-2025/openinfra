@@ -49,7 +49,8 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     lifespan=lifespan,
     version="1.0.0",
-    docs_url=None,  # Disable Swagger UI
+    description="OpenInfra API with NGSI-LD support for IoT sensor data. Standard JSON API at /api/v1/iot and NGSI-LD format at /api/v1/ld",
+    docs_url=None,  # Disable Swagger UI (use custom docs at /docs)
     redoc_url=None,  # Disable ReDoc
 )
 
@@ -78,7 +79,7 @@ app.include_router(ai_agent_router, prefix="/api/v1")
 # app.include_router(ingest.router, prefix="/api/ingest", tags=["Ingestion"])
 # app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 from app.routers import opendata
-app.include_router(opendata.router, prefix="/api/opendata", tags=["Open Data (JSON-LD)"])
+app.include_router(opendata.router, prefix="/api/opendata", tags=["Open Data"])
 # app.include_router(iot.router, prefix="/api/iot", tags=["IoT Sensors"])
 
 # Mount static files for uploads

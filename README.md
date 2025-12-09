@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Cloud Service](https://img.shields.io/badge/cloud-openinfra.space-orange.svg)](https://openinfra.space/)
-[![Open API](https://img.shields.io/badge/Open%20API-docs-blueviolet.svg)](https://openinfra.space/docs)
+[![Open API](https://img.shields.io/badge/Open%20API-docs-blueviolet.svg)](https://api.openinfra.space/docs)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
@@ -113,10 +113,11 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 
 ### 8. 🤖 AI-Ready API (MCP - Model Context Protocol)
 
-- **Semantic API**: JSON-LD for machine-readable data
+- **Semantic API**: NGSI-LD format for IoT data interoperability
 - **MCP Integration**: Simplified AI agent interaction
 - **Self-documenting**: No need to learn complex API structures
 - **Automatic Authentication**: Built-in security for AI systems
+- **Dual Format**: Standard JSON (`/api/v1/iot`) + NGSI-LD (`/api/v1/ld`)
 
 ---
 
@@ -624,7 +625,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 📞 Support & Contact
 
 - **Cloud Service**: [https://openinfra.space](https://openinfra.space/)
-- **Open API Documentation**: [https://openinfra.space/docs](https://openinfra.space/docs)
+- **Open API Documentation**: [https://api.openinfra.space/docs](https://api.openinfra.space/docs)
 - **Documentation**: [backend/docs/](backend/docs/)
 - **Issues**: [GitHub Issues](https://github.com/vku-open-source-2025/openinfra/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/vku-open-source-2025/openinfra/discussions)
