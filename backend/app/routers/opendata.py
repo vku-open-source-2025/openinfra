@@ -93,7 +93,7 @@ async def api_info():
             "feature_types": "/api/opendata/feature-types",
         },
         "formats": ["JSON-LD", "GeoJSON"],
-        "documentation": "https://openinfra.space/docs",
+        "documentation": "https://api.openinfra.space/docs",
     }
 
 

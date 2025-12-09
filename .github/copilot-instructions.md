@@ -94,12 +94,22 @@ const { data: assets } = useQuery({ queryKey: ['assets'], queryFn: getAssets });
 - Manual trigger: `python backend/trigger_import.py`
 - Task skips duplicate coordinates to avoid data duplication
 
+## IoT Data Standards
+- **Standard API** (`/api/v1/iot`): Simple JSON format for frontend consumption
+- **NGSI-LD API** (`/api/v1/ld`): ETSI NGSI-LD format for semantic interoperability
+  - Properties: `{"type": "Property", "value": ...}`
+  - Relationships: `{"type": "Relationship", "object": "urn:..."}`
+  - Context: NGSI-LD core + Schema.org vocabulary
+- **SOSA Ontology**: Used only for internal IoT device-to-frontend communication (NOT in public API)
+
 ## API Endpoints Quick Reference
 - `GET/POST /api/assets/` - List/create infrastructure assets
 - `GET/PUT/DELETE /api/assets/{id}` - Single asset operations
 - `POST /api/ingest/csv` - Upload CSV file for bulk import
 - `GET/POST /api/maintenance/` - Maintenance logs
 - `POST /api/auth/login` - Admin authentication
+- `GET /api/v1/iot/*` - IoT sensors (standard JSON format)
+- `GET /api/v1/ld/*` - IoT sensors & observations (NGSI-LD format)
 
 ## Frontend Routes
 - `/` - Landing page (HomePage)
