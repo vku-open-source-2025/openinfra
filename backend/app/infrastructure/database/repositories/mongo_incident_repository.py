@@ -1,10 +1,13 @@
 """MongoDB implementation of incident repository."""
+
 from typing import Optional, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from app.domain.models.incident import Incident, AssetSummary
 from app.domain.repositories.incident_repository import IncidentRepository
-from app.infrastructure.database.repositories.base_repository import convert_objectid_to_str
+from app.infrastructure.database.repositories.base_repository import (
+    convert_objectid_to_str,
+)
 from datetime import datetime, timedelta
 
 
@@ -21,7 +24,14 @@ class MongoIncidentRepository(IncidentRepository):
         if incident_doc.get("asset_id") and ObjectId.is_valid(incident_doc["asset_id"]):
             asset_doc = await self.assets_collection.find_one(
                 {"_id": ObjectId(incident_doc["asset_id"])},
-                {"_id": 1, "asset_code": 1, "name": 1, "feature_type": 1, "category": 1, "status": 1}
+                {
+                    "_id": 1,
+                    "asset_code": 1,
+                    "name": 1,
+                    "feature_type": 1,
+                    "category": 1,
+                    "status": 1,
+                },
             )
             if asset_doc:
                 incident_doc["asset"] = {
@@ -30,7 +40,7 @@ class MongoIncidentRepository(IncidentRepository):
                     "name": asset_doc.get("name"),
                     "feature_type": asset_doc.get("feature_type", "Unknown"),
                     "category": asset_doc.get("category"),
-                    "status": asset_doc.get("status")
+                    "status": asset_doc.get("status"),
                 }
         return incident_doc
 
@@ -43,7 +53,9 @@ class MongoIncidentRepository(IncidentRepository):
         incident_doc = convert_objectid_to_str(incident_doc)
         return Incident(**incident_doc)
 
-    async def find_by_id(self, incident_id: str, populate_asset: bool = False) -> Optional[Incident]:
+    async def find_by_id(
+        self, incident_id: str, populate_asset: bool = False
+    ) -> Optional[Incident]:
         """Find incident by ID."""
         if not ObjectId.is_valid(incident_id):
             return None
@@ -57,7 +69,9 @@ class MongoIncidentRepository(IncidentRepository):
 
     async def find_by_number(self, incident_number: str) -> Optional[Incident]:
         """Find incident by number."""
-        incident_doc = await self.collection.find_one({"incident_number": incident_number})
+        incident_doc = await self.collection.find_one(
+            {"incident_number": incident_number}
+        )
         if incident_doc:
             incident_doc = convert_objectid_to_str(incident_doc)
             return Incident(**incident_doc)
@@ -82,7 +96,7 @@ class MongoIncidentRepository(IncidentRepository):
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
         populate_asset: bool = False,
-        verification_status: Optional[str] = None
+        verification_status: Optional[str] = None,
     ) -> List[Incident]:
         """List incidents with filtering."""
         query = {}
@@ -97,7 +111,9 @@ class MongoIncidentRepository(IncidentRepository):
         if verification_status:
             query["ai_verification_status"] = verification_status
 
-        cursor = self.collection.find(query).sort("reported_at", -1).skip(skip).limit(limit)
+        cursor = (
+            self.collection.find(query).sort("reported_at", -1).skip(skip).limit(limit)
+        )
         incidents = []
         async for incident_doc in cursor:
             if populate_asset:
@@ -112,7 +128,7 @@ class MongoIncidentRepository(IncidentRepository):
             return False
         result = await self.collection.update_one(
             {"_id": ObjectId(incident_id)},
-            {"$push": {"comments": comment}, "$set": {"updated_at": datetime.utcnow()}}
+            {"$push": {"comments": comment}, "$set": {"updated_at": datetime.utcnow()}},
         )
         return result.modified_count > 0
 
@@ -129,8 +145,8 @@ class MongoIncidentRepository(IncidentRepository):
                 {
                     "$pull": {"upvoted_by": user_id},
                     "$inc": {"upvotes": -1},
-                    "$set": {"updated_at": datetime.utcnow()}
-                }
+                    "$set": {"updated_at": datetime.utcnow()},
+                },
             )
         else:
             # Add upvote
@@ -139,8 +155,8 @@ class MongoIncidentRepository(IncidentRepository):
                 {
                     "$addToSet": {"upvoted_by": user_id},
                     "$inc": {"upvotes": 1},
-                    "$set": {"updated_at": datetime.utcnow()}
-                }
+                    "$set": {"updated_at": datetime.utcnow()},
+                },
             )
         return result.modified_count > 0
 
@@ -153,7 +169,7 @@ class MongoIncidentRepository(IncidentRepository):
         category: Optional[str] = None,
         severity: Optional[str] = None,
         exclude_incident_ids: Optional[List[str]] = None,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Incident]:
         """Find potential duplicate incidents based on filters."""
         query = {}
@@ -176,7 +192,8 @@ class MongoIncidentRepository(IncidentRepository):
         # Exclude specific incident IDs
         if exclude_incident_ids:
             exclude_object_ids = [
-                ObjectId(inc_id) for inc_id in exclude_incident_ids
+                ObjectId(inc_id)
+                for inc_id in exclude_incident_ids
                 if ObjectId.is_valid(inc_id)
             ]
             if exclude_object_ids:
@@ -200,11 +217,8 @@ class MongoIncidentRepository(IncidentRepository):
                 # For now, we'll add location filter but MongoDB will use the 2dsphere index
                 query["location.geometry"] = {
                     "$near": {
-                        "$geometry": {
-                            "type": "Point",
-                            "coordinates": coords
-                        },
-                        "$maxDistance": location_radius_meters
+                        "$geometry": {"type": "Point", "coordinates": coords},
+                        "$maxDistance": location_radius_meters,
                     }
                 }
                 # Note: $near must be the only geospatial query in the filter

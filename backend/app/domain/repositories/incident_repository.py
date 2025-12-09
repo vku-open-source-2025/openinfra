@@ -1,4 +1,5 @@
 """Incident repository interface."""
+
 from abc import ABC, abstractmethod
 from typing import Optional, List
 from app.domain.models.incident import Incident
@@ -13,7 +14,9 @@ class IncidentRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_id(self, incident_id: str, populate_asset: bool = False) -> Optional[Incident]:
+    async def find_by_id(
+        self, incident_id: str, populate_asset: bool = False
+    ) -> Optional[Incident]:
         """Find incident by ID."""
         pass
 
@@ -36,7 +39,7 @@ class IncidentRepository(ABC):
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
-        populate_asset: bool = False
+        populate_asset: bool = False,
     ) -> List[Incident]:
         """List incidents with filtering."""
         pass
@@ -61,7 +64,7 @@ class IncidentRepository(ABC):
         category: Optional[str] = None,
         severity: Optional[str] = None,
         exclude_incident_ids: Optional[List[str]] = None,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Incident]:
         """Find potential duplicate incidents based on filters."""
         pass

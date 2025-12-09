@@ -1,9 +1,16 @@
 """API v1 dependencies for dependency injection."""
+
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.infrastructure.database.mongodb import get_database
-from app.infrastructure.database.repositories.mongo_user_repository import MongoUserRepository
-from app.infrastructure.database.repositories.mongo_asset_repository import MongoAssetRepository
-from app.infrastructure.database.repositories.mongo_audit_repository import MongoAuditRepository
+from app.infrastructure.database.repositories.mongo_user_repository import (
+    MongoUserRepository,
+)
+from app.infrastructure.database.repositories.mongo_asset_repository import (
+    MongoAssetRepository,
+)
+from app.infrastructure.database.repositories.mongo_audit_repository import (
+    MongoAuditRepository,
+)
 from app.domain.services.user_service import UserService
 from app.domain.services.asset_service import AssetService
 from app.domain.services.audit_service import AuditService
@@ -48,11 +55,12 @@ async def get_asset_service():
     # Optional: inject maintenance and incident repositories for health score calculation
     try:
         maintenance_repo = await get_maintenance_repository()
-    except:
+    except Exception:
         maintenance_repo = None
+
     try:
         incident_repo = await get_incident_repository()
-    except:
+    except Exception:
         incident_repo = None
     return AssetService(repository, audit_service, maintenance_repo, incident_repo)
 
@@ -65,6 +73,7 @@ async def get_storage_service():
 async def get_geospatial_service():
     """Get geospatial service instance."""
     from app.domain.services.geospatial_service import GeospatialService
+
     repository = await get_asset_repository()
     return GeospatialService(repository)
 
@@ -72,26 +81,36 @@ async def get_geospatial_service():
 async def get_osm_service():
     """Get OSM service instance."""
     from app.infrastructure.external.osm_service import OSMService
+
     return OSMService()
 
 
 async def get_iot_sensor_repository():
     """Get IoT sensor repository instance."""
-    from app.infrastructure.database.repositories.mongo_iot_repository import MongoIoTSensorRepository
+    from app.infrastructure.database.repositories.mongo_iot_repository import (
+        MongoIoTSensorRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoIoTSensorRepository(db)
 
 
 async def get_sensor_data_repository():
     """Get sensor data repository instance."""
-    from app.infrastructure.database.repositories.mongo_sensor_data_repository import MongoSensorDataRepository
+    from app.infrastructure.database.repositories.mongo_sensor_data_repository import (
+        MongoSensorDataRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoSensorDataRepository(db)
 
 
 async def get_alert_repository():
     """Get alert repository instance."""
-    from app.infrastructure.database.repositories.mongo_alert_repository import MongoAlertRepository
+    from app.infrastructure.database.repositories.mongo_alert_repository import (
+        MongoAlertRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoAlertRepository(db)
 
@@ -99,6 +118,7 @@ async def get_alert_repository():
 async def get_alert_service():
     """Get alert service instance."""
     from app.domain.services.alert_service import AlertService
+
     repository = await get_alert_repository()
     return AlertService(repository)
 
@@ -106,6 +126,7 @@ async def get_alert_service():
 async def get_iot_service():
     """Get IoT service instance."""
     from app.domain.services.iot_service import IoTService
+
     sensor_repo = await get_iot_sensor_repository()
     data_repo = await get_sensor_data_repository()
     alert_service = await get_alert_service()
@@ -114,7 +135,10 @@ async def get_iot_service():
 
 async def get_incident_repository():
     """Get incident repository instance."""
-    from app.infrastructure.database.repositories.mongo_incident_repository import MongoIncidentRepository
+    from app.infrastructure.database.repositories.mongo_incident_repository import (
+        MongoIncidentRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoIncidentRepository(db)
 
@@ -122,12 +146,16 @@ async def get_incident_repository():
 async def get_gemini_service():
     """Get Gemini service instance."""
     from app.infrastructure.external.gemini_service import GeminiService
+
     return GeminiService()
 
 
 async def get_duplicate_detection_service():
     """Get duplicate detection service instance."""
-    from app.domain.services.duplicate_detection_service import DuplicateDetectionService
+    from app.domain.services.duplicate_detection_service import (
+        DuplicateDetectionService,
+    )
+
     incident_repo = await get_incident_repository()
     gemini_service = await get_gemini_service()
     return DuplicateDetectionService(incident_repo, gemini_service)
@@ -136,13 +164,17 @@ async def get_duplicate_detection_service():
 async def get_merge_service():
     """Get incident merge service instance."""
     from app.domain.services.incident_merge_service import IncidentMergeService
+
     incident_repo = await get_incident_repository()
     return IncidentMergeService(incident_repo)
 
 
 async def get_merge_suggestion_repository():
     """Get merge suggestion repository instance."""
-    from app.infrastructure.database.repositories.mongo_merge_suggestion_repository import MongoMergeSuggestionRepository
+    from app.infrastructure.database.repositories.mongo_merge_suggestion_repository import (
+        MongoMergeSuggestionRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoMergeSuggestionRepository(db)
 
@@ -150,56 +182,43 @@ async def get_merge_suggestion_repository():
 async def get_incident_service():
     """Get incident service instance."""
     from app.domain.services.incident_service import IncidentService
+
     repository = await get_incident_repository()
     # Maintenance service is optional
     try:
         from app.api.v1.dependencies import get_maintenance_service
+
         maintenance_service = await get_maintenance_service()
     except:
         maintenance_service = None
-    
+
     # Asset service is optional but recommended for location population
     try:
         from app.api.v1.dependencies import get_asset_service
+
         asset_service = await get_asset_service()
     except:
         asset_service = None
-    
-    # Duplicate detection and merge services (optional, only if Gemini API key is configured)
-    duplicate_detection_service = None
-    merge_service = None
-    merge_suggestion_repo = None
-    try:
-        from app.core.config import settings
-        if settings.GEMINI_API_KEY:
-            duplicate_detection_service = await get_duplicate_detection_service()
-            merge_service = await get_merge_service()
-            merge_suggestion_repo = await get_merge_suggestion_repository()
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Could not initialize duplicate detection services: {e}")
-    
-    return IncidentService(
-        repository,
-        maintenance_service,
-        asset_service,
-        duplicate_detection_service,
-        merge_service,
-        merge_suggestion_repo
-    )
+
+    return IncidentService(repository, maintenance_service, asset_service)
 
 
 async def get_budget_repository():
     """Get budget repository instance."""
-    from app.infrastructure.database.repositories.mongo_budget_repository import MongoBudgetRepository
+    from app.infrastructure.database.repositories.mongo_budget_repository import (
+        MongoBudgetRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoBudgetRepository(db)
 
 
 async def get_budget_transaction_repository():
     """Get budget transaction repository instance."""
-    from app.infrastructure.database.repositories.mongo_budget_repository import MongoBudgetTransactionRepository
+    from app.infrastructure.database.repositories.mongo_budget_repository import (
+        MongoBudgetTransactionRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoBudgetTransactionRepository(db)
 
@@ -207,6 +226,7 @@ async def get_budget_transaction_repository():
 async def get_budget_service():
     """Get budget service instance."""
     from app.domain.services.budget_service import BudgetService
+
     budget_repo = await get_budget_repository()
     transaction_repo = await get_budget_transaction_repository()
     return BudgetService(budget_repo, transaction_repo)
@@ -214,7 +234,10 @@ async def get_budget_service():
 
 async def get_notification_repository():
     """Get notification repository instance."""
-    from app.infrastructure.database.repositories.mongo_notification_repository import MongoNotificationRepository
+    from app.infrastructure.database.repositories.mongo_notification_repository import (
+        MongoNotificationRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoNotificationRepository(db)
 
@@ -225,20 +248,20 @@ async def get_notification_service():
     from app.infrastructure.notifications.email_service import EmailService
     from app.infrastructure.notifications.sms_service import SMSService
     from app.infrastructure.notifications.push_service import PushService
+
     notification_repo = await get_notification_repository()
     user_repo = await get_user_repository()
     return NotificationService(
-        notification_repo,
-        user_repo,
-        EmailService(),
-        SMSService(),
-        PushService()
+        notification_repo, user_repo, EmailService(), SMSService(), PushService()
     )
 
 
 async def get_report_repository():
     """Get report repository instance."""
-    from app.infrastructure.database.repositories.mongo_report_repository import MongoReportRepository
+    from app.infrastructure.database.repositories.mongo_report_repository import (
+        MongoReportRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoReportRepository(db)
 
@@ -247,6 +270,7 @@ async def get_report_service():
     """Get report service instance."""
     from app.domain.services.report_service import ReportService
     from app.infrastructure.reports.report_generator import ReportGenerator
+
     report_repo = await get_report_repository()
     report_generator = ReportGenerator()
     return ReportService(report_repo, report_generator)
@@ -254,7 +278,10 @@ async def get_report_service():
 
 async def get_maintenance_repository():
     """Get maintenance repository instance."""
-    from app.infrastructure.database.repositories.mongo_maintenance_repository import MongoMaintenanceRepository
+    from app.infrastructure.database.repositories.mongo_maintenance_repository import (
+        MongoMaintenanceRepository,
+    )
+
     db: AsyncIOMotorDatabase = await get_database()
     return MongoMaintenanceRepository(db)
 
@@ -262,10 +289,17 @@ async def get_maintenance_repository():
 async def get_maintenance_service():
     """Get maintenance service instance."""
     from app.domain.services.maintenance_service import MaintenanceService
+
     maintenance_repo = await get_maintenance_repository()
     asset_service = await get_asset_service()
     try:
         budget_service = await get_budget_service()
     except:
         budget_service = None
-    return MaintenanceService(maintenance_repo, asset_service, budget_service)
+    try:
+        incident_service = await get_incident_service()
+    except:
+        incident_service = None
+    return MaintenanceService(
+        maintenance_repo, asset_service, budget_service, incident_service
+    )

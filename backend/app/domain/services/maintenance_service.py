@@ -1,10 +1,16 @@
 """Maintenance service for managing maintenance workflows."""
-from typing import Optional, List
+
+from typing import Optional, List, Any
 from datetime import datetime, timedelta
 from app.domain.models.maintenance import (
-    Maintenance, MaintenanceCreate, MaintenanceUpdate,
-    MaintenanceStartRequest, MaintenanceCompleteRequest,
-    MaintenanceStatus, MaintenanceType, RecurrencePattern
+    Maintenance,
+    MaintenanceCreate,
+    MaintenanceUpdate,
+    MaintenanceStartRequest,
+    MaintenanceCompleteRequest,
+    MaintenanceStatus,
+    MaintenanceType,
+    RecurrencePattern,
 )
 from app.domain.repositories.maintenance_repository import MaintenanceRepository
 from app.domain.services.budget_service import BudgetService
@@ -23,11 +29,13 @@ class MaintenanceService:
         self,
         maintenance_repository: MaintenanceRepository,
         asset_service: Optional[AssetService] = None,
-        budget_service: Optional[BudgetService] = None
+        budget_service: Optional[BudgetService] = None,
+        incident_service: Optional[Any] = None,
     ):
         self.repository = maintenance_repository
         self.asset_service = asset_service
         self.budget_service = budget_service
+        self.incident_service = incident_service
 
     def _generate_work_order_number(self) -> str:
         """Generate unique work order number."""
@@ -36,9 +44,7 @@ class MaintenanceService:
         return f"WO-{year}-{sequence}"
 
     async def create_maintenance(
-        self,
-        maintenance_data: MaintenanceCreate,
-        created_by: str
+        self, maintenance_data: MaintenanceCreate, created_by: str
     ) -> Maintenance:
         """Create a new maintenance work order."""
         # Verify asset exists
@@ -63,9 +69,10 @@ class MaintenanceService:
 
         # Calculate next maintenance date if recurring
         if maintenance_data.recurring and maintenance_data.recurrence_pattern:
-            maintenance_dict["next_maintenance_date"] = self._calculate_next_maintenance_date(
-                maintenance_data.scheduled_date,
-                maintenance_data.recurrence_pattern
+            maintenance_dict["next_maintenance_date"] = (
+                self._calculate_next_maintenance_date(
+                    maintenance_data.scheduled_date, maintenance_data.recurrence_pattern
+                )
             )
 
         maintenance = await self.repository.create(maintenance_dict)
@@ -76,7 +83,7 @@ class MaintenanceService:
                 await self.asset_service.update_asset(
                     maintenance_data.asset_id,
                     {"status": "maintenance"},
-                    updated_by=created_by
+                    updated_by=created_by,
                 )
             except Exception as e:
                 logger.warning(f"Could not update asset status: {e}")
@@ -85,9 +92,7 @@ class MaintenanceService:
         return maintenance
 
     def _calculate_next_maintenance_date(
-        self,
-        current_date: datetime,
-        pattern: RecurrencePattern
+        self, current_date: datetime, pattern: RecurrencePattern
     ) -> datetime:
         """Calculate next maintenance date based on recurrence pattern."""
         if pattern == RecurrencePattern.DAILY:
@@ -112,7 +117,7 @@ class MaintenanceService:
         self,
         maintenance_id: str,
         start_request: MaintenanceStartRequest,
-        started_by: str
+        started_by: str,
     ) -> Maintenance:
         """Start maintenance work."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)
@@ -127,8 +132,8 @@ class MaintenanceService:
             {
                 "status": MaintenanceStatus.IN_PROGRESS.value,
                 "actual_start_time": actual_start_time,
-                "updated_at": datetime.utcnow()
-            }
+                "updated_at": datetime.utcnow(),
+            },
         )
 
         if not updated:
@@ -141,7 +146,7 @@ class MaintenanceService:
         self,
         maintenance_id: str,
         complete_request: MaintenanceCompleteRequest,
-        completed_by: str
+        completed_by: str,
     ) -> Maintenance:
         """Complete maintenance work."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)
@@ -163,9 +168,9 @@ class MaintenanceService:
             for part in complete_request.parts_used
         )
         total_cost = (
-            (complete_request.labor_cost or 0) +
-            parts_cost +
-            (complete_request.other_costs or 0)
+            (complete_request.labor_cost or 0)
+            + parts_cost
+            + (complete_request.other_costs or 0)
         )
 
         # Determine new status - if costs involved, wait for approval
@@ -185,12 +190,16 @@ class MaintenanceService:
             "parts_cost": parts_cost,
             "other_costs": complete_request.other_costs,
             "total_cost": total_cost,
-            "quality_check": complete_request.quality_check.dict() if complete_request.quality_check else None,
+            "quality_check": (
+                complete_request.quality_check.dict()
+                if complete_request.quality_check
+                else None
+            ),
             "follow_up_required": complete_request.follow_up_required,
             "follow_up_notes": complete_request.follow_up_notes,
             "impact_assessment": complete_request.impact_assessment,
             "completed_by": completed_by,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         updated = await self.repository.update(maintenance_id, update_dict)
@@ -201,13 +210,13 @@ class MaintenanceService:
         if new_status == MaintenanceStatus.COMPLETED.value:
             await self._finalize_maintenance_completion(updated, completed_by)
 
-        logger.info(f"Completed maintenance work (Status: {new_status}): {maintenance.work_order_number}")
+        logger.info(
+            f"Completed maintenance work (Status: {new_status}): {maintenance.work_order_number}"
+        )
         return updated
 
     async def approve_resolution(
-        self,
-        maintenance_id: str,
-        approved_by: str
+        self, maintenance_id: str, approved_by: str
     ) -> Maintenance:
         """Approve maintenance resolution and costs."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)
@@ -219,15 +228,18 @@ class MaintenanceService:
         if maintenance.budget_id and self.budget_service:
             try:
                 from app.domain.models.budget import BudgetTransactionCreate
+
                 transaction_data = BudgetTransactionCreate(
                     budget_id=maintenance.budget_id,
                     amount=maintenance.total_cost,
                     transaction_date=datetime.utcnow(),
                     description=f"Maintenance work order {maintenance.work_order_number}",
                     category="labor" if maintenance.labor_cost else "materials",
-                    maintenance_record_id=maintenance_id
+                    maintenance_record_id=maintenance_id,
                 )
-                await self.budget_service.create_transaction(transaction_data, approved_by)
+                await self.budget_service.create_transaction(
+                    transaction_data, approved_by
+                )
             except Exception as e:
                 logger.warning(f"Could not create budget transaction: {e}")
 
@@ -236,10 +248,10 @@ class MaintenanceService:
             maintenance_id,
             {
                 "status": MaintenanceStatus.COMPLETED.value,
-                "updated_at": datetime.utcnow()
-            }
+                "updated_at": datetime.utcnow(),
+            },
         )
-        
+
         if not updated:
             raise NotFoundError("Maintenance", maintenance_id)
 
@@ -250,30 +262,94 @@ class MaintenanceService:
         return updated
 
     async def _finalize_maintenance_completion(
-        self,
-        maintenance: Maintenance,
-        user_id: str
+        self, maintenance: Maintenance, user_id: str
     ):
         """Perform final steps after maintenance is fully completed (and approved)."""
         # Update asset status back to operational
         if self.asset_service:
             try:
                 await self.asset_service.update_asset(
-                    maintenance.asset_id,
-                    {"status": "operational"},
-                    updated_by=user_id
+                    maintenance.asset_id, {"status": "operational"}, updated_by=user_id
                 )
             except Exception as e:
                 logger.warning(f"Could not update asset status: {e}")
+
+        # Add comment to related incidents
+        if self.incident_service:
+            try:
+                # Get incident repository from incident service
+                incident_repo = self.incident_service.repository
+                related_incidents = await incident_repo.find_by_maintenance_record_id(
+                    str(maintenance.id)
+                )
+
+                if related_incidents:
+                    # Build comment text with maintenance result
+                    comment_parts = [
+                        f"Maintenance work order {maintenance.work_order_number} has been completed.",
+                    ]
+
+                    if maintenance.work_performed:
+                        comment_parts.append(
+                            f"\nWork performed: {maintenance.work_performed}"
+                        )
+
+                    if maintenance.parts_used:
+                        # Handle both PartUsed objects and dicts
+                        parts_list_items = []
+                        for part in maintenance.parts_used:
+                            if isinstance(part, dict):
+                                part_name = part.get("part_name", "Unknown")
+                                quantity = part.get("quantity", 0)
+                            else:
+                                part_name = part.part_name
+                                quantity = part.quantity
+                            parts_list_items.append(f"{part_name} (x{quantity})")
+                        if parts_list_items:
+                            comment_parts.append(
+                                f"\nParts used: {', '.join(parts_list_items)}"
+                            )
+
+                    if maintenance.actual_duration:
+                        hours = maintenance.actual_duration // 60
+                        minutes = maintenance.actual_duration % 60
+                        duration_str = (
+                            f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+                        )
+                        comment_parts.append(f"\nDuration: {duration_str}")
+
+                    if maintenance.impact_assessment:
+                        comment_parts.append(
+                            f"\nImpact assessment: {maintenance.impact_assessment}"
+                        )
+
+                    comment_text = "".join(comment_parts)
+
+                    # Add comment to each related incident
+                    for incident in related_incidents:
+                        try:
+                            await self.incident_service.add_comment(
+                                str(incident.id),
+                                comment_text,
+                                user_id,
+                                is_internal=True,
+                            )
+                            logger.info(
+                                f"Added maintenance completion comment to incident {incident.incident_number}"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Could not add comment to incident {incident.id}: {e}"
+                            )
+            except Exception as e:
+                logger.warning(f"Could not add comments to related incidents: {e}")
 
         # Create next recurring maintenance if needed
         if maintenance.recurring and maintenance.recurrence_pattern:
             await self._create_next_recurring_maintenance(maintenance, user_id)
 
     async def _create_next_recurring_maintenance(
-        self,
-        completed_maintenance: Maintenance,
-        created_by: str
+        self, completed_maintenance: Maintenance, created_by: str
     ):
         """Create next recurring maintenance record."""
         if not completed_maintenance.next_maintenance_date:
@@ -292,39 +368,32 @@ class MaintenanceService:
             supervisor_id=completed_maintenance.supervisor_id,
             budget_id=completed_maintenance.budget_id,
             recurring=True,
-            recurrence_pattern=completed_maintenance.recurrence_pattern
+            recurrence_pattern=completed_maintenance.recurrence_pattern,
         )
 
         await self.create_maintenance(next_maintenance, created_by)
 
     async def assign_maintenance(
-        self,
-        maintenance_id: str,
-        assigned_to: str,
-        assigned_by: str
+        self, maintenance_id: str, assigned_to: str, assigned_by: str
     ) -> Maintenance:
         """Assign maintenance to a technician."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)
 
         updated = await self.repository.update(
             maintenance_id,
-            {
-                "assigned_to": assigned_to,
-                "updated_at": datetime.utcnow()
-            }
+            {"assigned_to": assigned_to, "updated_at": datetime.utcnow()},
         )
 
         if not updated:
             raise NotFoundError("Maintenance", maintenance_id)
 
-        logger.info(f"Assigned maintenance {maintenance.work_order_number} to {assigned_to}")
+        logger.info(
+            f"Assigned maintenance {maintenance.work_order_number} to {assigned_to}"
+        )
         return updated
 
     async def cancel_maintenance(
-        self,
-        maintenance_id: str,
-        cancellation_reason: str,
-        cancelled_by: str
+        self, maintenance_id: str, cancellation_reason: str, cancelled_by: str
     ) -> Maintenance:
         """Cancel maintenance work order."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)
@@ -338,8 +407,8 @@ class MaintenanceService:
                 "status": MaintenanceStatus.CANCELLED.value,
                 "cancellation_reason": cancellation_reason,
                 "cancelled_by": cancelled_by,
-                "updated_at": datetime.utcnow()
-            }
+                "updated_at": datetime.utcnow(),
+            },
         )
 
         if not updated:
@@ -351,7 +420,7 @@ class MaintenanceService:
                 await self.asset_service.update_asset(
                     maintenance.asset_id,
                     {"status": "operational"},
-                    updated_by=cancelled_by
+                    updated_by=cancelled_by,
                 )
             except Exception as e:
                 logger.warning(f"Could not update asset status: {e}")
@@ -363,7 +432,7 @@ class MaintenanceService:
         self,
         maintenance_id: str,
         photo_urls: List[str],
-        photo_type: str = "after"  # "before" | "after"
+        photo_type: str = "after",  # "before" | "after"
     ) -> Maintenance:
         """Add photos to maintenance record."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)
@@ -386,19 +455,19 @@ class MaintenanceService:
         asset_id: Optional[str] = None,
         status: Optional[str] = None,
         assigned_to: Optional[str] = None,
-        priority: Optional[str] = None
+        priority: Optional[str] = None,
     ) -> List[Maintenance]:
         """List maintenance records with filtering."""
-        return await self.repository.list(skip, limit, asset_id, status, assigned_to, priority)
+        return await self.repository.list(
+            skip, limit, asset_id, status, assigned_to, priority
+        )
 
     async def get_upcoming_maintenance(self, days: int = 7) -> List[Maintenance]:
         """Get upcoming maintenance records."""
         return await self.repository.find_upcoming(days)
 
     async def update_maintenance(
-        self,
-        maintenance_id: str,
-        updates: MaintenanceUpdate
+        self, maintenance_id: str, updates: MaintenanceUpdate
     ) -> Maintenance:
         """Update maintenance record."""
         maintenance = await self.get_maintenance_by_id(maintenance_id)

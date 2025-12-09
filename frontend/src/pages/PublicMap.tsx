@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useSearch, useNavigate } from "@tanstack/react-router";
 import { getAssets, getAssetId, type Asset } from "../api";
 import MapComponent from "../components/Map";
-import AssetTable from "../components/AssetTable";
 import MaintenanceLogList from "../components/MaintenanceLog";
 import { useIoT } from "../hooks/useIoT";
-import { AlertTriangle, Activity, QrCode, Radio } from "lucide-react";
+import { AlertTriangle, X, ExternalLink } from "lucide-react";
 import Header from "../components/Header";
 import QRCodeModal from "../components/QRCodeModal";
 import NFCWriteModal from "../components/NFCWriteModal";
 import ReportModal from "../components/ReportModal";
 import IoTSensorChart from "../components/IoTSensorChart";
+import { Button } from "@/components/ui/button";
 
 // Extended Asset type with status added by useIoT hook
 type AssetWithStatus = Asset & {
@@ -36,7 +36,8 @@ const PublicMap: React.FC = () => {
     const { assetsWithStatus, alerts } = useIoT(initialAssets);
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
     const [filteredAssets, setFilteredAssets] = useState<Asset[] | null>(null);
-    const [routePoints, setRoutePoints] = useState<Asset[]>([]);
+    const [routePoints] = useState<Asset[]>([]);
+    const [showAssetInfoModal, setShowAssetInfoModal] = useState(false);
 
     const [showQRModal, setShowQRModal] = useState(false);
     const [showNFCModal, setShowNFCModal] = useState(false);
@@ -61,25 +62,19 @@ const PublicMap: React.FC = () => {
 
     const handleAssetSelect = (asset: Asset | null) => {
         setSelectedAsset(asset);
+        setShowAssetInfoModal(asset !== null);
         // Update URL without causing re-render
-        const newUrl = asset 
+        const newUrl = asset
             ? `${window.location.pathname}?assetId=${getAssetId(asset)}`
             : window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+        window.history.replaceState({}, "", newUrl);
     };
 
-    const handleRouteOptimization = () => {
-        if (!displayAssets.length) return;
-
-        const points = [...displayAssets]
-            .filter((a) => a.geometry.type === "Point")
-            .slice(0, 5)
-            .sort(
-                (a, b) => b.geometry.coordinates[1] - a.geometry.coordinates[1]
-            );
-
-        setRoutePoints(points);
-        alert(`Route optimized for ${points.length} stops!`);
+    const handleCloseAssetInfoModal = () => {
+        setShowAssetInfoModal(false);
+        setSelectedAsset(null);
+        // Update URL without causing re-render
+        window.history.replaceState({}, "", window.location.pathname);
     };
 
     if (isLoading)
@@ -128,222 +123,189 @@ const PublicMap: React.FC = () => {
                     </div>
                 )}
 
-                <div className="flex-1 p-4 lg:p-6 h-full overflow-hidden">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-                        {/* Left Column: Map & List */}
-                        <div className="lg:col-span-2 flex flex-col gap-4 h-full overflow-hidden">
-                            <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 h-[60%] shrink-0">
-                                <MapComponent
-                                    assets={displayAssets}
-                                    onAssetSelect={handleAssetSelect}
-                                    onFilterByShape={setFilteredAssets}
-                                    routePoints={routePoints}
-                                    selectedAsset={selectedAsset}
-                                    className="h-full"
-                                    enableGeoSearches={true}
-                                />
-                            </div>
+                {/* Fullscreen Map */}
+                <div className="flex-1 h-full w-full relative">
+                    <MapComponent
+                        assets={displayAssets}
+                        onAssetSelect={handleAssetSelect}
+                        onFilterByShape={setFilteredAssets}
+                        routePoints={routePoints}
+                        selectedAsset={selectedAsset}
+                        className="h-full w-full"
+                        enableGeoSearches={true}
+                    />
+                </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-0">
-                                <div className="px-6 py-3 border-b border-slate-100 flex justify-between items-center shrink-0">
-                                    <h3 className="font-bold text-lg">
-                                        {filteredAssets
-                                            ? `Filtered Assets (${filteredAssets.length})`
-                                            : "System Assets"}
-                                    </h3>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={handleRouteOptimization}
-                                            className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium hover:bg-blue-100 transition-colors flex items-center gap-1"
-                                        >
-                                            <Activity size={12} />
-                                            Optimize Route
-                                        </button>
-                                        {filteredAssets && (
-                                            <button
-                                                onClick={() =>
-                                                    setFilteredAssets(null)
-                                                }
-                                                className="text-xs text-red-600 font-medium hover:text-red-800"
+                {/* Asset Info Modal */}
+                {showAssetInfoModal && selectedAsset && (
+                    <div className="fixed top-20 right-0 bottom-0 z-[9999] flex items-start justify-end p-4">
+                        <div className="bg-white rounded-l-xl shadow-xl w-full max-w-2xl h-full overflow-hidden flex flex-col animate-in slide-in-from-right fade-in duration-200">
+                            {/* Modal Header */}
+                            <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-3 shrink-0">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">
+                                            {selectedAsset.feature_code}
+                                        </span>
+                                        <span className="text-xs text-slate-400">
+                                            ID:{" "}
+                                            {getAssetId(selectedAsset).slice(
+                                                -6
+                                            )}
+                                        </span>
+                                        {(selectedAsset as AssetWithStatus)
+                                            .status && (
+                                            <span
+                                                className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${
+                                                    (
+                                                        selectedAsset as AssetWithStatus
+                                                    ).status === "Online"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-red-100 text-red-700"
+                                                }`}
                                             >
-                                                Clear Filter
-                                            </button>
+                                                {
+                                                    (
+                                                        selectedAsset as AssetWithStatus
+                                                    ).status
+                                                }
+                                            </span>
                                         )}
                                     </div>
+                                    <h3 className="text-xl font-bold text-slate-900">
+                                        {selectedAsset.feature_type}
+                                    </h3>
                                 </div>
-                                <div className="flex-1 overflow-y-auto">
-                                    <AssetTable
-                                        assets={displayAssets}
-                                        onAssetSelect={handleAssetSelect}
-                                        selectedAssetId={selectedAsset ? getAssetId(selectedAsset) : undefined}
-                                    />
-                                </div>
+                                <button
+                                    onClick={handleCloseAssetInfoModal}
+                                    className="p-1 hover:bg-slate-200 rounded transition-colors shrink-0"
+                                    title="Close"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
-                        </div>
 
-                        {/* Right Column: Details Panel */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 h-full overflow-hidden flex flex-col">
-                            {selectedAsset ? (
-                                <>
-                                    <div className="p-6 border-b border-slate-100 bg-slate-50">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">
-                                                {selectedAsset.feature_code}
-                                            </span>
-                                            <span className="text-xs text-slate-400">
-                                                ID:{" "}
-                                                {getAssetId(selectedAsset).slice(-6)}
-                                            </span>
-                                            {(selectedAsset as AssetWithStatus)
-                                                .status && (
-                                                    <span
-                                                        className={`px-2 py-1 text-xs font-bold rounded uppercase tracking-wide ${(
-                                                                selectedAsset as AssetWithStatus
-                                                            ).status === "Online"
-                                                                ? "bg-green-100 text-green-700"
-                                                                : "bg-red-100 text-red-700"
-                                                            }`}
-                                                    >
-                                                        {
-                                                            (
-                                                                selectedAsset as AssetWithStatus
-                                                            ).status
-                                                        }
-                                                    </span>
-                                                )}
-                                        </div>
-                                        <h3 className="text-xl font-bold text-slate-900">
-                                            {selectedAsset.feature_type}
-                                        </h3>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto p-6">
-                                        <div className="space-y-6">
-                                            <div>
-                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                    Location
-                                                </h4>
-                                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                    {selectedAsset.geometry
-                                                        .type === "Point" ? (
-                                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                                            <div>
-                                                                <p className="text-slate-500 text-xs">
-                                                                    Latitude
-                                                                </p>
-                                                                <p className="font-mono font-medium">
-                                                                    {selectedAsset.geometry.coordinates[1].toFixed(
-                                                                        6
-                                                                    )}
-                                                                </p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-slate-500 text-xs">
-                                                                    Longitude
-                                                                </p>
-                                                                <p className="font-mono font-medium">
-                                                                    {selectedAsset.geometry.coordinates[0].toFixed(
-                                                                        6
-                                                                    )}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-sm">
-                                                            <p className="text-slate-500 text-xs mb-1">
-                                                                Geometry Type
-                                                            </p>
-                                                            <p className="font-mono font-medium mb-2">
-                                                                {
-                                                                    selectedAsset
-                                                                        .geometry
-                                                                        .type
-                                                                }
-                                                            </p>
-                                                            <p className="text-slate-500 text-xs mb-1">
-                                                                Details
-                                                            </p>
-                                                            <p className="font-mono font-medium">
-                                                                {selectedAsset
+                            {/* Modal Content */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                <div className="space-y-6">
+                                    {/* Location */}
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                            Location
+                                        </h4>
+                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                            {selectedAsset.geometry.type ===
+                                                "Point" &&
+                                            Array.isArray(
+                                                selectedAsset.geometry
+                                                    .coordinates
+                                            ) ? (
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <p className="text-slate-500 text-xs">
+                                                            Latitude
+                                                        </p>
+                                                        <p className="font-mono font-medium">
+                                                            {(
+                                                                selectedAsset
                                                                     .geometry
-                                                                    .type ===
-                                                                    "LineString"
-                                                                    ? `${selectedAsset.geometry.coordinates.length} points`
-                                                                    : "Complex Geometry"}
-                                                            </p>
-                                                        </div>
-                                                    )}
+                                                                    .coordinates[1] as number
+                                                            ).toFixed(6)}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-slate-500 text-xs">
+                                                            Longitude
+                                                        </p>
+                                                        <p className="font-mono font-medium">
+                                                            {(
+                                                                selectedAsset
+                                                                    .geometry
+                                                                    .coordinates[0] as number
+                                                            ).toFixed(6)}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-
-                                            <div>
-                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                    Maintenance History
-                                                </h4>
-                                                <MaintenanceLogList
-                                                    assetId={getAssetId(selectedAsset)}
-                                                />
-                                            </div>
-
-                                            {/* IoT Sensor Data */}
-                                            <div>
-                                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                    IoT Sensor Data
-                                                </h4>
-                                                <IoTSensorChart
-                                                    assetId={getAssetId(selectedAsset)}
-                                                    assetName={selectedAsset.feature_type}
-                                                />
-                                            </div>
+                                            ) : (
+                                                <div className="text-sm">
+                                                    <p className="text-slate-500 text-xs mb-1">
+                                                        Geometry Type
+                                                    </p>
+                                                    <p className="font-mono font-medium mb-2">
+                                                        {
+                                                            selectedAsset
+                                                                .geometry.type
+                                                        }
+                                                    </p>
+                                                    <p className="text-slate-500 text-xs mb-1">
+                                                        Details
+                                                    </p>
+                                                    <p className="font-mono font-medium">
+                                                        {selectedAsset.geometry
+                                                            .type ===
+                                                        "LineString"
+                                                            ? `${selectedAsset.geometry.coordinates.length} points`
+                                                            : "Complex Geometry"}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
-                                    <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
-                                        <button
-                                            onClick={() => setShowQRModal(true)}
-                                            className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
-                                        >
-                                            <QrCode size={16} />
-                                            QR Code
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                setShowNFCModal(true)
-                                            }
-                                            className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
-                                        >
-                                            <Radio size={16} />
-                                            Write NFC
-                                        </button>
-                                        <button
-                                            onClick={() => setShowReportModal(true)}
-                                            className="flex-1 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium shadow-sm flex items-center justify-center gap-2"
-                                        >
-                                            <AlertTriangle size={16} />
-                                            Report
-                                        </button>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
-                                    <div className="bg-slate-100 p-4 rounded-full mb-4">
-                                        <Activity
-                                            size={32}
-                                            className="text-slate-300"
+                                    {/* Maintenance History */}
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                            Maintenance History
+                                        </h4>
+                                        <MaintenanceLogList
+                                            assetId={getAssetId(selectedAsset)}
                                         />
                                     </div>
-                                    <p className="font-medium text-slate-500">
-                                        No Asset Selected
-                                    </p>
-                                    <p className="text-sm mt-2">
-                                        Select an asset from the map or list to
-                                        view details.
-                                    </p>
+
+                                    {/* IoT Sensor Data */}
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                                            IoT Sensor Data
+                                        </h4>
+                                        <IoTSensorChart
+                                            assetId={getAssetId(selectedAsset)}
+                                            assetName={
+                                                selectedAsset.feature_type
+                                            }
+                                        />
+                                    </div>
                                 </div>
-                            )}
+                            </div>
+
+                            {/* Modal Actions */}
+                            <div className="px-8 py-4 border-t border-slate-100 bg-slate-50 flex gap-2 shrink-0 justify-end">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        const assetId =
+                                            getAssetId(selectedAsset);
+                                        navigate({
+                                            to: "/asset/$id",
+                                            params: { id: assetId },
+                                        });
+                                    }}
+                                    className="flex flex-row items-center gap-2"
+                                >
+                                    <ExternalLink size={16} />
+                                    View Details
+                                </Button>
+                                <Button
+                                    className="flex flex-row items-center gap-2"
+                                    variant="destructive"
+                                    onClick={() => setShowReportModal(true)}
+                                >
+                                    <AlertTriangle size={16} />
+                                    Report
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 <QRCodeModal
                     isOpen={showQRModal}

@@ -1,0 +1,640 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { maintenanceApi } from "../../api/maintenance";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Textarea } from "../../components/ui/textarea";
+import { Label } from "../../components/ui/label";
+import { Badge } from "../../components/ui/badge";
+import {
+    Loader2,
+    ArrowLeft,
+    MapPin,
+    CheckCircle,
+    Clock,
+    PlayCircle,
+    Camera,
+    Wrench,
+    Calendar,
+    DollarSign,
+    AlertCircle,
+    XCircle,
+    Image as ImageIcon,
+    X,
+} from "lucide-react";
+import { format } from "date-fns";
+import { useAuthStore } from "../../stores/authStore";
+
+export const Route = createFileRoute("/technician/maintenance/$id")({
+    component: MaintenanceDetailPage,
+});
+
+function MaintenanceDetailPage() {
+    const { id } = Route.useParams();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const { user } = useAuthStore();
+
+    const [completionNotes, setCompletionNotes] = useState("");
+    const [actualCost, setActualCost] = useState<string>("");
+    const [showCompleteForm, setShowCompleteForm] = useState(false);
+    const [beforePhotos, setBeforePhotos] = useState<File[]>([]);
+    const [afterPhotos, setAfterPhotos] = useState<File[]>([]);
+    const [uploadingPhotos, setUploadingPhotos] = useState(false);
+    const [photoType, setPhotoType] = useState<"before" | "after">("after");
+
+    const { data: maintenance, isLoading } = useQuery({
+        queryKey: ["maintenance", id],
+        queryFn: () => maintenanceApi.getById(id),
+    });
+
+    const startMutation = useMutation({
+        mutationFn: () => maintenanceApi.start(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["maintenance", id] });
+            queryClient.invalidateQueries({
+                queryKey: ["my-maintenance", user?.id],
+            });
+        },
+    });
+
+    const completeMutation = useMutation({
+        mutationFn: (data: { notes: string; cost?: number }) =>
+            maintenanceApi.complete(id, {
+                work_performed: data.notes, // Required field
+                actual_cost: data.cost,
+                quality_checks: [],
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["maintenance", id] });
+            queryClient.invalidateQueries({
+                queryKey: ["my-maintenance", user?.id],
+            });
+            navigate({ to: "/technician" });
+        },
+    });
+
+    const uploadPhotosMutation = useMutation({
+        mutationFn: ({
+            files,
+            type,
+        }: {
+            files: File[];
+            type: "before" | "after";
+        }) => maintenanceApi.uploadPhotos(id, files, type),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["maintenance", id] });
+            setBeforePhotos([]);
+            setAfterPhotos([]);
+            setUploadingPhotos(false);
+        },
+    });
+
+    const handleStart = () => {
+        startMutation.mutate();
+    };
+
+    const handleComplete = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!completionNotes.trim()) return;
+
+        completeMutation.mutate({
+            notes: completionNotes,
+            cost: actualCost ? parseFloat(actualCost) : undefined,
+        });
+    };
+
+    const handlePhotoUpload = async (type: "before" | "after") => {
+        const photos = type === "before" ? beforePhotos : afterPhotos;
+        if (photos.length === 0) return;
+
+        setUploadingPhotos(true);
+        try {
+            await uploadPhotosMutation.mutateAsync({ files: photos, type });
+        } catch (error) {
+            console.error("Failed to upload photos:", error);
+        } finally {
+            setUploadingPhotos(false);
+        }
+    };
+
+    const handleFileSelect = (
+        e: React.ChangeEvent<HTMLInputElement>,
+        type: "before" | "after"
+    ) => {
+        const files = Array.from(e.target.files || []);
+        if (type === "before") {
+            setBeforePhotos([...beforePhotos, ...files]);
+        } else {
+            setAfterPhotos([...afterPhotos, ...files]);
+        }
+    };
+
+    const removePhoto = (index: number, type: "before" | "after") => {
+        if (type === "before") {
+            setBeforePhotos(beforePhotos.filter((_, i) => i !== index));
+        } else {
+            setAfterPhotos(afterPhotos.filter((_, i) => i !== index));
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center p-8">
+                <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
+            </div>
+        );
+    }
+
+    if (!maintenance) {
+        return (
+            <div className="p-8 text-center text-red-500">
+                Maintenance work order not found.
+            </div>
+        );
+    }
+
+    const getStatusConfig = () => {
+        switch (maintenance.status) {
+            case "scheduled":
+                return {
+                    icon: Calendar,
+                    color: "text-blue-600",
+                    bgColor: "bg-blue-50",
+                    label: "Scheduled",
+                };
+            case "in_progress":
+                return {
+                    icon: Wrench,
+                    color: "text-orange-600",
+                    bgColor: "bg-orange-50",
+                    label: "In Progress",
+                };
+            case "completed":
+                return {
+                    icon: CheckCircle,
+                    color: "text-green-600",
+                    bgColor: "bg-green-50",
+                    label: "Completed",
+                };
+            case "cancelled":
+                return {
+                    icon: XCircle,
+                    color: "text-red-600",
+                    bgColor: "bg-red-50",
+                    label: "Cancelled",
+                };
+            default:
+                return {
+                    icon: Clock,
+                    color: "text-slate-600",
+                    bgColor: "bg-slate-50",
+                    label: maintenance.status,
+                };
+        }
+    };
+
+    const statusConfig = getStatusConfig();
+    const StatusIcon = statusConfig.icon;
+
+    const canStart = maintenance.status === "scheduled";
+    const canComplete = maintenance.status === "in_progress";
+    const canUploadPhotos =
+        maintenance.status === "in_progress" ||
+        maintenance.status === "completed";
+
+    return (
+        <div className="space-y-6">
+            <Button
+                variant="ghost"
+                className="pl-0"
+                onClick={() => navigate({ to: "/technician" })}
+            >
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
+            </Button>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
+                {/* Header */}
+                <div>
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Badge
+                                    variant="outline"
+                                    className="font-mono text-xs"
+                                >
+                                    {maintenance.work_order_number}
+                                </Badge>
+                                <div
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+                                >
+                                    <StatusIcon className="h-4 w-4" />
+                                    <span>{statusConfig.label}</span>
+                                </div>
+                                <Badge
+                                    variant={
+                                        maintenance.priority === "urgent" ||
+                                        maintenance.priority === "high"
+                                            ? "destructive"
+                                            : maintenance.priority === "medium"
+                                            ? "default"
+                                            : "secondary"
+                                    }
+                                >
+                                    {maintenance.priority}
+                                </Badge>
+                            </div>
+                            <h1 className="text-2xl font-bold text-slate-900 mb-2">
+                                {maintenance.title}
+                            </h1>
+                            <p className="text-slate-600">
+                                {maintenance.description}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-200">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Calendar className="h-4 w-4" />
+                            <span>
+                                <strong>Scheduled:</strong>{" "}
+                                {format(
+                                    new Date(maintenance.scheduled_date),
+                                    "MMM d, yyyy HH:mm"
+                                )}
+                            </span>
+                        </div>
+                        {maintenance.started_at && (
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <Clock className="h-4 w-4" />
+                                <span>
+                                    <strong>Started:</strong>{" "}
+                                    {format(
+                                        new Date(maintenance.started_at),
+                                        "MMM d, yyyy HH:mm"
+                                    )}
+                                </span>
+                            </div>
+                        )}
+                        {maintenance.completed_at && (
+                            <div className="flex items-center gap-2 text-sm text-green-600">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>
+                                    <strong>Completed:</strong>{" "}
+                                    {format(
+                                        new Date(maintenance.completed_at),
+                                        "MMM d, yyyy HH:mm"
+                                    )}
+                                </span>
+                            </div>
+                        )}
+                        {maintenance.estimated_cost && (
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <DollarSign className="h-4 w-4" />
+                                <span>
+                                    <strong>Estimated Cost:</strong> $
+                                    {maintenance.estimated_cost.toFixed(2)}
+                                </span>
+                            </div>
+                        )}
+                        {maintenance.actual_cost && (
+                            <div className="flex items-center gap-2 text-sm text-green-600">
+                                <DollarSign className="h-4 w-4" />
+                                <span>
+                                    <strong>Actual Cost:</strong> $
+                                    {maintenance.actual_cost.toFixed(2)}
+                                </span>
+                            </div>
+                        )}
+                        {maintenance.asset_id && (
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <MapPin className="h-4 w-4" />
+                                <span>
+                                    <strong>Asset ID:</strong>{" "}
+                                    {maintenance.asset_id}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Notes Section */}
+                {maintenance.notes && (
+                    <div className="pt-4 border-t border-slate-200">
+                        <h3 className="font-semibold mb-2">Notes</h3>
+                        <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                            {maintenance.notes}
+                        </p>
+                    </div>
+                )}
+
+                {/* Completion Notes */}
+                {maintenance.status === "completed" && maintenance.notes && (
+                    <div className="pt-4 border-t border-slate-200">
+                        <h3 className="font-semibold mb-2">Completion Notes</h3>
+                        <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                            {maintenance.notes}
+                        </p>
+                    </div>
+                )}
+
+                {/* Photos Section */}
+                {canUploadPhotos && (
+                    <div className="pt-4 border-t border-slate-200">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                            <Camera className="h-5 w-5" />
+                            Photos
+                        </h3>
+
+                        {/* Before Photos */}
+                        <div className="mb-6">
+                            <Label className="mb-2 block">Before Photos</Label>
+                            <div className="space-y-3">
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) =>
+                                            handleFileSelect(e, "before")
+                                        }
+                                        className="flex-1"
+                                    />
+                                    {beforePhotos.length > 0 && (
+                                        <Button
+                                            onClick={() =>
+                                                handlePhotoUpload("before")
+                                            }
+                                            disabled={uploadingPhotos}
+                                            size="sm"
+                                        >
+                                            {uploadingPhotos ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Camera className="h-4 w-4 mr-1" />
+                                                    Upload
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+                                {beforePhotos.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {beforePhotos.map((file, index) => (
+                                            <div
+                                                key={index}
+                                                className="relative bg-slate-100 rounded p-2 flex items-center gap-2"
+                                            >
+                                                <ImageIcon className="h-4 w-4 text-slate-500" />
+                                                <span className="text-xs text-slate-600 truncate max-w-[150px]">
+                                                    {file.name}
+                                                </span>
+                                                <button
+                                                    onClick={() =>
+                                                        removePhoto(
+                                                            index,
+                                                            "before"
+                                                        )
+                                                    }
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* After Photos */}
+                        <div>
+                            <Label className="mb-2 block">After Photos</Label>
+                            <div className="space-y-3">
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={(e) =>
+                                            handleFileSelect(e, "after")
+                                        }
+                                        className="flex-1"
+                                    />
+                                    {afterPhotos.length > 0 && (
+                                        <Button
+                                            onClick={() =>
+                                                handlePhotoUpload("after")
+                                            }
+                                            disabled={uploadingPhotos}
+                                            size="sm"
+                                        >
+                                            {uploadingPhotos ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Camera className="h-4 w-4 mr-1" />
+                                                    Upload
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+                                {afterPhotos.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {afterPhotos.map((file, index) => (
+                                            <div
+                                                key={index}
+                                                className="relative bg-slate-100 rounded p-2 flex items-center gap-2"
+                                            >
+                                                <ImageIcon className="h-4 w-4 text-slate-500" />
+                                                <span className="text-xs text-slate-600 truncate max-w-[150px]">
+                                                    {file.name}
+                                                </span>
+                                                <button
+                                                    onClick={() =>
+                                                        removePhoto(
+                                                            index,
+                                                            "after"
+                                                        )
+                                                    }
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Display existing photos */}
+                        {maintenance.attachments &&
+                            maintenance.attachments.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-slate-200">
+                                    <h4 className="text-sm font-semibold mb-2">
+                                        Uploaded Photos
+                                    </h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {maintenance.attachments.map(
+                                            (attachment, index) => (
+                                                <a
+                                                    key={index}
+                                                    href={attachment.file_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block aspect-square rounded-lg overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all"
+                                                >
+                                                    <img
+                                                        src={
+                                                            attachment.file_url
+                                                        }
+                                                        alt={
+                                                            attachment.file_name
+                                                        }
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </a>
+                                            )
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                    </div>
+                )}
+
+                {/* Actions */}
+                <div className="pt-4 border-t border-slate-200">
+                    {canStart && (
+                        <Button
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            onClick={handleStart}
+                            disabled={startMutation.isPending}
+                        >
+                            {startMutation.isPending ? (
+                                <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                            ) : (
+                                <PlayCircle className="mr-2 h-4 w-4" />
+                            )}
+                            Start Work
+                        </Button>
+                    )}
+
+                    {canComplete && !showCompleteForm && (
+                        <Button
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            onClick={() => setShowCompleteForm(true)}
+                        >
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Complete Work
+                        </Button>
+                    )}
+
+                    {showCompleteForm && (
+                        <form
+                            onSubmit={handleComplete}
+                            className="bg-slate-50 p-4 rounded border space-y-4"
+                        >
+                            <h3 className="font-semibold">
+                                Completion Details
+                            </h3>
+                            <div>
+                                <Label htmlFor="work-performed">
+                                    Work Performed *
+                                </Label>
+                                <Textarea
+                                    id="work-performed"
+                                    required
+                                    value={completionNotes}
+                                    onChange={(e) =>
+                                        setCompletionNotes(e.target.value)
+                                    }
+                                    placeholder="Describe work performed, parts replaced, issues found..."
+                                    rows={5}
+                                />
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Required: Describe the work that was
+                                    performed.
+                                </p>
+                            </div>
+                            <div>
+                                <Label htmlFor="actual-cost">
+                                    Actual Cost ($)
+                                </Label>
+                                <Input
+                                    id="actual-cost"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={actualCost}
+                                    onChange={(e) =>
+                                        setActualCost(e.target.value)
+                                    }
+                                    placeholder="0.00"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Enter the actual cost if different from
+                                    estimated cost.
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => {
+                                        setShowCompleteForm(false);
+                                        setCompletionNotes("");
+                                        setActualCost("");
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    disabled={
+                                        completeMutation.isPending ||
+                                        !completionNotes.trim()
+                                    }
+                                >
+                                    {completeMutation.isPending && (
+                                        <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                                    )}
+                                    Submit Completion
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+
+                    {maintenance.status === "completed" &&
+                        maintenance.approval_status === "pending" && (
+                            <div className="bg-yellow-50 p-4 rounded border border-yellow-200 text-yellow-800 text-center">
+                                <AlertCircle className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                                <p className="font-semibold">
+                                    Waiting for Admin Approval
+                                </p>
+                                <p className="text-sm">
+                                    Work completed. Pending cost approval.
+                                </p>
+                            </div>
+                        )}
+
+                    {maintenance.status === "completed" &&
+                        maintenance.approval_status === "approved" && (
+                            <div className="bg-green-50 p-4 rounded border border-green-200 text-green-800 text-center">
+                                <CheckCircle className="mx-auto h-8 w-8 mb-2" />
+                                <p className="font-semibold">
+                                    Work Completed and Approved
+                                </p>
+                            </div>
+                        )}
+                </div>
+            </div>
+        </div>
+    );
+}

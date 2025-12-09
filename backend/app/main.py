@@ -49,9 +49,8 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     lifespan=lifespan,
     version="1.0.0",
-    description="OpenInfra API with NGSI-LD support for IoT sensor data. Standard JSON API at /api/v1/iot and NGSI-LD format at /api/v1/ld",
-    docs_url=None,  # Disable Swagger UI (use custom docs at /docs)
-    redoc_url=None,  # Disable ReDoc
+    docs_url=None if os.environ.get("NODE_ENV") == "production" else "/docs",
+    redoc_url=None if os.environ.get("NODE_ENV") == "production" else "/redoc",
 )
 
 # CORS
@@ -72,6 +71,7 @@ app.include_router(api_router, prefix="/api/v1")
 
 # AI Agent WebSocket router (separate from REST API)
 from app.api.v1.routers.ai_agent import router as ai_agent_router
+
 app.include_router(ai_agent_router, prefix="/api/v1")
 
 # app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])
@@ -79,6 +79,7 @@ app.include_router(ai_agent_router, prefix="/api/v1")
 # app.include_router(ingest.router, prefix="/api/ingest", tags=["Ingestion"])
 # app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 from app.routers import opendata
+
 app.include_router(opendata.router, prefix="/api/opendata", tags=["Open Data"])
 # app.include_router(iot.router, prefix="/api/iot", tags=["IoT Sensors"])
 
@@ -89,6 +90,7 @@ if os.path.exists(uploads_dir):
 else:
     os.makedirs(uploads_dir, exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
 
 @app.get("/")
 async def root():
