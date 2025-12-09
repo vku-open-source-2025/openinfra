@@ -162,4 +162,9 @@ export const incidentsApi = {
     );
     return response.data;
   },
+
+  getRelatedIncidents: async (id: string): Promise<Incident[]> => {
+    const response = await httpClient.get<Incident[]>(`/incidents/${id}/related`);
+    return response.data;
+  },
 };

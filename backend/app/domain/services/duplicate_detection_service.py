@@ -22,7 +22,13 @@ class DuplicateDetectionService:
         self.gemini_service = gemini_service
 
     async def detect_duplicates(self, incident: Incident) -> List[DuplicateMatch]:
-        """Detect potential duplicate incidents."""
+        """Detect potential duplicate incidents.
+        
+        Considers multiple scenarios:
+        1. Multiple reports of same issue before fix (active incidents)
+        2. Recurrence: Same issue happens again after being resolved
+        3. Reports while technician is working (in progress incidents)
+        """
         try:
             # Get potential duplicates from repository
             location_dict = None
@@ -33,6 +39,7 @@ class DuplicateDetectionService:
                     logger.warning(f"Error serializing location for incident {incident.id}: {e}")
                     location_dict = None
 
+            # Include resolved incidents to detect recurrence (longer time window)
             candidates = await self.repository.find_potential_duplicates(
                 asset_id=incident.asset_id,
                 location=location_dict,
@@ -41,7 +48,9 @@ class DuplicateDetectionService:
                 category=incident.category.value if incident.category else None,
                 severity=incident.severity.value if incident.severity else None,
                 exclude_incident_ids=[incident.id] if incident.id else None,
-                limit=50
+                limit=50,
+                include_resolved=True,  # Include resolved incidents for recurrence detection
+                resolved_time_window_hours=getattr(settings, 'DUPLICATE_RESOLVED_TIME_WINDOW_HOURS', 720)  # 30 days default
             )
 
             if not candidates:
@@ -81,6 +90,12 @@ class DuplicateDetectionService:
                             match_reasons.append("similar_images")
                         if incident.location and candidate.location:
                             match_reasons.append("nearby_location")
+                        
+                        # Add temporal context
+                        if candidate.status == "resolved":
+                            match_reasons.append("possible_recurrence")
+                        elif candidate.status in ["assigned", "investigating", "in_progress"]:
+                            match_reasons.append("reported_during_work")
 
                         matches.append(DuplicateMatch(
                             incident_id=str(candidate.id),

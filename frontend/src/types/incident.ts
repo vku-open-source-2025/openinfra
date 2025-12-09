@@ -35,7 +35,8 @@ export interface IncidentComment {
 
 export interface Incident {
   id: string;
-  incident_code: string;
+  incident_number?: string;
+  incident_code?: string;
   title: string;
   description: string;
   severity: IncidentSeverity;
@@ -55,6 +56,9 @@ export interface Incident {
   comments: IncidentComment[];
   created_at: string;
   updated_at: string;
+  // Merge/Related incidents
+  merged_reporter_ids?: string[];
+  related_incidents?: string[];
   // AI Verification
   ai_verification_status?: 'pending' | 'verified' | 'to_be_verified' | 'failed';
   ai_confidence_score?: number;
