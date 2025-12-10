@@ -45,7 +45,7 @@ const Header: React.FC = () => {
     }, []);
 
     return (
-        <header className="fixed z-60 top-0 left-0 h-20 w-full bg-white backdrop-blur-md shadow-sm">
+        <header className="fixed z-[1001] top-0 left-0 h-20 w-full bg-white backdrop-blur-md shadow-sm">
             <div className="flex items-center justify-between h-full px-4 mx-auto max-w-7xl">
                 {/* Logo */}
                 <div className="flex items-center">
@@ -69,7 +69,7 @@ const Header: React.FC = () => {
 
                 {/* Navigation */}
                 <nav
-                    className={`flex items-center max-lg:flex-col max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bg-white max-lg:w-4/5 max-lg:h-screen max-lg:pt-20 max-lg:transition-transform max-lg:duration-500 max-lg:ease-in-out ${
+                    className={`flex items-center max-lg:flex-col max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bg-white max-lg:w-4/5 max-lg:h-screen max-lg:pt-20 max-lg:transition-transform max-lg:duration-500 max-lg:ease-in-out max-lg:z-[1002] ${
                         isMobileMenuOpen
                             ? "max-lg:translate-x-0"
                             : "max-lg:translate-x-full"

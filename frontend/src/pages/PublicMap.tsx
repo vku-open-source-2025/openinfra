@@ -59,6 +59,7 @@ const PublicMap: React.FC = () => {
             const asset = displayAssets.find((a) => getAssetId(a) === assetId);
             if (asset) {
                 setSelectedAsset(asset);
+                setShowAssetInfoModal(true);
             }
         }
     }, [displayAssets, selectedAsset]);
@@ -105,12 +106,10 @@ const PublicMap: React.FC = () => {
         );
 
     return (
-        <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-            <div className="bg-slate-900 z-53">
-                <Header />
-            </div>
+        <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900">
+            <Header />
 
-            <main className="flex-1 flex flex-col relative pt-20 h-full">
+            <main className="flex-1 flex flex-col relative pt-20 h-full z-0">
                 {/* Alert Feed Overlay */}
                 {alerts.length > 0 && (
                     <div className="absolute top-24 right-8 z-50 w-80 pointer-events-none">
@@ -146,7 +145,7 @@ const PublicMap: React.FC = () => {
 
                 {/* Asset Info Modal */}
                 {showAssetInfoModal && selectedAsset && (
-                    <div className="fixed top-20 right-0 bottom-0 z-[52] flex items-start justify-end p-4">
+                    <div className="fixed top-20 right-0 bottom-0 z-[1000] flex items-start justify-end p-4">
                         <div className="bg-white rounded-l-xl shadow-xl w-full max-w-2xl h-full overflow-hidden flex flex-col animate-in slide-in-from-right fade-in duration-200">
                             {/* Modal Header */}
                             <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-3 shrink-0">

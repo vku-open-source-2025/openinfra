@@ -18,7 +18,7 @@ const AlertDashboard: React.FC = () => {
     const { user } = useAuthStore();
     const queryClient = useQueryClient();
     const [selectedSeverity, setSelectedSeverity] = useState<string>("");
-    const [selectedStatus, setSelectedStatus] = useState<string>("active");
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
 
     const { data: alerts, isLoading } = useQuery({
         queryKey: ["alerts", "dashboard", selectedSeverity, selectedStatus],

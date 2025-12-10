@@ -559,7 +559,7 @@ export default function ApiDocsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white relative">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             <Header />
 
             {/* Sidebar - fixed on desktop */}
@@ -927,7 +927,7 @@ export default function ApiDocsPage() {
                                             Tool
                                         </th>
                                         <th className="text-left px-4 py-2 font-semibold text-green-800">
-                                            Mô tả
+                                            Description
                                         </th>
                                     </tr>
                                 </thead>
@@ -1137,7 +1137,7 @@ export default function ApiDocsPage() {
                             {API_BASE_URL}
                         </code>
                         <p className="text-slate-600 mt-4">
-                            Không yêu cầu khóa API. Dữ liệu mở, miễn phí sử dụng.
+                            No API key required. Open data, free to use.
                         </p>
                     </div>
                 </section>

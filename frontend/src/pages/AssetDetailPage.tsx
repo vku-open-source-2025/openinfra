@@ -181,7 +181,7 @@ const AssetDetailPage: React.FC = () => {
                         className="mb-6"
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Quay lại bản đồ
+                        Back to Map
                     </Button>
 
                     {/* Asset Header */}
@@ -397,7 +397,7 @@ const AssetDetailPage: React.FC = () => {
                                     {asset.lifecycle?.commissioned_date && (
                                         <div>
                                             <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                Ngày đưa vào hoạt động
+                                                Commissioned Date
                                             </label>
                                             <p className="text-sm font-medium text-slate-900 mt-1">
                                                 {format(
@@ -413,7 +413,7 @@ const AssetDetailPage: React.FC = () => {
                                         ?.designed_lifespan_years && (
                                         <div>
                                             <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                Tuổi thọ thiết kế
+                                                Designed Lifespan
                                             </label>
                                             <p className="text-sm font-medium text-slate-900 mt-1">
                                                 {
@@ -427,7 +427,7 @@ const AssetDetailPage: React.FC = () => {
                                     {asset.created_at && (
                                         <div>
                                             <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                Ngày tạo
+                                                Created At
                                             </label>
                                             <p className="text-sm font-medium text-slate-900 mt-1">
                                                 {format(
@@ -445,13 +445,13 @@ const AssetDetailPage: React.FC = () => {
                                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                                     <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                                         <MapPin size={20} />
-                                        Thông tin vị trí
+                                        Location Details
                                     </h2>
                                     <div className="space-y-2">
                                         {asset.location.address && (
                                             <div>
                                                 <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                    Địa chỉ
+                                                    Address
                                                 </label>
                                                 <p className="text-sm font-medium text-slate-900 mt-1">
                                                     {asset.location.address}
@@ -462,7 +462,7 @@ const AssetDetailPage: React.FC = () => {
                                             {asset.location.ward && (
                                                 <div>
                                                     <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                        Phường/Xã
+                                                        Ward
                                                     </label>
                                                     <p className="text-sm font-medium text-slate-900 mt-1">
                                                         {asset.location.ward}
@@ -472,7 +472,7 @@ const AssetDetailPage: React.FC = () => {
                                             {asset.location.district && (
                                                 <div>
                                                     <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                        Quận/Huyện
+                                                        District
                                                     </label>
                                                     <p className="text-sm font-medium text-slate-900 mt-1">
                                                         {
@@ -485,7 +485,7 @@ const AssetDetailPage: React.FC = () => {
                                             {asset.location.city && (
                                                 <div>
                                                     <label className="text-xs text-slate-500 uppercase tracking-wide">
-                                                        Thành phố
+                                                        City
                                                     </label>
                                                     <p className="text-sm font-medium text-slate-900 mt-1">
                                                         {asset.location.city}
@@ -508,7 +508,7 @@ const AssetDetailPage: React.FC = () => {
                                     <MaintenanceLogList assetId={id} />
                                 ) : (
                                     <div className="text-center py-8 text-slate-500">
-                                        <p>Không có lịch sử bảo trì.</p>
+                                        <p>No maintenance history available.</p>
                                     </div>
                                 )}
                             </div>
@@ -604,7 +604,7 @@ const AssetDetailPage: React.FC = () => {
                                             variant="default"
                                         >
                                             <MapPin className="h-4 w-4 mr-2" />
-                                            Xem trên bản đồ
+                                            View on Map
                                         </Button>
                                     </Link>
                                     <Button
