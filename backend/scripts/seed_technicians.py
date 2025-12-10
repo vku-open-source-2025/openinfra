@@ -293,6 +293,31 @@ async def seed_vietnamese_duplicate_incidents(
     """
     Seed Vietnamese duplicate incidents for testing duplicate display in incident reports.
     
+    LOGIC FOR DUPLICATE INCIDENTS:
+    ===============================
+    According to merge service logic (incident_merge_service.py), the PRIMARY ticket
+    is always the OLDEST ticket (earliest reported_at). Therefore:
+    
+    1. PRIMARY TICKET (Main ticket):
+       - Reported FIRST: 7-10 days ago
+       - Status: INVESTIGATING (still active, shown in "useful" tab)
+       - This is the ticket that appears in "useful" tab
+    
+    2. DUPLICATE TICKETS (Child tickets):
+       - Reported AFTER primary: 1-5 days after primary ticket
+       - Status: RESOLVED with resolution_type = DUPLICATE
+       - Resolved 1-3 days after being reported
+       - These appear in "duplicates" tab grouped under primary ticket
+    
+    Example timeline:
+    - Day 0: Primary ticket reported (7 days ago)
+    - Day 2: Duplicate ticket #1 reported (5 days ago)
+    - Day 3: Duplicate ticket #1 resolved as duplicate
+    - Day 4: Duplicate ticket #2 reported (3 days ago)
+    - Day 6: Duplicate ticket #2 resolved as duplicate
+    
+    This ensures primary ticket is always the oldest, matching merge service behavior.
+    
     Args:
         db: MongoDB database instance
         asset_ids: Optional list of asset IDs to use
@@ -457,8 +482,15 @@ async def seed_vietnamese_duplicate_incidents(
     incident_index = len(await db.incidents.find({}).to_list(length=1000)) + 1
     
     for group in duplicate_groups:
-        # Create primary incident
-        primary_asset_id = random.choice(asset_ids) if asset_ids else None
+        # LOGIC: Primary ticket must be the OLDEST (reported first)
+        # Duplicate tickets are reported AFTER primary ticket
+        # This matches the merge service logic which selects oldest as primary
+        
+        # Primary ticket: reported 7-10 days ago (oldest)
+        primary_days_ago = random.randint(7, 10)
+        primary_reported_at = datetime.utcnow() - timedelta(days=primary_days_ago)
+        
+        primary_asset_id = random.choice(asset_ids) if asset_ids and len(asset_ids) > 0 else None
         geometry = {
             "type": "Point",
             "coordinates": [
@@ -482,23 +514,31 @@ async def seed_vietnamese_duplicate_incidents(
                 "district": location["district"],
                 "ward": location["ward"],
             },
-            "reported_by": random.choice(user_ids) if user_ids else None,
+            "reported_by": random.choice(user_ids) if user_ids and len(user_ids) > 0 else None,
             "reporter_type": ReporterType.CITIZEN.value,
             "reported_via": "web",
-            "reported_at": datetime.utcnow() - timedelta(days=random.randint(1, 7)),
-            "assigned_to": random.choice(user_ids) if user_ids else None,
-            "acknowledged_at": datetime.utcnow() - timedelta(days=random.randint(1, 6)),
-            "acknowledged_by": random.choice(user_ids) if user_ids else None,
+            "reported_at": primary_reported_at,  # Primary reported FIRST (oldest)
+            "assigned_to": random.choice(user_ids) if user_ids and len(user_ids) > 0 else None,
+            "acknowledged_at": primary_reported_at + timedelta(hours=random.randint(1, 12)),
+            "acknowledged_by": random.choice(user_ids) if user_ids and len(user_ids) > 0 else None,
             "public_visible": True,
-            "created_at": datetime.utcnow() - timedelta(days=random.randint(1, 7)),
-            "updated_at": datetime.utcnow() - timedelta(days=random.randint(0, 6)),
+            "created_at": primary_reported_at,
+            "updated_at": datetime.utcnow() - timedelta(days=random.randint(0, 2)),
             "related_incidents": [],  # Will be populated after creating duplicates
         }
         incident_index += 1
         
-        # Create duplicate incidents
+        # Create duplicate incidents - reported AFTER primary ticket
         duplicate_incident_ids = []
         for dup_scenario in group["duplicates"]:
+            # Duplicate tickets: reported 1-5 days AFTER primary ticket
+            # So if primary was 7 days ago, duplicates are 2-6 days ago (after primary)
+            duplicate_days_ago = random.randint(1, 5)  # Days after primary
+            duplicate_reported_at = primary_reported_at + timedelta(days=duplicate_days_ago)
+            
+            # Resolved as duplicate: resolved 1-3 days after being reported
+            duplicate_resolved_at = duplicate_reported_at + timedelta(days=random.randint(1, 3))
+            
             dup_geometry = {
                 "type": "Point",
                 "coordinates": [
@@ -517,8 +557,8 @@ async def seed_vietnamese_duplicate_incidents(
                 "status": IncidentStatus.RESOLVED.value,
                 "resolution_type": ResolutionType.DUPLICATE.value,
                 "resolution_notes": f"Trùng lặp với sự cố {primary_incident['incident_number']}",
-                "resolved_at": datetime.utcnow() - timedelta(days=random.randint(1, 5)),
-                "resolved_by": random.choice(user_ids) if user_ids else None,
+                "resolved_at": duplicate_resolved_at,  # Resolved after being reported
+                "resolved_by": random.choice(user_ids) if user_ids and len(user_ids) > 0 else None,
                 "location": {
                     "geometry": dup_geometry,
                     "address": primary_incident["location"]["address"],
@@ -526,13 +566,13 @@ async def seed_vietnamese_duplicate_incidents(
                     "district": location["district"],
                     "ward": location["ward"],
                 },
-                "reported_by": random.choice(user_ids) if user_ids else None,
+                "reported_by": random.choice(user_ids) if user_ids and len(user_ids) > 0 else None,
                 "reporter_type": ReporterType.CITIZEN.value,
                 "reported_via": random.choice(["web", "mobile"]),
-                "reported_at": datetime.utcnow() - timedelta(days=random.randint(1, 6)),
+                "reported_at": duplicate_reported_at,  # Reported AFTER primary ticket
                 "public_visible": True,
-                "created_at": datetime.utcnow() - timedelta(days=random.randint(1, 6)),
-                "updated_at": datetime.utcnow() - timedelta(days=random.randint(0, 5)),
+                "created_at": duplicate_reported_at,
+                "updated_at": duplicate_resolved_at,
                 "related_incidents": [],  # Will link to primary
             }
             duplicate_incident_ids.append(dup_incident)

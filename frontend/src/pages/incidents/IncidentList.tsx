@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { incidentsApi } from "../../api/incidents";
 import { IncidentCard } from "../../components/incidents/IncidentCard";
+import { DuplicateGroupCard } from "../../components/incidents/DuplicateGroupCard";
 import { IncidentFilters } from "../../components/incidents/IncidentFilters";
 import { Pagination } from "../../components/ui/pagination";
 import { Skeleton } from "../../components/ui/skeleton";
 import { Button } from "../../components/ui/button";
 import { Plus, AlertTriangle } from "lucide-react";
+import type { Incident } from "../../types/incident";
 
 type MainTab = "all" | "spam_risk" | "useful" | "duplicates";
 
@@ -68,11 +70,13 @@ const IncidentList: React.FC = () => {
             );
         } else if (mainTab === "useful") {
             // Useful = good AI score or unscored but not marked as spam
+            // Exclude duplicate incidents (they have their own tab)
             filtered = filtered.filter(
                 (inc) =>
-                    inc.ai_confidence_score === null ||
+                    inc.resolution_type !== "duplicate" &&
+                    (inc.ai_confidence_score === null ||
                     inc.ai_confidence_score === undefined ||
-                    inc.ai_confidence_score >= 0.5
+                    inc.ai_confidence_score >= 0.5)
             );
         } else if (mainTab === "duplicates") {
             // Duplicates = explicitly tagged as duplicate in resolution_type
@@ -122,14 +126,84 @@ const IncidentList: React.FC = () => {
     };
 
     const filteredIncidents = filterIncidents(incidents);
-    const totalPages = filteredIncidents
-        ? Math.max(1, Math.ceil(filteredIncidents.length / pageSize))
-        : 1;
+
+    // Group duplicates by primary ticket for duplicates tab
+    const groupedDuplicates = useMemo(() => {
+        if (mainTab !== "duplicates" || !filteredIncidents) return null;
+
+        // Map to store groups: primary_id -> { primary, duplicates[] }
+        const groups = new Map<string, { primary: Incident; duplicates: Incident[] }>();
+        const processedDuplicateIds = new Set<string>();
+
+        // First, process all duplicate incidents
+        for (const duplicate of filteredIncidents) {
+            if (duplicate.resolution_type !== "duplicate") continue;
+            if (processedDuplicateIds.has(duplicate.id)) continue;
+
+            // Find primary ticket from related_incidents
+            const primaryId = duplicate.related_incidents?.[0];
+            if (primaryId) {
+                // Try to find primary in current data
+                const primary = incidents?.find((inc) => inc.id === primaryId);
+                
+                if (primary && primary.resolution_type !== "duplicate") {
+                    // Primary ticket found and it's not a duplicate itself
+                    if (!groups.has(primaryId)) {
+                        groups.set(primaryId, { primary, duplicates: [] });
+                    }
+                    groups.get(primaryId)!.duplicates.push(duplicate);
+                    processedDuplicateIds.add(duplicate.id);
+                } else if (primaryId) {
+                    // Primary not in current data - still create group with placeholder
+                    // The primary ticket will be shown in "useful" tab, so it should exist
+                    // If not found, it might be filtered out or deleted
+                    if (!groups.has(primaryId)) {
+                        // Create a minimal primary placeholder - will be replaced if found later
+                        const placeholderPrimary: Incident = {
+                            id: primaryId,
+                            title: `Ticket chính #${primaryId.slice(-8)}`,
+                            description: "Ticket này có thể đã bị xóa hoặc không có trong danh sách hiện tại",
+                            severity: duplicate.severity,
+                            status: "resolved" as any,
+                            reporter_type: "citizen" as any,
+                            upvotes: 0,
+                            comments: [],
+                            created_at: duplicate.created_at,
+                            updated_at: duplicate.updated_at,
+                        };
+                        groups.set(primaryId, { primary: placeholderPrimary, duplicates: [] });
+                    }
+                    groups.get(primaryId)!.duplicates.push(duplicate);
+                    processedDuplicateIds.add(duplicate.id);
+                }
+            }
+        }
+
+        // Convert map to array and sort by primary ticket creation date
+        return Array.from(groups.values()).sort(
+            (a, b) => 
+                new Date(b.primary.created_at).getTime() - 
+                new Date(a.primary.created_at).getTime()
+        );
+    }, [mainTab, filteredIncidents, incidents]);
+
+    // Calculate pagination based on tab type
+    const isDuplicatesTab = mainTab === "duplicates" && groupedDuplicates !== null;
+    const totalItems = isDuplicatesTab && groupedDuplicates
+        ? groupedDuplicates.length 
+        : (filteredIncidents?.length || 0);
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
     const safePage = Math.min(page, totalPages || 1);
-    const pagedIncidents = filteredIncidents?.slice(
-        (safePage - 1) * pageSize,
-        safePage * pageSize
-    );
+    
+    // Pagination for grouped duplicates or regular incidents
+    const pagedGroups: Array<{ primary: Incident; duplicates: Incident[] }> | null = 
+        isDuplicatesTab && groupedDuplicates
+            ? groupedDuplicates.slice((safePage - 1) * pageSize, safePage * pageSize)
+            : null;
+    const pagedIncidents: Incident[] | null = 
+        !isDuplicatesTab && filteredIncidents
+            ? filteredIncidents.slice((safePage - 1) * pageSize, safePage * pageSize)
+            : null;
 
     if (error) {
         return (
@@ -233,20 +307,43 @@ const IncidentList: React.FC = () => {
                         <Skeleton key={i} className="h-32 w-full" />
                     ))}
                 </div>
-            ) : filteredIncidents && filteredIncidents.length > 0 ? (
+            ) : (isDuplicatesTab && pagedGroups && pagedGroups.length > 0) || 
+                  (!isDuplicatesTab && pagedIncidents && pagedIncidents.length > 0) ? (
                 <>
                     <div className="space-y-4">
-                        {pagedIncidents?.map((incident) => (
-                            <IncidentCard
-                                key={incident.id}
-                                incident={incident}
-                                onClick={() =>
-                                    navigate({
-                                        to: `/admin/incidents/${incident.id}`,
-                                    })
-                                }
-                            />
-                        ))}
+                        {isDuplicatesTab && pagedGroups ? (
+                            // Render grouped duplicates with alternating colors
+                            pagedGroups.map((group, groupIndex) => {
+                                // Calculate absolute index for alternating colors across pages
+                                const absoluteIndex = (safePage - 1) * pageSize + groupIndex;
+                                return (
+                                    <DuplicateGroupCard
+                                        key={group.primary.id}
+                                        primaryIncident={group.primary}
+                                        duplicateIncidents={group.duplicates}
+                                        index={absoluteIndex}
+                                        onClick={() =>
+                                            navigate({
+                                                to: `/admin/incidents/${group.primary.id}`,
+                                            })
+                                        }
+                                    />
+                                );
+                            })
+                        ) : (
+                            // Render regular incidents
+                            pagedIncidents?.map((incident) => (
+                                <IncidentCard
+                                    key={incident.id}
+                                    incident={incident}
+                                    onClick={() =>
+                                        navigate({
+                                            to: `/admin/incidents/${incident.id}`,
+                                        })
+                                    }
+                                />
+                            ))
+                        )}
                     </div>
                     <Pagination
                         currentPage={safePage}
