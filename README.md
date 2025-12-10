@@ -12,6 +12,12 @@
 
 OpenInfra is a comprehensive urban infrastructure asset management system designed to digitize and optimize the lifecycle management of public infrastructure and telecommunications assets. The system helps government agencies and utilities track, maintain, and optimize infrastructure assets while improving service quality, extending asset lifespan, reducing costs, and enhancing community safety through data-driven decision making.
 
+### 🌐 Quick Links
+
+- **🚀 [Production System](https://openinfra.space/)**: Experience the full cloud-hosted platform with real-time GIS mapping, asset tracking, and IoT monitoring
+
+- **📚 [API Documentation](https://openinfra.space/docs)**: Learn how to integrate with our NGSI-LD compliant REST API for semantic interoperability and IoT data access
+
 ---
 
 ## 📋 Table of Contents
