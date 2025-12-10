@@ -52,7 +52,7 @@ class MongoIncidentRepository(IncidentRepository):
         """Populate user names in comments."""
         if not incident_doc.get("comments"):
             return incident_doc
-        
+
         # Collect unique user IDs from comments
         user_ids = set()
         for comment in incident_doc["comments"]:
@@ -65,28 +65,34 @@ class MongoIncidentRepository(IncidentRepository):
                 elif isinstance(user_id, str) and ObjectId.is_valid(user_id):
                     user_ids.add(user_id)
                 else:
-                    logger.debug(f"Invalid user_id format in comment: {user_id} (type: {type(user_id)})")
-        
+                    logger.debug(
+                        f"Invalid user_id format in comment: {user_id} (type: {type(user_id)})"
+                    )
+
         # Fetch all users at once
         user_map = {}
         if user_ids:
             try:
-                object_ids = [ObjectId(uid) for uid in user_ids if ObjectId.is_valid(uid)]
+                object_ids = [
+                    ObjectId(uid) for uid in user_ids if ObjectId.is_valid(uid)
+                ]
                 if object_ids:
                     user_cursor = self.users_collection.find(
                         {"_id": {"$in": object_ids}},
-                        {"_id": 1, "full_name": 1, "username": 1}
+                        {"_id": 1, "full_name": 1, "username": 1},
                     )
                     async for user_doc in user_cursor:
                         user_id_str = str(user_doc["_id"])
                         user_map[user_id_str] = {
                             "full_name": user_doc.get("full_name"),
-                            "username": user_doc.get("username")
+                            "username": user_doc.get("username"),
                         }
-                    logger.debug(f"Populated {len(user_map)} user names from {len(user_ids)} user IDs")
+                    logger.debug(
+                        f"Populated {len(user_map)} user names from {len(user_ids)} user IDs"
+                    )
             except Exception as e:
                 logger.warning(f"Error populating comment users: {e}", exc_info=True)
-        
+
         # Populate user names in comments
         for comment in incident_doc["comments"]:
             user_id = comment.get("user_id")
@@ -95,11 +101,17 @@ class MongoIncidentRepository(IncidentRepository):
                 user_id_str = str(user_id) if isinstance(user_id, ObjectId) else user_id
                 if user_id_str in user_map:
                     user_info = user_map[user_id_str]
-                    comment["user_name"] = user_info.get("full_name") or user_info.get("username")
-                    logger.debug(f"Populated user_name '{comment.get('user_name')}' for user_id '{user_id_str}'")
+                    comment["user_name"] = user_info.get("full_name") or user_info.get(
+                        "username"
+                    )
+                    logger.debug(
+                        f"Populated user_name '{comment.get('user_name')}' for user_id '{user_id_str}'"
+                    )
                 else:
-                    logger.debug(f"User not found for user_id '{user_id_str}' in comment")
-        
+                    logger.debug(
+                        f"User not found for user_id '{user_id_str}' in comment"
+                    )
+
         return incident_doc
 
     async def create(self, incident_data: dict) -> Incident:
@@ -159,10 +171,15 @@ class MongoIncidentRepository(IncidentRepository):
         populate_asset: bool = False,
         verification_status: Optional[str] = None,
     ) -> List[Incident]:
-        """List incidents with filtering, sorted by severity (critical > high > medium > low)."""
+        """List incidents with filtering, sorted by severity (critical > high > medium > low).
+        Excludes incidents with status 'closed' unless explicitly requested."""
         query = {}
         if status:
+            # If status is explicitly set, use it (even if it's 'closed')
             query["status"] = status
+        else:
+            # Exclude closed incidents when no status filter is provided
+            query["status"] = {"$ne": "closed"}
         if severity:
             query["severity"] = severity
         if asset_id:

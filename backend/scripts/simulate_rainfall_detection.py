@@ -35,19 +35,9 @@ from app.infrastructure.database.mongodb import db, get_database
 from app.services.rain_forecast_service import RainForecastService
 from app.tasks.sensor_monitoring import detect_ai_risks
 from app.domain.services.alert_service import AlertService
-from app.domain.models.alert import Alert, AlertSeverity, AlertSourceType
+from app.domain.models.alert import Alert, AlertSeverity, AlertSourceType, AlertStatus
 from app.infrastructure.database.repositories.mongo_alert_repository import (
     MongoAlertRepository,
-)
-from app.infrastructure.database.repositories.mongo_incident_repository import (
-    MongoIncidentRepository,
-)
-from app.domain.services.incident_service import IncidentService
-from app.domain.models.incident import (
-    IncidentCreate,
-    IncidentCategory,
-    IncidentSeverity as IncidentSeverityEnum,
-    ReporterType,
 )
 import uuid
 
@@ -572,13 +562,10 @@ async def run_ai_detection(database, sensor_id: str) -> Dict:
     # Run detection
     result = await detect_ai_risks(grouped_readings, db=database)
 
-    # Create alerts and incidents for detected risks
+    # Create alerts for detected risks
     alert_repo = MongoAlertRepository(database)
     alert_service = AlertService(alert_repo)
-    incident_repo = MongoIncidentRepository(database)
-    incident_service = IncidentService(incident_repo)
     alerts_created = 0
-    incidents_created = 0
 
     for risk in result.get("risks", []):
         try:
@@ -597,7 +584,7 @@ async def run_ai_detection(database, sensor_id: str) -> Dict:
 
             severity = severity_mapping.get(risk_level, AlertSeverity.INFO)
 
-            # Create alert for detected risk
+            # Create alert for detected risk with status ACTIVE
             alert = Alert(
                 alert_code=f"AI-RISK-{uuid.uuid4().hex[:8].upper()}",
                 source_type=AlertSourceType.SENSOR,
@@ -605,6 +592,7 @@ async def run_ai_detection(database, sensor_id: str) -> Dict:
                 asset_id=asset_id,
                 type="ai_risk_detection",
                 severity=severity,
+                status=AlertStatus.ACTIVE,
                 title=f"AI Detected Risk: {risk.get('risk_type', 'Unknown')}",
                 message=risk.get(
                     "description", "AI risk detection identified a potential issue"
@@ -619,173 +607,8 @@ async def run_ai_detection(database, sensor_id: str) -> Dict:
                 },
             )
 
-            created_alert = await alert_service.create_alert(alert)
+            await alert_service.create_alert(alert)
             alerts_created += 1
-
-            # Create incident for critical/high risks
-            if risk_level in ["critical", "high"]:
-                try:
-                    # Map risk level to incident severity
-                    incident_severity_mapping = {
-                        "critical": IncidentSeverityEnum.CRITICAL,
-                        "high": IncidentSeverityEnum.HIGH,
-                    }
-                    incident_severity = incident_severity_mapping.get(
-                        risk_level, IncidentSeverityEnum.MEDIUM
-                    )
-
-                    # Map risk type to incident category
-                    risk_type = risk.get("risk_type", "").lower()
-                    if "rain" in risk_type or "flood" in risk_type:
-                        incident_category = IncidentCategory.SAFETY_HAZARD
-                    elif "water" in risk_type or "level" in risk_type:
-                        incident_category = IncidentCategory.MALFUNCTION
-                    else:
-                        incident_category = IncidentCategory.OTHER
-
-                    # Map risk level to Vietnamese
-                    risk_level_vn = {
-                        "critical": "Nghiêm Trọng",
-                        "high": "Cao",
-                        "medium": "Trung Bình",
-                        "low": "Thấp",
-                    }.get(risk_level, risk_level.upper())
-
-                    # Map risk type to Vietnamese
-                    risk_type = risk.get("risk_type", "Unknown")
-                    risk_type_vn = {
-                        "abnormal_rain_accumulation": "Tích Tụ Mưa Bất Thường",
-                        "elevated_reading": "Giá Trị Đo Cao",
-                        "flood_risk": "Nguy Cơ Lũ Lụt",
-                        "water_level_high": "Mực Nước Cao",
-                    }.get(risk_type.lower(), risk_type)
-
-                    # Create incident with Vietnamese description
-                    sensor_code = sensor_info.get("sensor_code", sensor_id)
-                    confidence_pct = risk.get("confidence", 0) * 100
-
-                    # Translate description to Vietnamese or generate Vietnamese description
-                    original_description = risk.get("description", "")
-                    if original_description:
-                        # Translate common English patterns to Vietnamese
-                        description_vn = original_description
-                        # Translate common phrases
-                        description_vn = description_vn.replace(
-                            "Abnormal rain accumulation detected",
-                            "Phát hiện tích tụ mưa bất thường",
-                        )
-                        description_vn = description_vn.replace(
-                            "Current rate", "Tốc độ hiện tại"
-                        )
-                        description_vn = description_vn.replace(
-                            "exceeds forecast", "vượt quá dự báo"
-                        )
-                        description_vn = description_vn.replace("mm/h", "mm/giờ")
-                        description_vn = description_vn.replace("Threshold", "Ngưỡng")
-                        description_vn = description_vn.replace(
-                            "High rain accumulation rate detected",
-                            "Phát hiện tốc độ tích tụ mưa cao",
-                        )
-                        description_vn = description_vn.replace("threshold", "ngưỡng")
-                        description_vn = description_vn.replace(
-                            "Water level readings show elevated values",
-                            "Giá trị đo mực nước cho thấy mức độ cao",
-                        )
-                        description_vn = description_vn.replace("max", "tối đa")
-
-                        # If still mostly English, generate Vietnamese description from risk data
-                        if any(
-                            word in description_vn.lower()
-                            for word in [
-                                "detected",
-                                "exceeds",
-                                "threshold",
-                                "readings show",
-                            ]
-                        ):
-                            # Generate Vietnamese description from risk metadata
-                            forecast_data = risk.get("forecast_data", {})
-                            statistics = risk.get("statistics", {})
-
-                            if forecast_data:
-                                current_rate = forecast_data.get("current_rate", 0)
-                                forecast_rate = forecast_data.get("forecast_rate", 0)
-                                description_vn = (
-                                    f"Phát hiện tích tụ mưa bất thường: "
-                                    f"Tốc độ hiện tại {current_rate:.2f} mm/giờ vượt quá dự báo "
-                                    f"{forecast_rate:.2f} mm/giờ."
-                                )
-                            elif statistics:
-                                max_value = statistics.get("max", 0)
-                                description_vn = (
-                                    f"Giá trị đo mực nước cho thấy mức độ cao "
-                                    f"(tối đa: {max_value:.2f} {sensor_info.get('measurement_unit', '')})."
-                                )
-                            else:
-                                description_vn = (
-                                    f"Hệ thống phát hiện rủi ro AI đã xác định một rủi ro mức {risk_level_vn.lower()} cho cảm biến {sensor_code}. "
-                                    f"Loại rủi ro: {risk_type_vn}. "
-                                    f"Độ tin cậy: {confidence_pct:.1f}%."
-                                )
-                    else:
-                        # Generate Vietnamese description from risk data
-                        forecast_data = risk.get("forecast_data", {})
-                        statistics = risk.get("statistics", {})
-
-                        if forecast_data:
-                            current_rate = forecast_data.get("current_rate", 0)
-                            forecast_rate = forecast_data.get("forecast_rate", 0)
-                            description_vn = (
-                                f"Phát hiện tích tụ mưa bất thường: "
-                                f"Tốc độ hiện tại {current_rate:.2f} mm/giờ vượt quá dự báo "
-                                f"{forecast_rate:.2f} mm/giờ."
-                            )
-                        elif statistics:
-                            max_value = statistics.get("max", 0)
-                            description_vn = (
-                                f"Giá trị đo mực nước cho thấy mức độ cao "
-                                f"(tối đa: {max_value:.2f} {sensor_info.get('measurement_unit', '')})."
-                            )
-                        else:
-                            description_vn = (
-                                f"Hệ thống phát hiện rủi ro AI đã xác định một rủi ro mức {risk_level_vn.lower()} cho cảm biến {sensor_code}. "
-                                f"Loại rủi ro: {risk_type_vn}. "
-                                f"Độ tin cậy: {confidence_pct:.1f}%."
-                            )
-
-                    incident_data = IncidentCreate(
-                        asset_id=asset_id,
-                        title=f"AI Phát Hiện Rủi Ro {risk_level_vn}: {risk_type_vn}",
-                        description=description_vn,
-                        category=incident_category,
-                        severity=incident_severity,
-                        reported_via="system",
-                        public_visible=False,
-                    )
-
-                    created_incident = await incident_service.create_incident(
-                        incident_data,
-                        reported_by=None,
-                        reporter_type=ReporterType.SYSTEM.value,
-                    )
-
-                    # Link alert to incident
-                    await alert_repo.update(
-                        str(created_alert.id),
-                        {
-                            "incident_created": True,
-                            "incident_id": str(created_incident.id),
-                        },
-                    )
-
-                    incidents_created += 1
-                    print(
-                        f"✓ Created incident {created_incident.incident_number} for risk {risk.get('risk_type')}"
-                    )
-
-                except Exception as e:
-                    print(f"⚠ Error creating incident for risk {sensor_id}: {e}")
-                    # Continue even if incident creation fails
 
         except Exception as e:
             print(f"⚠ Error creating alert for risk {risk.get('sensor_id')}: {e}")
@@ -793,7 +616,6 @@ async def run_ai_detection(database, sensor_id: str) -> Dict:
 
     # Add creation counts to result
     result["alerts_created"] = alerts_created
-    result["incidents_created"] = incidents_created
 
     return result
 
@@ -934,9 +756,6 @@ async def main():
             print(f"  Warning risks: {summary.get('warning_risks', 0)}")
             print(f"  Info risks: {summary.get('info_risks', 0)}")
             print(f"  Alerts created: {detection_result.get('alerts_created', 0)}")
-            print(
-                f"  Incidents created: {detection_result.get('incidents_created', 0)}"
-            )
             print()
 
             if risks:
