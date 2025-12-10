@@ -98,7 +98,6 @@ For detailed architecture information, see [Architecture Documentation](backend/
 
 ![GIS Map](images/Gismap.png)
 
-- **Multi-layer Visualization**: Display BTS stations, signal strength (RSRP, SINR), and coverage anomalies
 - **Geospatial Queries**: Find assets by location, radius, or custom polygons
 - **Real-time Updates**: View live asset status and sensor readings
 - **Coverage Analysis**: Automatically detect and alert on signal coverage issues
