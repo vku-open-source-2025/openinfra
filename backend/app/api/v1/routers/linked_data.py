@@ -1,12 +1,20 @@
 """
-NGSI-LD API Router for IoT Sensor Data.
+NGSI-LD API Router for IoT Sensor Data with SOSA Semantic Metadata.
 
-This module provides NGSI-LD endpoints following ETSI NGSI-LD standard:
-- NGSI-LD Core Context (JSON-LD based)
-- Schema.org vocabulary for additional properties
-- GeoJSON geometry support
+This module provides NGSI-LD endpoints following ETSI NGSI-LD standard
+with W3C SOSA (Sensor, Observation, Sample, Actuator) ontology integration.
 
-NGSI-LD is the ETSI standard for context information management.
+Standards implemented:
+- NGSI-LD Core Context (JSON-LD based) - ETSI standard
+- SOSA/SSN Ontology - W3C recommendation for sensor semantics
+- Schema.org vocabulary - General-purpose
+- QUDT - Units of measurement
+
+Architecture (Hybrid Store Pattern):
+- MongoDB stores raw measurements (high-performance time-series)
+- sensors_metadata stores SOSA semantic descriptions
+- API combines both for full semantic interoperability
+
 API Documentation: https://api.openinfra.space/docs (see NGSI-LD section)
 """
 
@@ -16,28 +24,61 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from app.domain.services.iot_service import IoTService
 from app.api.v1.dependencies import get_iot_service
+from app.domain.models.sosa_metadata import (
+    SOSA_JSONLD_CONTEXT,
+    sensor_type_to_observable_property,
+    unit_to_qudt_uri,
+    unit_to_label,
+)
 
 router = APIRouter()
 
-# NGSI-LD Context for sensor data
+# NGSI-LD + SOSA Combined Context for sensor data
 NGSI_LD_CONTEXT = [
     "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld",
     {
+        # Standard vocabularies
         "schema": "https://schema.org/",
         "geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
         "dcterms": "http://purl.org/dc/terms/",
         
-        # OpenInfra specific terms
+        # SOSA/SSN Ontology (W3C)
+        "sosa": "http://www.w3.org/ns/sosa/",
+        "ssn": "http://www.w3.org/ns/ssn/",
+        "qudt": "http://qudt.org/schema/qudt/",
+        
+        # SOSA Core Classes
+        "Sensor": "sosa:Sensor",
+        "Observation": "sosa:Observation",
+        "Platform": "sosa:Platform",
+        "FeatureOfInterest": "sosa:FeatureOfInterest",
+        "ObservableProperty": "sosa:ObservableProperty",
+        
+        # SOSA Properties
+        "observes": {"@id": "sosa:observes", "@type": "@id"},
+        "hasFeatureOfInterest": {"@id": "sosa:hasFeatureOfInterest", "@type": "@id"},
+        "isHostedBy": {"@id": "sosa:isHostedBy", "@type": "@id"},
+        "madeObservation": {"@id": "sosa:madeObservation", "@type": "@id"},
+        "madeBySensor": {"@id": "sosa:madeBySensor", "@type": "@id"},
+        "hasResult": "sosa:hasResult",
+        "hasSimpleResult": "sosa:hasSimpleResult",
+        "resultTime": {"@id": "sosa:resultTime", "@type": "xsd:dateTime"},
+        
+        # OpenInfra specific terms (backward compatible)
         "sensorCode": "schema:identifier",
         "sensorType": "schema:additionalType",
         "manufacturer": "schema:manufacturer",
         "model": "schema:model",
-        "measurementUnit": "schema:unitCode",
+        "measurementUnit": "qudt:unit",
         "sampleRate": "schema:frequency",
         "assetId": "schema:identifier",
         "featureType": "schema:category",
         "featureCode": "schema:propertyID",
         "quality": "schema:quality",
+        
+        # Unit measurement
+        "unit": "qudt:unit",
+        "unitSymbol": "qudt:symbol",
         
         # License
         "license": {"@id": "dcterms:license", "@type": "@id"},
@@ -58,25 +99,45 @@ LICENSE_INFO = {
 }
 
 
-def create_sensor_ngsi_ld(sensor, base_url: str = "https://openinfra.space") -> dict:
-    """Convert sensor to NGSI-LD format."""
+def create_sensor_ngsi_ld(sensor, base_url: str = "https://openinfra.space", metadata: dict = None) -> dict:
+    """
+    Convert sensor to NGSI-LD format with SOSA semantics.
+    
+    If metadata is provided (from sensors_metadata collection), 
+    includes full SOSA semantic description.
+    """
     sensor_id = str(sensor.id) if sensor.id else sensor.sensor_code
+    sensor_type_value = sensor.sensor_type.value if hasattr(sensor.sensor_type, "value") else sensor.sensor_type
+    
+    # Map sensor type to SOSA ObservableProperty
+    observable_property = sensor_type_to_observable_property(sensor_type_value)
     
     entity = {
         "id": f"urn:ngsi-ld:Sensor:{sensor_id}",
-        "type": "Sensor",
+        "type": "Sensor",  # Maps to sosa:Sensor via context
         "sensorCode": {
             "type": "Property",
             "value": sensor.sensor_code
         },
         "sensorType": {
             "type": "Property",
-            "value": sensor.sensor_type.value if hasattr(sensor.sensor_type, "value") else sensor.sensor_type
+            "value": sensor_type_value
         },
         "status": {
             "type": "Property",
             "value": sensor.status.value if hasattr(sensor.status, "value") else sensor.status
         },
+        # SOSA: observes - what property is being measured
+        "observes": {
+            "type": "Relationship",
+            "object": observable_property.value if hasattr(observable_property, "value") else observable_property
+        },
+        # SOSA: hasFeatureOfInterest - link to the asset
+        "hasFeatureOfInterest": {
+            "type": "Relationship",
+            "object": f"urn:ngsi-ld:Asset:{sensor.asset_id}"
+        },
+        # Legacy compatibility
         "refAsset": {
             "type": "Relationship",
             "object": f"urn:ngsi-ld:Asset:{sensor.asset_id}"
@@ -88,7 +149,12 @@ def create_sensor_ngsi_ld(sensor, base_url: str = "https://openinfra.space") -> 
     if sensor.model:
         entity["model"] = {"type": "Property", "value": sensor.model}
     if sensor.measurement_unit:
-        entity["measurementUnit"] = {"type": "Property", "value": sensor.measurement_unit}
+        qudt_uri = unit_to_qudt_uri(sensor.measurement_unit)
+        entity["measurementUnit"] = {
+            "type": "Property", 
+            "value": sensor.measurement_unit,
+            "unitCode": qudt_uri if qudt_uri else sensor.measurement_unit
+        }
     if sensor.sample_rate:
         entity["sampleRate"] = {"type": "Property", "value": sensor.sample_rate}
     if sensor.last_seen:
@@ -97,13 +163,34 @@ def create_sensor_ngsi_ld(sensor, base_url: str = "https://openinfra.space") -> 
             "value": {"@type": "DateTime", "@value": sensor.last_seen.isoformat()}
         }
     
+    # Add SOSA metadata if available
+    if metadata:
+        if metadata.get("label"):
+            entity["name"] = {"type": "Property", "value": metadata["label"]}
+        if metadata.get("description"):
+            entity["description"] = {"type": "Property", "value": metadata["description"]}
+        if metadata.get("is_hosted_by"):
+            entity["isHostedBy"] = {
+                "type": "Relationship",
+                "object": f"urn:ngsi-ld:Platform:{metadata['is_hosted_by']}"
+            }
+    
     return entity
 
 
 def create_observation_ngsi_ld(
     reading, sensor_info: dict = None, base_url: str = "https://openinfra.space"
 ) -> dict:
-    """Convert sensor reading to NGSI-LD Observation."""
+    """
+    Convert sensor reading to NGSI-LD Observation following SOSA ontology.
+    
+    SOSA Observation structure:
+    - sosa:madeBySensor - link to the sensor
+    - sosa:hasFeatureOfInterest - what was observed
+    - sosa:observedProperty - what property was measured
+    - sosa:hasSimpleResult - the measured value
+    - sosa:resultTime - when the observation was made
+    """
     reading_id = (
         str(reading.id)
         if reading.id
@@ -114,16 +201,58 @@ def create_observation_ngsi_ld(
     if not timestamp_str.endswith('Z'):
         timestamp_str += "Z"
     
+    # Get unit info for QUDT mapping
+    unit = reading.unit if hasattr(reading, 'unit') else None
+    qudt_uri = unit_to_qudt_uri(unit) if unit else None
+    
     entity = {
         "id": f"urn:ngsi-ld:Observation:{reading_id}",
-        "type": "Observation",
+        "type": "Observation",  # Maps to sosa:Observation via context
+        
+        # SOSA: resultTime - when the observation was made
+        "resultTime": {
+            "type": "Property",
+            "value": timestamp_str
+        },
         "observedAt": timestamp_str,
+        
+        # SOSA: hasSimpleResult - the measured value
+        "hasSimpleResult": {
+            "type": "Property",
+            "value": reading.value
+        },
+        
+        # Full result with unit (QUDT)
+        "hasResult": {
+            "type": "Property",
+            "value": {
+                "numericValue": reading.value,
+                "unit": qudt_uri if qudt_uri else unit,
+                "unitSymbol": unit
+            }
+        },
+        
+        # Legacy format (backward compatible)
         "value": {
             "type": "Property",
             "value": reading.value,
-            "unitCode": reading.unit,
+            "unitCode": unit,
             "observedAt": timestamp_str
         },
+        
+        # SOSA: madeBySensor - link to sensor
+        "madeBySensor": {
+            "type": "Relationship",
+            "object": f"urn:ngsi-ld:Sensor:{reading.sensor_id}"
+        },
+        
+        # SOSA: hasFeatureOfInterest - link to asset
+        "hasFeatureOfInterest": {
+            "type": "Relationship",
+            "object": f"urn:ngsi-ld:Asset:{reading.asset_id}"
+        },
+        
+        # Legacy (backward compatible)
         "refSensor": {
             "type": "Relationship",
             "object": f"urn:ngsi-ld:Sensor:{reading.sensor_id}"
@@ -140,10 +269,12 @@ def create_observation_ngsi_ld(
             "value": reading.quality
         }
     
+    # SOSA: observedProperty - what was measured
     if sensor_info and sensor_info.get("sensor_type"):
+        observable_property = sensor_type_to_observable_property(sensor_info["sensor_type"])
         entity["observedProperty"] = {
-            "type": "Property",
-            "value": sensor_info["sensor_type"]
+            "type": "Relationship",
+            "object": observable_property.value if hasattr(observable_property, "value") else observable_property
         }
     
     return entity
@@ -173,6 +304,96 @@ def create_observation_ngsi_ld(
 async def get_context():
     """Return the NGSI-LD context for sensor data."""
     return JSONResponse(content={"@context": NGSI_LD_CONTEXT}, media_type="application/ld+json")
+
+
+@router.get(
+    "/sosa/context",
+    summary="Get SOSA/SSN Context",
+    description="""
+    Returns the W3C SOSA (Sensor, Observation, Sample, Actuator) context document.
+
+    This context provides semantic vocabulary for:
+    - **sosa:Sensor** - IoT sensor devices
+    - **sosa:Observation** - Sensor readings/measurements
+    - **sosa:Platform** - Entity hosting sensors
+    - **sosa:FeatureOfInterest** - The thing being observed (e.g., asset)
+    - **sosa:ObservableProperty** - What property is being measured
+
+    SOSA is a W3C recommendation for describing sensors and observations
+    with proper semantic meaning for machine interoperability.
+
+    Reference: https://www.w3.org/TR/vocab-ssn/
+    """,
+    tags=["SOSA"],
+    responses={
+        200: {
+            "description": "SOSA Context document",
+            "content": {"application/ld+json": {}},
+        }
+    },
+)
+async def get_sosa_context():
+    """Return the SOSA/SSN context for semantic sensor data."""
+    return JSONResponse(content=SOSA_JSONLD_CONTEXT, media_type="application/ld+json")
+
+
+@router.get(
+    "/sosa/observable-properties",
+    summary="List Observable Properties",
+    description="""
+    Returns the list of observable properties supported by OpenInfra.
+
+    Each property follows SOSA ontology pattern:
+    - URI identifier for the property
+    - Human-readable label
+    - Common units of measurement
+
+    Use these URIs in `sosa:observes` relationships.
+    """,
+    tags=["SOSA"],
+)
+async def list_observable_properties():
+    """List all supported observable properties."""
+    from app.domain.models.sosa_metadata import ObservableProperty, unit_to_qudt_uri
+    
+    properties = []
+    property_info = {
+        "Temperature": {"units": ["°C", "°F"], "description": "Temperature measurement"},
+        "Humidity": {"units": ["%"], "description": "Relative humidity"},
+        "Pressure": {"units": ["kPa", "Pa"], "description": "Atmospheric or fluid pressure"},
+        "WaterLevel": {"units": ["cm", "m"], "description": "Water level in drainage/tanks"},
+        "FlowRate": {"units": ["L/s", "m³/s"], "description": "Fluid flow rate"},
+        "AirQuality": {"units": ["ppm"], "description": "Air quality index"},
+        "Vibration": {"units": ["Hz"], "description": "Vibration frequency"},
+        "Power": {"units": ["kW", "W"], "description": "Electrical power"},
+        "Voltage": {"units": ["V"], "description": "Electrical voltage"},
+        "Current": {"units": ["A"], "description": "Electrical current"},
+    }
+    
+    for prop in ObservableProperty:
+        prop_name = prop.name.replace("_", "")
+        info = property_info.get(prop_name.title().replace("_", ""), {})
+        
+        properties.append({
+            "@id": prop.value,
+            "@type": "sosa:ObservableProperty",
+            "label": prop_name.replace("_", " ").title(),
+            "description": info.get("description", ""),
+            "commonUnits": [
+                {"symbol": u, "qudt": unit_to_qudt_uri(u)} 
+                for u in info.get("units", [])
+            ]
+        })
+    
+    return JSONResponse(
+        content={
+            "@context": SOSA_JSONLD_CONTEXT["@context"],
+            "@type": "schema:ItemList",
+            "schema:numberOfItems": len(properties),
+            "schema:itemListElement": properties
+        },
+        media_type="application/ld+json"
+    )
 
 
 @router.get(
