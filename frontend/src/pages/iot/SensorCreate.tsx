@@ -32,7 +32,21 @@ const SensorCreate: React.FC = () => {
     },
     onError: (error: any) => {
       if (error.response?.data?.detail) {
-        setErrors({ submit: error.response.data.detail })
+        const detail = error.response.data.detail
+        // Handle FastAPI validation errors (array of objects)
+        if (Array.isArray(detail)) {
+          const errorMessages = detail.map((err: any) => {
+            const field = err.loc?.slice(1).join('.') || 'unknown'
+            return `${field}: ${err.msg}`
+          }).join('; ')
+          setErrors({ submit: errorMessages })
+        } else if (typeof detail === 'string') {
+          setErrors({ submit: detail })
+        } else {
+          setErrors({ submit: 'An error occurred while creating the sensor' })
+        }
+      } else {
+        setErrors({ submit: error.message || 'An error occurred' })
       }
     },
   })
@@ -94,9 +108,14 @@ const SensorCreate: React.FC = () => {
               <option value="humidity">Humidity</option>
               <option value="pressure">Pressure</option>
               <option value="vibration">Vibration</option>
-              <option value="noise">Noise</option>
+              <option value="power">Power</option>
+              <option value="voltage">Voltage</option>
+              <option value="current">Current</option>
+              <option value="flow_rate">Flow Rate</option>
+              <option value="water_level">Water Level</option>
               <option value="air_quality">Air Quality</option>
-              <option value="other">Other</option>
+              <option value="rainfall">Rainfall</option>
+              <option value="custom">Custom</option>
             </Select>
           </FormField>
 
