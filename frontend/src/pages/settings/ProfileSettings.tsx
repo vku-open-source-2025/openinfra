@@ -100,7 +100,7 @@ const ProfileSettings: React.FC = () => {
         setErrors({});
 
         if (!formData.email?.trim()) {
-            setErrors({ email: "Email is required" });
+            setErrors({ email: "Email là bắt buộc" });
             return;
         }
 
@@ -112,7 +112,7 @@ const ProfileSettings: React.FC = () => {
         setErrors({});
 
         if (!passwordData.current_password) {
-            setErrors({ password: "Current password is required" });
+            setErrors({ password: "Mật khẩu hiện tại là bắt buộc" });
             return;
         }
         if (
@@ -120,12 +120,12 @@ const ProfileSettings: React.FC = () => {
             passwordData.new_password.length < 6
         ) {
             setErrors({
-                password: "New password must be at least 6 characters",
+                password: "Mật khẩu mới phải có ít nhất 6 ký tự",
             });
             return;
         }
         if (passwordData.new_password !== passwordData.confirm_password) {
-            setErrors({ password: "Passwords do not match" });
+            setErrors({ password: "Mật khẩu không khớp" });
             return;
         }
 
@@ -154,21 +154,21 @@ const ProfileSettings: React.FC = () => {
         <div className="p-6 space-y-6">
             <div>
                 <h1 className="text-2xl font-bold text-slate-900">
-                    Profile Settings
+                    Cài đặt tài khoản
                 </h1>
                 <p className="text-slate-500 mt-1">
-                    Manage your account information
+                    Quản lý thông tin tài khoản của bạn
                 </p>
             </div>
 
             <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h2 className="text-lg font-semibold mb-4">
-                    Profile Information
+                    Thông tin hồ sơ
                 </h2>
                 <Form onSubmit={handleProfileSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel>Tên đăng nhập</FormLabel>
                             <Input
                                 value={currentUser?.username || ""}
                                 disabled
@@ -194,7 +194,7 @@ const ProfileSettings: React.FC = () => {
                         </FormField>
 
                         <FormField>
-                            <FormLabel required>Full Name</FormLabel>
+                            <FormLabel required>Họ và tên</FormLabel>
                             <Input
                                 value={formData.full_name || ""}
                                 onChange={(e) =>
@@ -207,7 +207,7 @@ const ProfileSettings: React.FC = () => {
                         </FormField>
 
                         <FormField>
-                            <FormLabel>Phone</FormLabel>
+                            <FormLabel>Số điện thoại</FormLabel>
                             <Input
                                 value={formData.phone || ""}
                                 onChange={(e) =>
@@ -228,19 +228,19 @@ const ProfileSettings: React.FC = () => {
                             disabled={updateMutation.isPending}
                         >
                             {updateMutation.isPending
-                                ? "Updating..."
-                                : "Update Profile"}
+                                ? "Đang cập nhật..."
+                                : "Cập nhật"}
                         </Button>
                     </div>
                 </Form>
             </div>
 
             <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+                <h2 className="text-lg font-semibold mb-4">Đổi mật khẩu</h2>
                 <Form onSubmit={handlePasswordSubmit}>
                     <div className="space-y-4">
                         <FormField>
-                            <FormLabel required>Current Password</FormLabel>
+                            <FormLabel required>Mật khẩu hiện tại</FormLabel>
                             <Input
                                 type="password"
                                 value={passwordData.current_password}
@@ -255,7 +255,7 @@ const ProfileSettings: React.FC = () => {
                         </FormField>
 
                         <FormField>
-                            <FormLabel required>New Password</FormLabel>
+                            <FormLabel required>Mật khẩu mới</FormLabel>
                             <Input
                                 type="password"
                                 value={passwordData.new_password}
@@ -270,7 +270,7 @@ const ProfileSettings: React.FC = () => {
                         </FormField>
 
                         <FormField>
-                            <FormLabel required>Confirm New Password</FormLabel>
+                            <FormLabel required>Xác nhận mật khẩu mới</FormLabel>
                             <Input
                                 type="password"
                                 value={passwordData.confirm_password}
@@ -295,8 +295,8 @@ const ProfileSettings: React.FC = () => {
                             disabled={changePasswordMutation.isPending}
                         >
                             {changePasswordMutation.isPending
-                                ? "Changing..."
-                                : "Change Password"}
+                                ? "Đang thay đổi..."
+                                : "Đổi mật khẩu"}
                         </Button>
                     </div>
                 </Form>
@@ -307,10 +307,10 @@ const ProfileSettings: React.FC = () => {
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <Fingerprint className="w-5 h-5" />
-                        Biometric Login
+                        Đăng nhập bằng sinh trắc học
                     </h2>
                     <p className="text-sm text-slate-500 mb-4">
-                        Use fingerprint or face recognition for quick and secure login
+                        Sử dụng vân tay hoặc nhận diện khuôn mặt để đăng nhập nhanh và an toàn
                     </p>
                     
                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
@@ -322,26 +322,26 @@ const ProfileSettings: React.FC = () => {
                             )}
                             <div>
                                 <p className="font-medium">
-                                    {biometricEnabled ? 'Biometric Enabled' : 'Biometric Disabled'}
+                                    {biometricEnabled ? 'Sinh trắc học đã bật' : 'Sinh trắc học chưa bật'}
                                 </p>
                                 <p className="text-sm text-slate-500">
                                     {biometricEnabled 
-                                        ? 'You can login using fingerprint or face recognition' 
-                                        : 'Enable to login faster next time'}
+                                        ? 'Bạn có thể đăng nhập bằng vân tay hoặc nhận diện khuôn mặt' 
+                                        : 'Bật để đăng nhập nhanh hơn lần sau'}
                                 </p>
                             </div>
                         </div>
                         
                         {biometricEnabled ? (
-                            <Button
+                                <Button
                                 variant="outline"
                                 onClick={disableBiometric}
                                 disabled={biometricLoading}
                             >
-                                Disable
+                                Tắt
                             </Button>
                         ) : (
-                            <Button
+                                <Button
                                 onClick={async () => {
                                     if (currentUser && accessToken && refreshToken) {
                                         await registerBiometric(
@@ -354,7 +354,7 @@ const ProfileSettings: React.FC = () => {
                                 }}
                                 disabled={biometricLoading}
                             >
-                                {biometricLoading ? 'Setting up...' : 'Enable'}
+                                {biometricLoading ? 'Đang thiết lập...' : 'Bật'}
                             </Button>
                         )}
                     </div>
@@ -366,14 +366,14 @@ const ProfileSettings: React.FC = () => {
             )}
 
             <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold mb-4">Account Actions</h2>
+                <h2 className="text-lg font-semibold mb-4">Hành động tài khoản</h2>
                 <div className="flex gap-4">
-                    <Button
+                        <Button
                         type="button"
                         variant="destructive"
                         onClick={handleLogout}
                     >
-                        Logout
+                        Đăng xuất
                     </Button>
                 </div>
             </div>

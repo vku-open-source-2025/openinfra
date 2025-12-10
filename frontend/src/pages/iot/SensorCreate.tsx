@@ -56,11 +56,11 @@ const SensorCreate: React.FC = () => {
     setErrors({})
 
     if (!formData.sensor_code?.trim()) {
-      setErrors({ sensor_code: "Sensor code is required" })
+      setErrors({ sensor_code: "Mã cảm biến là bắt buộc" })
       return
     }
     if (!formData.asset_id?.trim()) {
-      setErrors({ asset_id: "Asset ID is required" })
+      setErrors({ asset_id: "ID tài sản là bắt buộc" })
       return
     }
 
@@ -71,15 +71,15 @@ const SensorCreate: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/iot" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Sensors
+        Quay lại danh sách cảm biến
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Register New Sensor</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Đăng ký cảm biến mới</h1>
 
         <Form onSubmit={handleSubmit}>
           <FormField>
-            <FormLabel required>Sensor Code</FormLabel>
+            <FormLabel required>Mã cảm biến</FormLabel>
             <Input
               value={formData.sensor_code || ""}
               onChange={(e) => setFormData({ ...formData, sensor_code: e.target.value })}
@@ -89,7 +89,7 @@ const SensorCreate: React.FC = () => {
           </FormField>
 
           <FormField>
-            <FormLabel required>Asset ID</FormLabel>
+            <FormLabel required>ID tài sản</FormLabel>
             <Input
               value={formData.asset_id || ""}
               onChange={(e) => setFormData({ ...formData, asset_id: e.target.value })}
@@ -99,38 +99,38 @@ const SensorCreate: React.FC = () => {
           </FormField>
 
           <FormField>
-            <FormLabel required>Sensor Type</FormLabel>
+            <FormLabel required>Loại cảm biến</FormLabel>
             <Select
               value={formData.sensor_type || "temperature"}
               onChange={(e) => setFormData({ ...formData, sensor_type: e.target.value as SensorType })}
             >
-              <option value="temperature">Temperature</option>
-              <option value="humidity">Humidity</option>
-              <option value="pressure">Pressure</option>
-              <option value="vibration">Vibration</option>
-              <option value="power">Power</option>
-              <option value="voltage">Voltage</option>
-              <option value="current">Current</option>
-              <option value="flow_rate">Flow Rate</option>
-              <option value="water_level">Water Level</option>
-              <option value="air_quality">Air Quality</option>
-              <option value="rainfall">Rainfall</option>
-              <option value="custom">Custom</option>
+              <option value="temperature">Nhiệt độ</option>
+              <option value="humidity">Độ ẩm</option>
+              <option value="pressure">Áp suất</option>
+              <option value="vibration">Rung</option>
+              <option value="power">Công suất</option>
+              <option value="voltage">Điện áp</option>
+              <option value="current">Dòng điện</option>
+              <option value="flow_rate">Lưu lượng</option>
+              <option value="water_level">Mực nước</option>
+              <option value="air_quality">Chất lượng không khí</option>
+              <option value="rainfall">Lượng mưa</option>
+              <option value="custom">Tùy chỉnh</option>
             </Select>
           </FormField>
 
           <FormField>
-            <FormLabel>Measurement Unit</FormLabel>
+            <FormLabel>Đơn vị đo</FormLabel>
             <Input
               value={formData.measurement_unit || ""}
               onChange={(e) => setFormData({ ...formData, measurement_unit: e.target.value })}
-              placeholder="°C, %, hPa, etc."
+              placeholder="°C, %, hPa, ..."
             />
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">
             <FormField>
-              <FormLabel>Latitude</FormLabel>
+              <FormLabel>Vĩ độ</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -149,7 +149,7 @@ const SensorCreate: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel>Longitude</FormLabel>
+              <FormLabel>Kinh độ</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -172,14 +172,14 @@ const SensorCreate: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Registering..." : "Register Sensor"}
+              {createMutation.isPending ? "Đang đăng ký..." : "Đăng ký cảm biến"}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/iot" })}
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </Form>

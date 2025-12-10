@@ -119,19 +119,19 @@ const AssetDetail: React.FC = () => {
     return (
         <div className="p-6 space-y-6">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-slate-500">
+                <div className="flex items-center gap-2 text-sm text-slate-500">
                 <button
                     onClick={() => navigate({ to: "/admin" })}
                     className="hover:text-slate-900"
                 >
-                    Home
+                    Trang chủ
                 </button>
                 <span>/</span>
                 <button
                     onClick={() => navigate({ to: "/admin" })}
                     className="hover:text-slate-900"
                 >
-                    Assets
+                    Tài sản
                 </button>
                 <span>/</span>
                 <span className="text-slate-900 font-medium">
@@ -206,14 +206,14 @@ const AssetDetail: React.FC = () => {
                             }
                         >
                             <Map className="h-4 w-4 mr-2" />
-                            View on Map
+                            Xem trên bản đồ
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => navigate({ to: "/admin" })}
                         >
                             <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back
+                            Quay lại
                         </Button>
                     </div>
                 </div>
@@ -221,7 +221,7 @@ const AssetDetail: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div className="bg-slate-50 rounded-lg p-4">
                         <div className="text-xs text-slate-500 mb-1">
-                            Last Maintenance
+                            Lần bảo trì gần nhất
                         </div>
                         <div className="text-sm font-semibold text-slate-900">
                             {asset.lifecycle?.last_maintenance_date
@@ -236,7 +236,7 @@ const AssetDetail: React.FC = () => {
                     </div>
                     <div className="bg-slate-50 rounded-lg p-4">
                         <div className="text-xs text-slate-500 mb-1">
-                            Next Maintenance
+                            Bảo trì tiếp theo
                         </div>
                         <div className="text-sm font-semibold text-slate-900">
                             {asset.lifecycle?.next_maintenance_date
@@ -251,7 +251,7 @@ const AssetDetail: React.FC = () => {
                     </div>
                     <div className="bg-slate-50 rounded-lg p-4">
                         <div className="text-xs text-slate-500 mb-1">
-                            Health Score
+                            Điểm sức khỏe
                         </div>
                         <div className="flex items-center gap-2">
                             <span
@@ -275,7 +275,7 @@ const AssetDetail: React.FC = () => {
                     </div>
                     <div className="bg-slate-50 rounded-lg p-4">
                         <div className="text-xs text-slate-500 mb-1">
-                            Remaining Life
+                            Thời gian sử dụng còn lại
                         </div>
                         <div className="text-sm font-semibold text-slate-900">
                             {asset.lifecycle?.remaining_lifespan_years

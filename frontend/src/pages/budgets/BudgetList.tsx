@@ -36,19 +36,19 @@ const BudgetList: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Budgets</h1>
-          <p className="text-slate-500 mt-1">Manage budget planning and tracking</p>
+          <h1 className="text-2xl font-bold text-slate-900">Ngân sách</h1>
+          <p className="text-slate-500 mt-1">Quản lý kế hoạch và theo dõi ngân sách</p>
         </div>
         <Button onClick={() => navigate({ to: "/admin/budgets/create" })}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Budget
+          Tạo ngân sách
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-4">
         <Input
           type="number"
-          placeholder="Fiscal Year"
+          placeholder="Năm tài chính"
           value={fiscalYear}
           onChange={(e) => setFiscalYear(e.target.value)}
           className="w-[150px]"
@@ -56,16 +56,16 @@ const BudgetList: React.FC = () => {
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          placeholder="All Statuses"
+          placeholder="Tất cả trạng thái"
         >
           <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="submitted">Submitted</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
+          <option value="draft">Bản nháp</option>
+          <option value="submitted">Đã gửi</option>
+          <option value="approved">Đã duyệt</option>
+          <option value="rejected">Từ chối</option>
         </Select>
         <Input
-          placeholder="Category"
+          placeholder="Danh mục"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           className="flex-1 min-w-[200px]"
@@ -95,7 +95,7 @@ const BudgetList: React.FC = () => {
         </>
       ) : (
         <div className="text-center py-12 text-slate-500">
-          <p>No budgets found.</p>
+          <p>Không tìm thấy ngân sách.</p>
         </div>
       )}
     </div>

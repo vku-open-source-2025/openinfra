@@ -43,7 +43,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
     <div className="space-y-4">
       {/* Report Type Selection */}
       <div>
-        <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Select Report Type</label>
+        <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Chọn loại báo cáo</label>
         <div className="space-y-2">
           <label className="flex items-center gap-2 p-3 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
             <input
@@ -54,7 +54,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               onChange={() => onReportTypeChange("maintenance_summary")}
               className="rounded border-slate-300"
             />
-            <span className="text-sm text-slate-900">Maintenance Summary</span>
+            <span className="text-sm text-slate-900">Tóm tắt bảo trì</span>
           </label>
           <label className="flex items-center gap-2 p-3 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
             <input
@@ -65,7 +65,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               onChange={() => onReportTypeChange("incident_summary")}
               className="rounded border-slate-300"
             />
-            <span className="text-sm text-slate-900">Incident Summary</span>
+            <span className="text-sm text-slate-900">Tóm tắt sự cố</span>
           </label>
           <label className="flex items-center gap-2 p-3 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
             <input
@@ -76,7 +76,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               onChange={() => onReportTypeChange("lifecycle_overview")}
               className="rounded border-slate-300"
             />
-            <span className="text-sm text-slate-900">Lifecycle Overview</span>
+            <span className="text-sm text-slate-900">Tổng quan vòng đời</span>
           </label>
           <label className="flex items-center gap-2 p-3 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
             <input
@@ -87,7 +87,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               onChange={() => onReportTypeChange("end_of_life_forecast")}
               className="rounded border-slate-300"
             />
-            <span className="text-sm text-slate-900">End-of-Life Forecast</span>
+            <span className="text-sm text-slate-900">Dự báo hết vòng đời</span>
           </label>
           <label className="flex items-center gap-2 p-3 border border-slate-200 rounded cursor-pointer hover:bg-slate-50">
             <input
@@ -98,7 +98,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               onChange={() => onReportTypeChange("custom")}
               className="rounded border-slate-300"
             />
-            <span className="text-sm text-slate-900">Custom Report</span>
+            <span className="text-sm text-slate-900">Báo cáo tùy chỉnh</span>
           </label>
         </div>
       </div>
@@ -106,10 +106,10 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
       {/* Filters (if custom) */}
       {reportType === "custom" && (
         <div className="space-y-4 border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-semibold text-slate-900">Filters</h4>
+          <h4 className="text-sm font-semibold text-slate-900">Bộ lọc</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-500 mb-1 block">Date From</label>
+              <label className="text-xs text-slate-500 mb-1 block">Từ ngày</label>
               <Input
                 type="date"
                 value={dateFrom}
@@ -117,7 +117,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 mb-1 block">Date To</label>
+              <label className="text-xs text-slate-500 mb-1 block">Đến ngày</label>
               <Input
                 type="date"
                 value={dateTo}
@@ -125,32 +125,32 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 mb-1 block">Incident Severity</label>
+              <label className="text-xs text-slate-500 mb-1 block">Mức độ sự cố</label>
               <Select
                 value={severityFilter}
                 onValueChange={onSeverityFilterChange}
               >
-                <option value="">All Severities</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
+                <option value="">Tất cả mức độ</option>
+                <option value="low">Thấp</option>
+                <option value="medium">Trung bình</option>
+                <option value="high">Cao</option>
+                <option value="critical">Nghiêm trọng</option>
               </Select>
             </div>
             <div>
-              <label className="text-xs text-slate-500 mb-1 block">Maintenance Cost Range</label>
+              <label className="text-xs text-slate-500 mb-1 block">Khoảng chi phí bảo trì</label>
               <div className="flex gap-2">
                 <Input
                   type="number"
                   value={costMin}
                   onChange={(e) => onCostMinChange(e.target.value)}
-                  placeholder="Min"
+                  placeholder="Tối thiểu"
                 />
                 <Input
                   type="number"
                   value={costMax}
                   onChange={(e) => onCostMaxChange(e.target.value)}
-                  placeholder="Max"
+                  placeholder="Tối đa"
                 />
               </div>
             </div>
@@ -160,7 +160,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
 
       {/* Output Format */}
       <div className="border-t border-slate-200 pt-4">
-        <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Output Format</label>
+        <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Định dạng đầu ra</label>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -194,7 +194,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
           disabled={isGenerating}
           className="w-full"
         >
-          {isGenerating ? "Generating Report..." : "Generate Report"}
+          {isGenerating ? "Đang tạo báo cáo..." : "Tạo báo cáo"}
         </Button>
       </div>
     </div>

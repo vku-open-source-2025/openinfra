@@ -122,16 +122,16 @@ const IncidentCreate: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/incidents" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Incidents
+        Quay lại danh sách sự cố
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Report New Incident</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Báo sự cố mới</h1>
 
         <Form onSubmit={handleSubmit}>
           {/* Asset Selector */}
           <FormField>
-            <FormLabel>Related Asset</FormLabel>
+            <FormLabel>Tài sản liên quan</FormLabel>
             {selectedAsset ? (
               <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <Box className="h-5 w-5 text-blue-600" />
@@ -141,14 +141,14 @@ const IncidentCreate: React.FC = () => {
                   </p>
                   <p className="text-xs text-blue-600">{selectedAsset.feature_type}</p>
                 </div>
-                <Button
+                  <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedAssetId(null)}
                   className="text-blue-600 hover:text-blue-800"
                 >
-                  Change
+                  Thay đổi
                 </Button>
               </div>
             ) : (
@@ -158,7 +158,7 @@ const IncidentCreate: React.FC = () => {
                   <Input
                     value={assetSearch}
                     onChange={(e) => setAssetSearch(e.target.value)}
-                    placeholder="Search assets by name, code, or type..."
+                    placeholder="Tìm kiếm tài sản theo tên, mã hoặc loại..."
                     className="pl-10"
                   />
                 </div>
@@ -181,53 +181,53 @@ const IncidentCreate: React.FC = () => {
                   </div>
                 )}
                 {assetSearch && filteredAssets && filteredAssets.length === 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-4 text-center text-slate-500 text-sm">
-                    No assets found matching "{assetSearch}"
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-4 text-center text-slate-500 text-sm">
+                    Không tìm thấy tài sản phù hợp với "{assetSearch}"
                   </div>
                 )}
               </div>
             )}
             <p className="text-xs text-slate-500 mt-1">
-              Optional: Link this incident to a specific asset
+              Tùy chọn: Liên kết sự cố này với tài sản cụ thể
             </p>
           </FormField>
 
           <FormField>
-            <FormLabel required>Title</FormLabel>
+            <FormLabel required>Tiêu đề</FormLabel>
             <Input
               value={formData.title || ""}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Brief description of the incident"
+              placeholder="Mô tả ngắn gọn về sự cố"
             />
             {errors.title && <FormError>{errors.title}</FormError>}
           </FormField>
 
           <FormField>
-            <FormLabel required>Description</FormLabel>
+            <FormLabel required>Mô tả</FormLabel>
             <Textarea
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Detailed description of the incident"
+              placeholder="Mô tả chi tiết về sự cố"
               rows={5}
             />
             {errors.description && <FormError>{errors.description}</FormError>}
           </FormField>
 
           <FormField>
-            <FormLabel required>Severity</FormLabel>
+            <FormLabel required>Mức độ nghiêm trọng</FormLabel>
             <Select
               value={formData.severity || "medium"}
               onChange={(e) => setFormData({ ...formData, severity: e.target.value as IncidentSeverity })}
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+              <option value="low">Thấp</option>
+              <option value="medium">Trung bình</option>
+              <option value="high">Cao</option>
+              <option value="critical">Nguy kịch</option>
             </Select>
           </FormField>
 
           <FormField>
-            <FormLabel required>Location Address</FormLabel>
+            <FormLabel required>Địa chỉ vị trí</FormLabel>
             <Input
               value={formData.location?.address || ""}
               onChange={(e) =>
@@ -239,14 +239,14 @@ const IncidentCreate: React.FC = () => {
                   },
                 })
               }
-              placeholder="Street address or location"
+              placeholder="Địa chỉ hoặc vị trí"
             />
             {errors.address && <FormError>{errors.address}</FormError>}
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">
             <FormField>
-              <FormLabel>Latitude</FormLabel>
+              <FormLabel>Vĩ độ</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -268,7 +268,7 @@ const IncidentCreate: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel>Longitude</FormLabel>
+              <FormLabel>Kinh độ</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -294,14 +294,14 @@ const IncidentCreate: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Incident"}
+              {createMutation.isPending ? "Đang tạo..." : "Tạo sự cố"}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/incidents" })}
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </Form>

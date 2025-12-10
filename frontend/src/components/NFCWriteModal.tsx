@@ -42,12 +42,12 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
     const startScanning = async () => {
         if (!("NDEFReader" in window)) {
             setStatus("error");
-            setMessage("Web NFC is not supported on this device/browser.");
+            setMessage("Thiết bị/trình duyệt này không hỗ trợ Web NFC.");
             return;
         }
 
         setStatus("scanning");
-        setMessage("Ready to scan. Tap your device on the NFC tag.");
+        setMessage("Sẵn sàng quét. Chạm thiết bị của bạn vào thẻ NFC.");
 
         abortControllerRef.current = new AbortController();
 
@@ -57,8 +57,8 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
             await ndef.scan({ signal: abortControllerRef.current.signal });
 
             ndef.onreading = async (_event: NDEFReadingEvent) => {
-                setStatus("writing");
-                setMessage("Tag detected. Writing data...");
+                    setStatus("writing");
+                setMessage("Phát hiện thẻ. Đang ghi dữ liệu...");
 
                 try {
                     const assetId = asset ? getAssetId(asset) : "";
@@ -71,7 +71,7 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
                     });
 
                     setStatus("success");
-                    setMessage("Successfully wrote asset URL to NFC tag!");
+                    setMessage("Đã ghi thành công URL tài sản vào thẻ NFC!");
 
                     // Auto close after success
                     setTimeout(() => {
@@ -80,18 +80,18 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
                 } catch (writeError) {
                     console.error(writeError);
                     setStatus("error");
-                    setMessage("Failed to write to tag. Please try again.");
+                    setMessage("Ghi vào thẻ thất bại. Vui lòng thử lại.");
                 }
             };
 
             ndef.onreadingerror = () => {
                 setStatus("error");
-                setMessage("Error reading tag. Please try again.");
+                setMessage("Lỗi khi đọc thẻ. Vui lòng thử lại.");
             };
         } catch (error) {
             console.error(error);
             setStatus("error");
-            setMessage("Failed to start NFC scan. Ensure NFC is enabled.");
+            setMessage("Không thể bắt đầu quét NFC. Vui lòng đảm bảo NFC đã được bật.");
         }
     };
 
@@ -102,7 +102,7 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
                     <h3 className="font-bold text-lg text-slate-800">
-                        Write to NFC
+                        Ghi vào NFC
                     </h3>
                     <button
                         onClick={onClose}
@@ -136,26 +136,26 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-slate-800 text-lg mb-2">
-                            {status === "scanning"
-                                ? "Ready to Scan"
+                            <h4 className="font-bold text-slate-800 text-lg mb-2">
+                                {status === "scanning"
+                                ? "Sẵn sàng quét"
                                 : status === "writing"
-                                ? "Writing Data..."
+                                ? "Đang ghi dữ liệu..."
                                 : status === "success"
-                                ? "Success!"
+                                ? "Thành công!"
                                 : status === "error"
-                                ? "Error"
-                                : "Initialize"}
-                        </h4>
+                                ? "Lỗi"
+                                : "Chuẩn bị"}
+                            </h4>
                         <p className="text-slate-500 text-sm">{message}</p>
                     </div>
 
                     {status === "error" && (
-                        <button
+                            <button
                             onClick={startScanning}
                             className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors"
                         >
-                            Try Again
+                            Thử lại
                         </button>
                     )}
                 </div>

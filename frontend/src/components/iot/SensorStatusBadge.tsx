@@ -15,24 +15,24 @@ export const SensorStatusBadge: React.FC<SensorStatusBadgeProps> = ({ status, la
         const minutesAgo = Math.floor((now.getTime() - lastSeenDate.getTime()) / 60000)
 
         if (minutesAgo > 30) {
-          return { label: "Offline", variant: "destructive" as const }
+          return { label: "Ngoại tuyến", variant: "destructive" as const }
         }
         if (minutesAgo > 10) {
-          return { label: "Warning", variant: "warning" as const }
+          return { label: "Cảnh báo", variant: "warning" as const }
         }
       }
-      return { label: "Online", variant: "success" as const }
+      return { label: "Trực tuyến", variant: "success" as const }
     }
     if (status === "maintenance") {
-      return { label: "Maintenance", variant: "warning" as const }
+      return { label: "Bảo trì", variant: "warning" as const }
     }
     if (status === "offline") {
-      return { label: "Offline", variant: "destructive" as const }
+      return { label: "Ngoại tuyến", variant: "destructive" as const }
     }
     if (status === "error") {
-      return { label: "Error", variant: "destructive" as const }
+      return { label: "Lỗi", variant: "destructive" as const }
     }
-    return { label: "Inactive", variant: "outline" as const }
+    return { label: "Không hoạt động", variant: "outline" as const }
   }
 
   const { label, variant } = getStatusInfo()

@@ -59,8 +59,8 @@ const SensorList: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">IoT Sensors</h1>
-          <p className="text-slate-500 mt-1">Manage and monitor IoT sensors</p>
+          <h1 className="text-2xl font-bold text-slate-900">Cảm biến IoT</h1>
+          <p className="text-slate-500 mt-1">Quản lý và giám sát cảm biến IoT</p>
         </div>
         <Button onClick={() => navigate({ to: "/admin/iot/create" })}>
           <Plus className="h-4 w-4 mr-2" />
@@ -71,7 +71,7 @@ const SensorList: React.FC = () => {
       <div className="flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px]">
           <Input
-            placeholder="Search sensors..."
+            placeholder="Tìm kiếm cảm biến..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -79,25 +79,25 @@ const SensorList: React.FC = () => {
         <Select
           value={sensorType}
           onChange={(e) => setSensorType(e.target.value)}
-          placeholder="All Types"
+          placeholder="Tất cả loại"
         >
           <option value="">All Types</option>
-          <option value="temperature">Temperature</option>
-          <option value="humidity">Humidity</option>
-          <option value="pressure">Pressure</option>
-          <option value="vibration">Vibration</option>
-          <option value="noise">Noise</option>
-          <option value="air_quality">Air Quality</option>
+          <option value="temperature">Nhiệt độ</option>
+          <option value="humidity">Độ ẩm</option>
+          <option value="pressure">Áp suất</option>
+          <option value="vibration">Rung</option>
+          <option value="noise">Tiếng ồn</option>
+          <option value="air_quality">Chất lượng không khí</option>
         </Select>
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          placeholder="All Statuses"
+          placeholder="Tất cả trạng thái"
         >
           <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="maintenance">Maintenance</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="inactive">Ngưng hoạt động</option>
+          <option value="maintenance">Bảo trì</option>
         </Select>
       </div>
 
@@ -109,8 +109,8 @@ const SensorList: React.FC = () => {
         </div>
       ) : paginatedSensors && paginatedSensors.length > 0 ? (
         <>
-          <div className="text-sm text-slate-500 mb-2">
-            Showing {(page - 1) * itemsPerPage + 1}-{Math.min(page * itemsPerPage, totalItems)} of {totalItems} sensors
+            <div className="text-sm text-slate-500 mb-2">
+            Hiển thị {(page - 1) * itemsPerPage + 1}-{Math.min(page * itemsPerPage, totalItems)} trong tổng {totalItems} cảm biến
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {paginatedSensors.map((sensor) => (
@@ -127,7 +127,7 @@ const SensorList: React.FC = () => {
         </>
       ) : (
         <div className="text-center py-12 text-slate-500">
-          <p>No sensors found.</p>
+          <p>Không tìm thấy cảm biến.</p>
         </div>
       )}
     </div>

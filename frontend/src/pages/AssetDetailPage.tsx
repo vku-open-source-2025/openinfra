@@ -101,19 +101,19 @@ const AssetDetailPage: React.FC = () => {
                     <div className="text-center p-8">
                         <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                         <h2 className="text-xl font-bold text-slate-900 mb-2">
-                            Asset Not Found
+                            Không tìm thấy tài sản
                         </h2>
                         <p className="text-slate-600 mb-6">
                             The asset you're looking for doesn't exist or is not
                             available.
                         </p>
                         <div className="flex gap-3 justify-center">
-                            <Button
+                                <Button
                                 onClick={() => navigate({ to: "/map" })}
                                 variant="outline"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Map
+                                Quay lại bản đồ
                             </Button>
                             <Button onClick={() => navigate({ to: "/" })}>
                                 Go Home
@@ -240,7 +240,7 @@ const AssetDetailPage: React.FC = () => {
                                     variant="outline"
                                 >
                                     <MapPin className="h-4 w-4 mr-2" />
-                                    {showMap ? "Hide" : "Show"} Map
+                                    {showMap ? "Ẩn" : "Hiện"} bản đồ
                                 </Button>
                             )}
                         </div>
@@ -250,7 +250,7 @@ const AssetDetailPage: React.FC = () => {
                             {healthScore !== null && (
                                 <div className="bg-slate-50 rounded-lg p-4">
                                     <div className="text-xs text-slate-500 mb-1 uppercase tracking-wide">
-                                        Health Score
+                                        Điểm sức khỏe
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span
@@ -270,7 +270,7 @@ const AssetDetailPage: React.FC = () => {
                             {asset.lifecycle?.last_maintenance_date && (
                                 <div className="bg-slate-50 rounded-lg p-4">
                                     <div className="text-xs text-slate-500 mb-1 uppercase tracking-wide">
-                                        Last Maintenance
+                                        Lần bảo trì gần nhất
                                     </div>
                                     <div className="text-sm font-semibold text-slate-900">
                                         {format(
@@ -285,7 +285,7 @@ const AssetDetailPage: React.FC = () => {
                             {asset.lifecycle?.next_maintenance_date && (
                                 <div className="bg-slate-50 rounded-lg p-4">
                                     <div className="text-xs text-slate-500 mb-1 uppercase tracking-wide">
-                                        Next Maintenance
+                                        Bảo trì tiếp theo
                                     </div>
                                     <div className="text-sm font-semibold text-slate-900">
                                         {format(
@@ -300,7 +300,7 @@ const AssetDetailPage: React.FC = () => {
                             {asset.lifecycle?.remaining_lifespan_years && (
                                 <div className="bg-slate-50 rounded-lg p-4">
                                     <div className="text-xs text-slate-500 mb-1 uppercase tracking-wide">
-                                        Remaining Life
+                                        Thời gian sử dụng còn lại
                                     </div>
                                     <div className="text-sm font-semibold text-slate-900">
                                         {

@@ -102,12 +102,12 @@ export const NearbySearch: React.FC<NearbySearchProps> = ({ onResults, onClear }
           className="flex items-center gap-2"
         >
           <Search size={16} />
-          Nearby Search
+          Tìm kiếm xung quanh
         </Button>
       ) : (
         <div className="p-4 w-80">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-sm text-slate-900">Search Nearby</h3>
+            <h3 className="font-semibold text-sm text-slate-900">Tìm kiếm xung quanh</h3>
             <button
               onClick={handleClear}
               className="text-slate-400 hover:text-slate-600"
@@ -119,7 +119,7 @@ export const NearbySearch: React.FC<NearbySearchProps> = ({ onResults, onClear }
           <div className="space-y-3">
             <div>
               <Label htmlFor="radius" className="text-xs text-slate-600">
-                Search Radius (meters)
+                Bán kính tìm kiếm (mét)
               </Label>
               <div className="flex items-center gap-2 mt-1">
                 <Input
@@ -172,11 +172,11 @@ export const NearbySearch: React.FC<NearbySearchProps> = ({ onResults, onClear }
                 size="sm"
               >
                 {isSearching ? (
-                  'Searching...'
+                  'Đang tìm...'
                 ) : (
                   <>
                     <MapPin size={16} className="mr-2" />
-                    Search from Map Center
+                    Tìm kiếm từ trung tâm bản đồ
                   </>
                 )}
               </Button>

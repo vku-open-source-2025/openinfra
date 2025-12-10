@@ -19,10 +19,10 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
     : 0
 
   const statusConfig: Record<typeof budget.status, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "outline" }> = {
-    draft: { label: "Draft", variant: "outline" },
-    submitted: { label: "Submitted", variant: "secondary" },
-    approved: { label: "Approved", variant: "success" },
-    rejected: { label: "Rejected", variant: "destructive" },
+    draft: { label: "Nháp", variant: "outline" },
+    submitted: { label: "Đã gửi", variant: "secondary" },
+    approved: { label: "Đã duyệt", variant: "success" },
+    rejected: { label: "Bị từ chối", variant: "destructive" },
   }
 
   const statusInfo = statusConfig[budget.status]
@@ -44,19 +44,19 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
 
       <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600">Total Budget</span>
+          <span className="text-slate-600">Tổng ngân sách</span>
           <span className="font-semibold text-slate-900">
             {totalAmount.toLocaleString()} VND
           </span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600">Spent</span>
+          <span className="text-slate-600">Đã chi</span>
           <span className="font-semibold text-red-600">
             {spentAmount.toLocaleString()} VND
           </span>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600">Remaining</span>
+          <span className="text-slate-600">Còn lại</span>
           <span className="font-semibold text-green-600">
             {(totalAmount - spentAmount).toLocaleString()} VND
           </span>
@@ -65,7 +65,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
 
       <div className="mb-2">
         <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-          <span>Utilization</span>
+          <span>Tỷ lệ sử dụng</span>
           <span>{utilizationPercent.toFixed(1)}%</span>
         </div>
         <div className="w-full bg-slate-200 rounded-full h-2">
@@ -83,11 +83,11 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onClick }) => {
       <div className="flex items-center gap-4 text-xs text-slate-500 mt-3">
         <div className="flex items-center gap-1">
           <Calendar className="h-3 w-3" />
-          <span>FY {budget.fiscal_year}</span>
+          <span>Năm tài chính {budget.fiscal_year}</span>
         </div>
         <div className="flex items-center gap-1">
           <DollarSign className="h-3 w-3" />
-          <span>{allocatedAmount.toLocaleString()} allocated</span>
+          <span>{allocatedAmount.toLocaleString()} đã phân bổ</span>
         </div>
       </div>
     </div>

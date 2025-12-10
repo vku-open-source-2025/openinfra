@@ -41,15 +41,15 @@ const ReportCreate: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/reports" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Reports
+        Quay lại Báo cáo
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Generate Report</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Tạo báo cáo</h1>
 
         <Form onSubmit={handleSubmit}>
           <FormField>
-            <FormLabel required>Report Type</FormLabel>
+            <FormLabel required>Loại báo cáo</FormLabel>
             <Select
               value={formData.type || "maintenance"}
               onChange={(e) => {
@@ -60,15 +60,15 @@ const ReportCreate: React.FC = () => {
                 })
               }}
             >
-              <option value="maintenance">Maintenance</option>
-              <option value="budget">Budget</option>
-              <option value="incident">Incident</option>
-              <option value="asset">Asset</option>
+              <option value="maintenance">Bảo trì</option>
+              <option value="budget">Ngân sách</option>
+              <option value="incident">Sự cố</option>
+              <option value="asset">Tài sản</option>
             </Select>
           </FormField>
 
           <FormField>
-            <FormLabel required>Format</FormLabel>
+            <FormLabel required>Định dạng</FormLabel>
             <Select
               value={formData.format || "pdf"}
               onChange={(e) =>
@@ -82,7 +82,7 @@ const ReportCreate: React.FC = () => {
           </FormField>
 
           <div className="mt-6 pt-6 border-t">
-            <h3 className="font-semibold mb-4">Report Parameters</h3>
+            <h3 className="font-semibold mb-4">Tham số báo cáo</h3>
             <ReportParameters
               reportType={formData.type as ReportType}
               parameters={formData.parameters || {}}
@@ -96,14 +96,14 @@ const ReportCreate: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Generating..." : "Generate Report"}
+              {createMutation.isPending ? "Đang tạo..." : "Tạo báo cáo"}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/reports" })}
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </Form>

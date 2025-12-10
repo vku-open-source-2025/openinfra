@@ -174,7 +174,7 @@ export const AddressSearch: React.FC<AddressSearchProps> = ({
                     <Input
                         ref={inputRef}
                         type="text"
-                        placeholder="Search address..."
+                        placeholder="Tìm kiếm địa chỉ..."
                         value={query}
                         onChange={(e) => {
                             setQuery(e.target.value);

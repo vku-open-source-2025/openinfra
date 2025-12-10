@@ -146,20 +146,20 @@ export const PolygonDraw: React.FC<PolygonDrawProps> = ({ onResults, onClear }) 
           className="flex items-center gap-2"
         >
           <Layers size={16} />
-          Draw Area
+          Vẽ khu vực
         </Button>
       ) : (
         <div className="p-3 flex items-center gap-2">
           <div className="flex items-center gap-2 text-sm text-slate-600">
-            {isSearching ? (
+                {isSearching ? (
               <>
                 <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <span>Searching...</span>
+                <span>Đang tìm...</span>
               </>
             ) : (
               <>
                 <Layers size={16} />
-                <span>Click on map to draw polygon</span>
+                <span>Nhấn vào bản đồ để vẽ đa giác</span>
               </>
             )}
           </div>

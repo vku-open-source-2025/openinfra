@@ -66,7 +66,7 @@ const SensorDetail: React.FC = () => {
   if (!sensor) {
     return (
       <div className="p-6 text-center text-red-500">
-        Sensor not found.
+      Không tìm thấy cảm biến.
       </div>
     )
   }
@@ -75,7 +75,7 @@ const SensorDetail: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/iot" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Sensors
+        Quay lại danh sách cảm biến
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
@@ -89,7 +89,7 @@ const SensorDetail: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Last Reading</h3>
+            <h3 className="text-sm font-medium text-slate-500 mb-1">Lần đọc gần nhất</h3>
             <p className="text-2xl font-bold text-slate-900">
               {sensor.last_reading !== undefined
                 ? `${sensor.last_reading} ${sensor.measurement_unit || ""}`
@@ -97,7 +97,7 @@ const SensorDetail: React.FC = () => {
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Last Seen</h3>
+            <h3 className="text-sm font-medium text-slate-500 mb-1">Lần thấy cuối</h3>
             <p className="text-lg text-slate-900">
               {sensor.last_seen
                 ? format(new Date(sensor.last_seen), "MMM d, yyyy HH:mm")
@@ -109,7 +109,7 @@ const SensorDetail: React.FC = () => {
         {/* Linked Asset */}
         {linkedAsset && (
           <div className="border-t border-slate-200 pt-4 mt-4">
-            <h3 className="text-sm font-medium text-slate-500 mb-2">Linked Asset</h3>
+            <h3 className="text-sm font-medium text-slate-500 mb-2">Tài sản liên kết</h3>
             <Link
               to={`/admin/assets/${linkedAsset.id}`}
               className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
@@ -129,14 +129,14 @@ const SensorDetail: React.FC = () => {
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Data Visualization</h2>
+          <h2 className="text-lg font-semibold">Trực quan dữ liệu</h2>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-slate-500" />
             <DatePicker
               value={dateRange.from}
               onChange={(date) => date && setDateRange({ ...dateRange, from: date })}
             />
-            <span className="text-slate-500">to</span>
+            <span className="text-slate-500">đến</span>
             <DatePicker
               value={dateRange.to}
               onChange={(date) => date && setDateRange({ ...dateRange, to: date })}
@@ -150,13 +150,13 @@ const SensorDetail: React.FC = () => {
           <>
             <SensorChart readings={readings} unit={sensor.measurement_unit} />
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-4">Statistics</h3>
+              <h3 className="text-lg font-semibold mb-4">Thống kê</h3>
               <SensorStatistics readings={readings} unit={sensor.measurement_unit} />
             </div>
           </>
         ) : (
           <div className="text-center py-12 text-slate-500">
-            <p>No data available for the selected date range</p>
+            <p>Không có dữ liệu cho khoảng thời gian đã chọn</p>
           </div>
         )}
       </div>
