@@ -10,7 +10,7 @@ import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMer
 import { IncidentHierarchy } from "../../components/incidents/IncidentHierarchy"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
-import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X, AlertTriangle } from "lucide-react"
+import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image } from "lucide-react"
 import { format } from "date-fns"
 import { useAuthStore } from "../../stores/authStore"
 
@@ -170,6 +170,7 @@ const IncidentDetail: React.FC = () => {
                 Back to Incidents
             </Button>
 
+            {/* Header Section */}
             <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -188,19 +189,201 @@ const IncidentDetail: React.FC = () => {
                     </div>
                 </div>
 
-      {/* Related Reports - Show main report with sub-reports */}
-      <IncidentHierarchy incidentId={id} incident={incident} />
+                {/* Location and Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <MapPin className="h-4 w-4" />
+                        {incident.location?.geometry?.coordinates ? (
+                            (() => {
+                                const coords = incident.location.geometry.coordinates;
+                                // Handle GeoJSON Point format: [longitude, latitude]
+                                if (Array.isArray(coords) && coords.length >= 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+                                    const lng = coords[0];
+                                    const lat = coords[1];
+                                    return (
+                                        <a
+                                            href={`/map?lat=${lat}&lng=${lng}&zoom=18${
+                                                incident.asset_id
+                                                    ? `&assetId=${incident.asset_id}`
+                                                    : ""
+                                            }`}
+                                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                                            title="View on map"
+                                        >
+                                            {lat.toFixed(6)}, {lng.toFixed(6)}
+                                        </a>
+                                    );
+                                }
+                                return <span>Location not specified</span>;
+                            })()
+                        ) : (
+                            <span>Location not specified</span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                            Reported{" "}
+                            {format(
+                                new Date(incident.created_at),
+                                "MMM d, yyyy HH:mm"
+                            )}
+                        </span>
+                    </div>
+                    {incident.assigned_to && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <User className="h-4 w-4" />
+                            <span>Assigned to technician</span>
+                        </div>
+                    )}
+                    {incident.resolved_at && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>
+                                Resolved{" "}
+                                {format(
+                                    new Date(incident.resolved_at),
+                                    "MMM d, yyyy HH:mm"
+                                )}
+                            </span>
+                        </div>
+                    )}
+                    {incident.reporter_type && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <User className="h-4 w-4" />
+                            <span>Reported by: {incident.reporter_type}</span>
+                        </div>
+                    )}
+                </div>
 
-      {/* Merge Suggestions - Only show if admin/technician */}
-      {(user?.role === "admin" || user?.role === "technician") && (
-        <IncidentMergeSuggestions
-          incidentId={id}
-          canManage={user?.role === "admin" || user?.role === "technician"}
-        />
-      )}
+                {/* Description */}
+                <div className="mb-6">
+                    <h2 className="font-semibold mb-2">Description</h2>
+                    <p className="text-slate-700 whitespace-pre-wrap">
+                        {incident.description}
+                    </p>
+                </div>
 
-                <div className="bg-white rounded-lg border border-slate-200 p-6">
-                    <h2 className="font-semibold mb-4">Actions</h2>
+                {/* Photos Section */}
+                {incident.photos && incident.photos.length > 0 && (
+                    <div className="mb-6">
+                        <h2 className="font-semibold mb-3 flex items-center gap-2">
+                            <Image className="h-4 w-4" />
+                            Photos ({incident.photos.length})
+                        </h2>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {incident.photos.map((photo, index) => (
+                                <a
+                                    key={index}
+                                    href={photo}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block aspect-square rounded-lg overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all"
+                                >
+                                    <img
+                                        src={photo}
+                                        alt={`Incident photo ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Related Asset Section */}
+                {incident.asset_id && (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h2 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                            <Wrench className="h-4 w-4" />
+                            Related Asset
+                        </h2>
+                        {incident.asset ? (
+                            <div className="space-y-1">
+                                <p className="text-blue-800 font-medium">
+                                    {incident.asset.name ||
+                                        incident.asset.asset_code ||
+                                        incident.asset.feature_type}
+                                </p>
+                                <div className="flex flex-wrap gap-2 text-sm text-blue-700">
+                                    {incident.asset.asset_code && (
+                                        <span className="bg-blue-100 px-2 py-0.5 rounded">
+                                            Code:{" "}
+                                            {incident.asset.asset_code}
+                                        </span>
+                                    )}
+                                    {incident.asset.category && (
+                                        <span className="bg-blue-100 px-2 py-0.5 rounded">
+                                            {incident.asset.category}
+                                        </span>
+                                    )}
+                                    {incident.asset.status && (
+                                        <span className="bg-blue-100 px-2 py-0.5 rounded capitalize">
+                                            {incident.asset.status}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-blue-700 text-sm">
+                                Asset ID: {incident.asset_id}
+                            </p>
+                        )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() =>
+                                navigate({
+                                    to: `/admin/assets/${incident.asset_id}`,
+                                })
+                            }
+                        >
+                            View Asset Details
+                        </Button>
+                    </div>
+                )}
+
+                {/* Resolution Details */}
+                {incident.resolution_notes && (
+                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <h2 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            Resolution Details
+                        </h2>
+                        <div className="space-y-2">
+                            <p className="text-green-800 whitespace-pre-wrap">
+                                {incident.resolution_notes}
+                            </p>
+                            {incident.resolution_type && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-green-700">
+                                        Type:
+                                    </span>
+                                    <span className="text-sm font-medium text-green-800 capitalize">
+                                        {incident.resolution_type}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Related Reports - Show main report with sub-reports */}
+            <IncidentHierarchy incidentId={id} incident={incident} />
+
+            {/* Merge Suggestions - Only show if admin/technician */}
+            {(user?.role === "admin" || user?.role === "technician") && (
+                <IncidentMergeSuggestions
+                    incidentId={id}
+                    canManage={user?.role === "admin" || user?.role === "technician"}
+                />
+            )}
+
+            {/* Actions Section */}
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h2 className="font-semibold mb-4">Actions</h2>
                     <IncidentActions
                         incident={incident}
                         onAcknowledge={async () => {
@@ -321,6 +504,20 @@ const IncidentDetail: React.FC = () => {
                             </Button>
                         </div>
                     )}
+                </div>
+
+                {/* Comments Section */}
+                <div className="border-t pt-6 mt-6">
+                    <IncidentComments
+                        comments={incident.comments}
+                        onAddComment={async (comment, isInternal) => {
+                            await commentMutation.mutateAsync({
+                                comment,
+                                isInternal,
+                            });
+                        }}
+                        canAddInternal={canAddInternal}
+                    />
                 </div>
             </div>
         </div>

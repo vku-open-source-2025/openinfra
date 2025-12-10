@@ -56,14 +56,14 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
         // Differentiate spam risk vs likely safe
         if (isSpamRisk) {
           return (
-            <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason}>
+            <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason || `Low trust score: ${scorePercent}% confidence this is legitimate`}>
               <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Spam Risk {scorePercent !== null && `(${scorePercent}%)`}</span>
+              <span>Low Trust {scorePercent !== null && `(${scorePercent}%)`}</span>
             </div>
           );
         }
         return (
-          <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason}>
+          <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason || `Trust score: ${scorePercent}% confidence this is legitimate`}>
             <AlertTriangle className="h-3.5 w-3.5" />
             <span>To Verify {scorePercent !== null && `(${scorePercent}%)`}</span>
           </div>
