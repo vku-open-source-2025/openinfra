@@ -1,16 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { incidentsApi } from "../../api/incidents"
 import { Button } from "../ui/button"
-import { Alert, AlertDescription } from "../ui/alert"
 import { Badge } from "../ui/badge"
 import { Skeleton } from "../ui/skeleton"
-import { AlertTriangle, CheckCircle, XCircle, RefreshCw, GitMerge, Clock, AlertCircle } from "lucide-react"
-import { format } from "date-fns"
+import { RefreshCw, GitMerge, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { useState } from "react"
 
 interface IncidentMergeSuggestionsProps {
   incidentId: string
-  canManage: boolean // Admin or technician
+  canManage: boolean
 }
 
 export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> = ({
@@ -49,8 +47,8 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
   })
 
   const rejectMutation = useMutation({
-    mutationFn: ({ suggestionId, notes }: { suggestionId: string; notes?: string }) =>
-      incidentsApi.rejectMergeSuggestion(suggestionId, notes),
+    mutationFn: ({ suggestionId }: { suggestionId: string }) =>
+      incidentsApi.rejectMergeSuggestion(suggestionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["merge-suggestions", incidentId] })
     },
@@ -58,8 +56,7 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-24 w-full" />
+      <div className="bg-white rounded-lg border border-slate-200 p-6">
         <Skeleton className="h-24 w-full" />
       </div>
     )
@@ -67,107 +64,72 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
 
   const pendingSuggestions = suggestions?.filter((s: any) => s.status === "pending") || []
 
+  if (!canManage || pendingSuggestions.length === 0) {
+    return null
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Merge Suggestions</h3>
-        {canManage && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => checkDuplicatesMutation.mutate()}
-            disabled={checkingDuplicates}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${checkingDuplicates ? "animate-spin" : ""}`} />
-            Check for Duplicates
-          </Button>
-        )}
+    <div className="bg-white rounded-lg border border-slate-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <GitMerge className="h-5 w-5 text-blue-500" />
+          <h3 className="font-semibold">Possible Duplicates</h3>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => checkDuplicatesMutation.mutate()}
+          disabled={checkingDuplicates}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${checkingDuplicates ? "animate-spin" : ""}`} />
+          Check Again
+        </Button>
       </div>
 
-      {checkDuplicatesMutation.isSuccess && checkDuplicatesMutation.data && checkDuplicatesMutation.data.length === 0 && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>No duplicate incidents found.</AlertDescription>
-        </Alert>
-      )}
-
-      {pendingSuggestions.length === 0 && !checkDuplicatesMutation.isSuccess && (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            No pending merge suggestions. {canManage && "Click 'Check for Duplicates' to find potential duplicates."}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {pendingSuggestions.map((suggestion: any) => (
-        <div
-          key={suggestion.id}
-          className="border border-slate-200 rounded-lg p-4 space-y-3"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <GitMerge className="h-4 w-4 text-blue-500" />
-                <span className="font-semibold">Potential Duplicate Found</span>
-                <Badge variant="secondary">
-                  {(suggestion.similarity_score * 100).toFixed(0)}% similar
-                </Badge>
-              </div>
-              <div className="text-sm text-slate-600 space-y-1">
-                <div>
-                  <strong>Duplicate Incident(s):</strong> {suggestion.duplicate_incident_ids.length} incident(s)
+      {pendingSuggestions.map((suggestion: any) => {
+        const similarity = Math.round(suggestion.similarity_score * 100)
+        const isRecurrence = suggestion.match_reasons?.includes("possible_recurrence")
+        
+        return (
+          <div
+            key={suggestion.id}
+            className={`border rounded-lg p-4 mb-3 ${
+              isRecurrence 
+                ? "border-amber-300 bg-amber-50" 
+                : "border-blue-200 bg-blue-50"
+            }`}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  {isRecurrence ? (
+                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                  ) : (
+                    <GitMerge className="h-5 w-5 text-blue-500" />
+                  )}
+                  <span className="font-medium">
+                    {isRecurrence ? "Issue Happened Again" : "Similar Reports Found"}
+                  </span>
+                  <Badge variant={isRecurrence ? "destructive" : "default"}>
+                    {similarity}% match
+                  </Badge>
                 </div>
-                {suggestion.match_reasons && suggestion.match_reasons.length > 0 && (
-                  <div>
-                    <strong>Match Reasons:</strong>{" "}
-                    {suggestion.match_reasons.map((reason: string) => {
-                      const isRecurrence = reason === "possible_recurrence"
-                      const isDuringWork = reason === "reported_during_work"
-                      return (
-                        <Badge 
-                          key={reason} 
-                          variant={isRecurrence ? "destructive" : isDuringWork ? "default" : "outline"} 
-                          className="ml-1"
-                        >
-                          {reason === "possible_recurrence" && <AlertCircle className="h-3 w-3 mr-1 inline" />}
-                          {reason === "reported_during_work" && <Clock className="h-3 w-3 mr-1 inline" />}
-                          {reason.replace(/_/g, " ")}
-                        </Badge>
-                      )
-                    })}
-                  </div>
-                )}
-                {suggestion.match_reasons?.includes("possible_recurrence") && (
-                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                    <AlertCircle className="h-3 w-3 inline mr-1" />
-                    This appears to be a recurrence - the same issue was reported and resolved previously.
-                    Consider investigating why the issue happened again.
-                  </div>
-                )}
-                {suggestion.match_reasons?.includes("reported_during_work") && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                    <Clock className="h-3 w-3 inline mr-1" />
-                    Multiple reports received while technician is working on this issue.
-                  </div>
-                )}
-                <div className="text-xs text-slate-500">
-                  Suggested {format(new Date(suggestion.created_at), "MMM d, yyyy HH:mm")}
-                </div>
+                <p className="text-sm text-slate-600 ml-7">
+                  {suggestion.duplicate_incident_ids.length} {suggestion.duplicate_incident_ids.length === 1 ? 'report' : 'reports'} might be the same issue
+                </p>
               </div>
             </div>
-          </div>
 
-          {canManage && (
-            <div className="flex gap-2 pt-2 border-t">
+            <div className="flex gap-2 ml-7">
               <Button
                 size="sm"
                 variant="default"
                 onClick={() => approveMutation.mutate(suggestion.id)}
                 disabled={approveMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Approve Merge
+                Merge Together
               </Button>
               <Button
                 size="sm"
@@ -176,13 +138,12 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
                 disabled={rejectMutation.isPending}
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Reject
+                Keep Separate
               </Button>
             </div>
-          )}
-        </div>
-      ))}
+          </div>
+        )
+      })}
     </div>
   )
 }
-
