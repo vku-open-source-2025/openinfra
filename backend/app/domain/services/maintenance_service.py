@@ -233,7 +233,7 @@ class MaintenanceService:
                     budget_id=maintenance.budget_id,
                     amount=maintenance.total_cost,
                     transaction_date=datetime.utcnow(),
-                    description=f"Maintenance work order {maintenance.work_order_number}",
+                    description=f"Phiếu bảo trì đã được tạo cho sự cố {maintenance.work_order_number}",
                     category="labor" if maintenance.labor_cost else "materials",
                     maintenance_record_id=maintenance_id,
                 )

@@ -4,3 +4,4 @@ import ProfileSettings from "@/pages/settings/ProfileSettings";
 export const Route = createFileRoute("/technician/settings/")({
     component: ProfileSettings,
 });
+
