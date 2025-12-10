@@ -58,6 +58,7 @@ export interface Incident {
   maintenance_record_id?: string;
   resolution_type?: string;
   resolution_notes?: string;
+  resolved_at?: string;
   cost_status?: 'pending' | 'approved' | 'rejected';
   photos?: string[];
   upvotes: number;

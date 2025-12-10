@@ -88,9 +88,9 @@ const IncidentList: React.FC = () => {
 
         // Apply sub-tab filters
         if (mainTab === "to_verify") {
-            // Filter by AI verification confidence
+            // Filter by AI verification confidence (trustworthiness score)
             if (verifySubTab === "spam_risk") {
-                // Low confidence = potential spam (< 0.5)
+                // Low trust score = potential spam/fake (< 0.5 = <50% confidence it's legitimate)
                 filtered = filtered.filter(
                     (inc) =>
                         inc.ai_confidence_score !== null &&
@@ -98,7 +98,7 @@ const IncidentList: React.FC = () => {
                         inc.ai_confidence_score < 0.5
                 );
             } else if (verifySubTab === "safe") {
-                // Higher confidence = probably safe (>= 0.5)
+                // Higher trust score = probably legitimate (>= 0.5 = ≥50% confidence it's legitimate)
                 filtered = filtered.filter(
                     (inc) =>
                         inc.ai_confidence_score === null ||
@@ -234,12 +234,12 @@ const IncidentList: React.FC = () => {
                             { value: "all" as VerifySubTab, label: "All" },
                             {
                                 value: "spam_risk" as VerifySubTab,
-                                label: "🚨 Spam Risk",
+                                label: "🚨 Low Trust (<50%)",
                                 className: "text-red-600",
                             },
                             {
                                 value: "safe" as VerifySubTab,
-                                label: "✅ Likely Safe",
+                                label: "✅ Higher Trust (≥50%)",
                                 className: "text-green-600",
                             },
                         ].map((tab) => (
