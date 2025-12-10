@@ -10,7 +10,7 @@ import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMer
 import { IncidentHierarchy } from "../../components/incidents/IncidentHierarchy"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
-import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X } from "lucide-react"
+import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image, X, AlertTriangle } from "lucide-react"
 import { format } from "date-fns"
 import { useAuthStore } from "../../stores/authStore"
 
