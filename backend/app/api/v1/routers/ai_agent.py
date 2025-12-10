@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from app.infrastructure.database.mongodb import get_database
 from app.services.ai_agent import AIAgentService
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +155,10 @@ async def agent_status():
     
     return {
         "status": "ready" if api_key else "not_configured",
-        "model": "gemini-2.5-flash",
+        "model": settings.GEMINI_CHAT_MODEL,
+        "model_stable": settings.GEMINI_CHAT_MODEL_STABLE,
+        "model_live": settings.GEMINI_CHAT_MODEL_LIVE,
+        "use_live": settings.GEMINI_CHAT_MODEL_USE_LIVE,
         "features": [
             "Database querying (assets, sensors, incidents)",
             "API documentation and code examples",

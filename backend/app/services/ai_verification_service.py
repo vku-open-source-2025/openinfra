@@ -11,6 +11,7 @@ from datetime import datetime
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,10 @@ class AIVerificationService:
             self.llm = None
             return
         
+        # Use stable model for production reliability
+        # Verification service doesn't need live streaming, so always use stable
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model=settings.GEMINI_CHAT_MODEL_STABLE,
             google_api_key=self.api_key,
             temperature=0.1,  # Low temperature for consistent scoring
         )

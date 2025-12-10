@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { maintenanceApi } from "../../api/maintenance";
+import { incidentsApi } from "../../api/incidents";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
@@ -22,6 +23,7 @@ import {
     XCircle,
     Image as ImageIcon,
     X,
+    FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuthStore } from "../../stores/authStore";
@@ -48,6 +50,21 @@ function MaintenanceDetailPage() {
         queryKey: ["maintenance", id],
         queryFn: () => maintenanceApi.getById(id),
     });
+
+    // Find linked incident by searching for incidents with this maintenance_record_id
+    const { data: incidents } = useQuery({
+        queryKey: ["incidents", "maintenance", id],
+        queryFn: async () => {
+            const allIncidents = await incidentsApi.list({ limit: 1000 });
+            return allIncidents.find(
+                (inc) => inc.maintenance_record_id === id
+            );
+        },
+        enabled: !!maintenance && (user?.role === "admin" || user?.role === "manager"),
+    });
+
+    const isAdmin = user?.role === "admin" || user?.role === "manager";
+    const isTechnician = user?.role === "technician";
 
     const startMutation = useMutation({
         mutationFn: () => maintenanceApi.start(id),
@@ -198,18 +215,21 @@ function MaintenanceDetailPage() {
     const statusConfig = getStatusConfig();
     const StatusIcon = statusConfig.icon;
 
-    const canStart = maintenance.status === "scheduled";
-    const canComplete = maintenance.status === "in_progress";
+    const canStart = maintenance.status === "scheduled" && isTechnician;
+    const canComplete = maintenance.status === "in_progress" && isTechnician;
     const canUploadPhotos =
-        maintenance.status === "in_progress" ||
-        maintenance.status === "completed";
+        (maintenance.status === "in_progress" ||
+            maintenance.status === "completed") && isTechnician;
 
     return (
-        <div className="space-y-6">
+        <div className="p-6 space-y-6">
             <Button
                 variant="ghost"
-                className="pl-0"
-                onClick={() => navigate({ to: "/technician" })}
+                onClick={() =>
+                    navigate({
+                        to: isAdmin ? "/admin/incidents" : "/technician",
+                    })
+                }
             >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại công việc
             </Button>
@@ -320,6 +340,68 @@ function MaintenanceDetailPage() {
                     </div>
                 </div>
 
+                {/* Linked Incident Section - Show for admins */}
+                {isAdmin && incidents && (
+                    <div className="pt-4 border-t border-slate-200">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <FileText className="h-5 w-5" />
+                            Linked Incident Report
+                        </h3>
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <h4 className="font-semibold text-blue-900 mb-1">
+                                        {incidents.title}
+                                    </h4>
+                                    <p className="text-sm text-blue-700 mb-2">
+                                        {incidents.description}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 text-xs">
+                                        <Badge variant="outline">
+                                            {incidents.incident_number}
+                                        </Badge>
+                                        <Badge
+                                            variant={
+                                                incidents.severity === "critical" ||
+                                                incidents.severity === "high"
+                                                    ? "destructive"
+                                                    : "default"
+                                            }
+                                        >
+                                            {incidents.severity}
+                                        </Badge>
+                                        <Badge variant="secondary">
+                                            {incidents.status}
+                                        </Badge>
+                                        {incidents.reported_at && (
+                                            <span className="text-blue-600">
+                                                Reported:{" "}
+                                                {format(
+                                                    new Date(
+                                                        incidents.reported_at
+                                                    ),
+                                                    "MMM d, yyyy HH:mm"
+                                                )}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        navigate({
+                                            to: `/admin/incidents/${incidents.id}`,
+                                        })
+                                    }
+                                >
+                                    View Incident
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Notes Section */}
                 {maintenance.notes && (
                     <div className="pt-4 border-t border-slate-200">
@@ -340,8 +422,8 @@ function MaintenanceDetailPage() {
                     </div>
                 )}
 
-                {/* Photos Section */}
-                {canUploadPhotos && (
+                {/* Photos Section - Show for technicians (with upload) or admins (read-only) */}
+                {(canUploadPhotos || (isAdmin && maintenance.attachments && maintenance.attachments.length > 0)) && (
                     <div className="pt-4 border-t border-slate-200">
                         <h3 className="font-semibold mb-4 flex items-center gap-2">
                             <Camera className="h-5 w-5" />
@@ -399,7 +481,7 @@ function MaintenanceDetailPage() {
                                                             "before"
                                                         )
                                                     }
-                                                    className="text-red-500 hover:text-red-700"
+                                                    className="ml-auto text-red-500 hover:text-red-700"
                                                 >
                                                     <X className="h-4 w-4" />
                                                 </button>
@@ -411,71 +493,133 @@ function MaintenanceDetailPage() {
                         </div>
 
                         {/* After Photos */}
-                        <div>
+                        <div className="mb-6">
                             <Label className="mb-2 block">Ảnh sau</Label>
-                            <div className="space-y-3">
-                                <div className="flex gap-2">
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        onChange={(e) =>
-                                            handleFileSelect(e, "after")
-                                        }
-                                        className="flex-1"
-                                    />
-                                    {afterPhotos.length > 0 && (
-                                        <Button
-                                            onClick={() =>
-                                                handlePhotoUpload("after")
-                                            }
-                                            disabled={uploadingPhotos}
-                                            size="sm"
-                                        >
-                                            {uploadingPhotos ? (
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <Camera className="h-4 w-4 mr-1" />
-                                                    Tải lên
-                                                </>
-                                            )}
-                                        </Button>
-                                    )}
-                                </div>
-                                {afterPhotos.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {afterPhotos.map((file, index) => (
-                                            <div
-                                                key={index}
-                                                className="relative bg-slate-100 rounded p-2 flex items-center gap-2"
-                                            >
-                                                <ImageIcon className="h-4 w-4 text-slate-500" />
-                                                <span className="text-xs text-slate-600 truncate max-w-[150px]">
-                                                    {file.name}
-                                                </span>
-                                                <button
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={(e) =>
+                                                    handleFileSelect(e, "before")
+                                                }
+                                                className="flex-1"
+                                            />
+                                            {beforePhotos.length > 0 && (
+                                                <Button
                                                     onClick={() =>
-                                                        removePhoto(
-                                                            index,
-                                                            "after"
-                                                        )
+                                                        handlePhotoUpload("before")
                                                     }
-                                                    className="text-red-500 hover:text-red-700"
+                                                    disabled={uploadingPhotos}
+                                                    size="sm"
                                                 >
-                                                    <X className="h-4 w-4" />
-                                                </button>
+                                                    {uploadingPhotos ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <Camera className="h-4 w-4 mr-1" />
+                                                            Tải lên
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            )}
+                                        </div>
+                                        {beforePhotos.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {beforePhotos.map((file, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="relative bg-slate-100 rounded p-2 flex items-center gap-2"
+                                                    >
+                                                        <ImageIcon className="h-4 w-4 text-slate-500" />
+                                                        <span className="text-xs text-slate-600 truncate max-w-[150px]">
+                                                            {file.name}
+                                                        </span>
+                                                        <button
+                                                            onClick={() =>
+                                                                removePhoto(
+                                                                    index,
+                                                                    "before"
+                                                                )
+                                                            }
+                                                            className="ml-auto text-red-500 hover:text-red-700"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        </div>
+                                </div>
 
-                        {/* Display existing photos */}
+                                {/* After Photos */}
+                                <div className="mb-6">
+                                    <Label className="mb-2 block">Ảnh sau</Label>
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={(e) =>
+                                                    handleFileSelect(e, "after")
+                                                }
+                                                className="flex-1"
+                                            />
+                                            {afterPhotos.length > 0 && (
+                                                <Button
+                                                    onClick={() =>
+                                                        handlePhotoUpload("after")
+                                                    }
+                                                    disabled={uploadingPhotos}
+                                                    size="sm"
+                                                >
+                                                    {uploadingPhotos ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <Camera className="h-4 w-4 mr-1" />
+                                                            Tải lên
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            )}
+                                        </div>
+                                        {afterPhotos.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {afterPhotos.map((file, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="relative bg-slate-100 rounded p-2 flex items-center gap-2"
+                                                    >
+                                                        <ImageIcon className="h-4 w-4 text-slate-500" />
+                                                        <span className="text-xs text-slate-600 truncate max-w-[150px]">
+                                                            {file.name}
+                                                        </span>
+                                                        <button
+                                                            onClick={() =>
+                                                                removePhoto(
+                                                                    index,
+                                                                    "after"
+                                                                )
+                                                            }
+                                                            className="ml-auto text-red-500 hover:text-red-700"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                        {/* Display existing photos - Show for both technicians and admins */}
                         {maintenance.attachments &&
                             maintenance.attachments.length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-slate-200">
+                                <div className={canUploadPhotos ? "mt-4 pt-4 border-t border-slate-200" : ""}>
                                     <h4 className="text-sm font-semibold mb-2">
                                         Ảnh đã tải lên
                                     </h4>

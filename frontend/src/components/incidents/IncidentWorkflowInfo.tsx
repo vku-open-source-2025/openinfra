@@ -16,6 +16,8 @@ import {
 
 interface IncidentWorkflowInfoProps {
     currentStatus: string;
+    resolutionType?: string;
+    resolutionNotes?: string;
 }
 
 const workflowSteps = [
@@ -60,8 +62,8 @@ const workflowSteps = [
         bgColor: "bg-green-50",
         borderColor: "border-green-200",
         description:
-            "Vấn đề đã được kỹ thuật viên sửa chữa. Nếu chi phí bảo trì đang chờ xử lý, cần phê duyệt trước khi đóng.",
-        actions: ["Duyệt chi phí", "Đóng"],
+            "Vấn đề đã được kỹ thuật viên sửa chữa.",
+        actions: ["Đóng"],
     },
     {
         status: "closed",
@@ -73,15 +75,36 @@ const workflowSteps = [
         description: "Sự cố đã hoàn tất và được lưu trữ.",
         actions: [],
     },
+    {
+        status: "rejected",
+        label: "Đã từ chối",
+        icon: XCircle,
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+        description: "Sự cố đã bị từ chối vì không hợp lệ hoặc không đủ xác thực.",
+        actions: [],
+    },
 ];
 
 export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
     currentStatus,
+    resolutionType,
+    resolutionNotes,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
+    // Check if incident is rejected
+    const isRejected = resolutionNotes?.toLowerCase().includes('rejected') || 
+                      resolutionNotes?.toLowerCase().includes('từ chối') ||
+                      resolutionType === 'not_an_issue' || 
+                      resolutionType === 'invalid';
+
+    // If rejected, show rejected status instead of normal workflow
+    const displayStatus = isRejected ? 'rejected' : currentStatus;
+
     const currentStepIndex = workflowSteps.findIndex(
-        (s) => s.status === currentStatus
+        (s) => s.status === displayStatus
     );
 
     return (
@@ -127,13 +150,22 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                             </p>
 
                             <div className="space-y-3">
-                                {workflowSteps.map((step, index) => {
+                                {workflowSteps
+                                    .filter(step => {
+                                        // Hide rejected step if not rejected, hide normal steps if rejected
+                                        if (step.status === 'rejected') {
+                                            return isRejected;
+                                        }
+                                        return !isRejected;
+                                    })
+                                    .map((step, index, filteredSteps) => {
                                     const Icon = step.icon;
                                     const isCurrentStep =
-                                        step.status === currentStatus;
-                                    const isPastStep = index < currentStepIndex;
+                                        step.status === displayStatus;
+                                    const currentFilteredIndex = filteredSteps.findIndex(s => s.status === displayStatus);
+                                    const isPastStep = index < currentFilteredIndex;
                                     const isFutureStep =
-                                        index > currentStepIndex;
+                                        index > currentFilteredIndex;
 
                                     return (
                                         <div
@@ -142,11 +174,13 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                                         >
                                             {/* Connector line */}
                                             {index <
-                                                workflowSteps.length - 1 && (
+                                                filteredSteps.length - 1 && (
                                                 <div
                                                     className={`absolute left-5 top-12 w-0.5 h-6 ${
                                                         isPastStep
-                                                            ? "bg-green-300"
+                                                            ? isRejected && step.status === 'rejected'
+                                                                ? "bg-red-300"
+                                                                : "bg-green-300"
                                                             : "bg-slate-200"
                                                     }`}
                                                 />
@@ -157,9 +191,11 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                         flex items-start gap-4 p-4 rounded-lg border-2 transition-all
                         ${
                             isCurrentStep
-                                ? `${step.bgColor} ${step.borderColor} ring-2 ring-offset-2 ring-blue-400`
+                                ? `${step.bgColor} ${step.borderColor} ring-2 ring-offset-2 ${isRejected && step.status === 'rejected' ? 'ring-red-400' : 'ring-blue-400'}`
                                 : isPastStep
-                                ? "bg-green-50 border-green-200"
+                                ? isRejected && step.status === 'rejected'
+                                    ? "bg-red-50 border-red-200"
+                                    : "bg-green-50 border-green-200"
                                 : "bg-slate-50 border-slate-200 opacity-60"
                         }
                       `}
@@ -171,13 +207,19 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                               isCurrentStep
                                   ? `${step.bgColor} ${step.color}`
                                   : isPastStep
-                                  ? "bg-green-100 text-green-600"
+                                  ? isRejected && step.status === 'rejected'
+                                      ? "bg-red-100 text-red-600"
+                                      : "bg-green-100 text-green-600"
                                   : "bg-slate-100 text-slate-400"
                           }
                         `}
                                                 >
                                                     {isPastStep ? (
-                                                        <CheckCircle className="h-5 w-5" />
+                                                        isRejected && step.status === 'rejected' ? (
+                                                            <XCircle className="h-5 w-5" />
+                                                        ) : (
+                                                            <CheckCircle className="h-5 w-5" />
+                                                        )
                                                     ) : (
                                                         <Icon className="h-5 w-5" />
                                                     )}
@@ -202,8 +244,12 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                                                             </span>
                                                         )}
                                                         {isPastStep && (
-                                                            <span className="px-2 py-0.5 text-xs font-medium bg-green-600 text-white rounded-full">
-                                                                Hoàn thành
+                                                            <span className={`px-2 py-0.5 text-xs font-medium text-white rounded-full ${
+                                                                isRejected && step.status === 'rejected'
+                                                                    ? 'bg-red-600'
+                                                                    : 'bg-green-600'
+                                                            }`}>
+                                                                {isRejected && step.status === 'rejected' ? 'Đã từ chối' : 'Hoàn thành'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -267,13 +313,6 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                                         <span className="text-slate-600">
                                             <strong>Xác minh:</strong> Xác minh
                                             thủ công sự cố
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-4 w-4 text-yellow-600" />
-                                        <span className="text-slate-600">
-                                            <strong>Duyệt chi phí:</strong>{" "}
-                                            Duyệt chi phí bảo trì
                                         </span>
                                     </div>
                                 </div>

@@ -127,11 +127,6 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
                   {verificationStatus === "pending" && "Đang chờ xác minh"}
                   {verificationStatus === "failed" && "Xác minh thất bại"}
                 </span>
-                {scorePercent !== null && (
-                  <Badge variant={isLowTrust ? "destructive" : "default"}>
-                    {scorePercent}% confidence
-                  </Badge>
-                )}
               </div>
               {incident.ai_verification_reason && (
                 <p className="text-sm text-slate-600 mt-1">

@@ -9,7 +9,7 @@ from app.domain.models.incident import (
 )
 from app.domain.models.merge_suggestion import MergeSuggestion, MergeSuggestionStatus, MergeRequest
 from app.domain.services.incident_service import IncidentService
-from app.api.v1.dependencies import get_incident_service, get_storage_service
+from app.api.v1.dependencies import get_incident_service, get_storage_service, get_incident_verification_agent
 from app.api.v1.middleware import get_current_user, get_optional_current_user
 from app.domain.models.user import User, UserRole
 from app.domain.models.incident import ResolutionType
@@ -307,19 +307,42 @@ async def upvote_incident(
 @router.post("/{incident_id}/create-maintenance", response_model=dict)
 async def create_maintenance_from_incident(
     incident_id: str,
+    technician_id: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     incident_service: IncidentService = Depends(get_incident_service)
 ):
     """Create a maintenance work order from incident."""
-    maintenance_id = await incident_service.create_maintenance_from_incident(
-        incident_id,
-        str(current_user.id)
-    )
-    return {
-        "incident_id": incident_id,
-        "maintenance_id": maintenance_id,
-        "message": "Maintenance work order created successfully"
-    }
+    try:
+        logger.info(f"Creating maintenance for incident {incident_id} by user {current_user.id}, technician_id={technician_id}")
+        maintenance_id = await incident_service.create_maintenance_from_incident(
+            incident_id,
+            str(current_user.id),
+            technician_id=technician_id
+        )
+        logger.info(f"Successfully created maintenance {maintenance_id} for incident {incident_id}")
+        return {
+            "incident_id": incident_id,
+            "maintenance_id": maintenance_id,
+            "message": "Maintenance work order created successfully"
+        }
+    except ValueError as e:
+        logger.error(f"Validation error creating maintenance for incident {incident_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except RuntimeError as e:
+        logger.error(f"Runtime error creating maintenance for incident {incident_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error creating maintenance for incident {incident_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create maintenance: {str(e)}"
+        )
 
 
 @router.post("/{incident_id}/approve-cost", response_model=Incident)
@@ -387,6 +410,70 @@ async def check_duplicates(
     """Manually trigger duplicate detection for an incident."""
     duplicates = await incident_service.check_duplicates(incident_id)
     return [dup.dict() for dup in duplicates]
+
+
+@router.post("/{incident_id}/agent-verify", response_model=dict)
+async def agent_verify_incident(
+    incident_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: Optional[User] = Depends(get_optional_current_user),
+    incident_service: IncidentService = Depends(get_incident_service)
+):
+    """Trigger AI agent verification for an incident.
+    
+    The agent will autonomously:
+    - Check IoT sensor data if asset_id exists
+    - Check for duplicates
+    - Verify spam/legitimacy
+    - Make a verification decision
+    
+    Returns immediately, verification runs in background.
+    """
+    # Get incident
+    incident = await incident_service.get_incident_by_id(incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    # Get agent
+    agent = await get_incident_verification_agent()
+    
+    # Run verification in background
+    async def run_agent_verification():
+        try:
+            result = await agent.verify_incident(incident)
+            
+            # Update incident with agent verification result
+            await incident_service.update_verification(
+                incident_id,
+                verification_status=result.get("verification_status", "to_be_verified"),
+                confidence_score=result.get("confidence_score"),
+                verification_reason=result.get("reason", "")
+            )
+            
+            logger.info(
+                f"Agent verification completed for incident {incident_id}: "
+                f"status={result.get('verification_status')}, "
+                f"score={result.get('confidence_score')}"
+            )
+        except Exception as e:
+            logger.error(f"Agent verification failed for incident {incident_id}: {e}", exc_info=True)
+            try:
+                await incident_service.update_verification(
+                    incident_id,
+                    verification_status="failed",
+                    confidence_score=None,
+                    verification_reason=f"Agent verification error: {str(e)}"
+                )
+            except Exception as update_error:
+                logger.error(f"Failed to update verification status: {update_error}")
+    
+    background_tasks.add_task(run_agent_verification)
+    
+    return {
+        "status": "started",
+        "message": "Agent verification started in background",
+        "incident_id": incident_id
+    }
 
 
 @router.get("/{incident_id}/merge-suggestions", response_model=List[MergeSuggestion])

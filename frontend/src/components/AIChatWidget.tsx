@@ -351,13 +351,27 @@ export default function AIChatWidget({
     }]);
   }, []);
 
-  // Handle external open control
+  // Handle external open control (only if openChat prop is provided and different from current state)
+  const prevOpenChatRef = useRef<boolean | undefined>(undefined);
   useEffect(() => {
-    if (openChat !== isOpen) {
+    // Only sync if openChat prop is explicitly provided AND has changed
+    if (openChat !== undefined && prevOpenChatRef.current !== openChat) {
+      console.log('AIChatWidget: External openChat prop changed from', prevOpenChatRef.current, 'to', openChat);
+      console.log('AIChatWidget: Current isOpen:', isOpen);
       setIsOpen(openChat);
-      onOpenChange?.(openChat);
+      prevOpenChatRef.current = openChat;
+    } else if (openChat === undefined) {
+      // If openChat is not provided, use internal state (default behavior)
+      prevOpenChatRef.current = undefined;
     }
-  }, [openChat, isOpen, onOpenChange]);
+  }, [openChat]); // Only depend on openChat
+  
+  // Debug: Log isOpen changes
+  useEffect(() => {
+    console.log('AIChatWidget: isOpen state changed to:', isOpen);
+    console.log('AIChatWidget: Will render chat window?', isOpen);
+    console.log('AIChatWidget: openChat prop:', openChat);
+  }, [isOpen, openChat]);
 
   // Handle external asset addition - use ref to track previous value
   const prevAssetRef = useRef<Asset | null>(null);
@@ -380,47 +394,113 @@ export default function AIChatWidget({
   }, [selectedAsset, assetInContext]);
 
   const handleOpenChange = (open: boolean) => {
+    console.log('AIChatWidget: handleOpenChange called with', open);
+    console.log('AIChatWidget: Current isOpen state:', isOpen);
     setIsOpen(open);
+    console.log('AIChatWidget: isOpen state set to:', open);
     onOpenChange?.(open);
   };
 
   const connectWebSocket = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    // Don't connect if already connected or connecting
+    if (wsRef.current?.readyState === WebSocket.OPEN || 
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      console.log('WebSocket already connected or connecting');
+      return;
+    }
+    
+    // Close existing connection if any (but not connecting)
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CONNECTING) {
+      const oldWs = wsRef.current;
+      if ((oldWs as any).pingInterval) {
+        clearInterval((oldWs as any).pingInterval);
+      }
+      if (oldWs.readyState === WebSocket.OPEN) {
+        oldWs.close();
+      }
+      wsRef.current = null;
+    }
 
     const wsUrl = `${WEBSOCKET_URL}/${clientIdRef.current}`;
     console.log('Connecting to WebSocket:', wsUrl);
 
-    const ws = new WebSocket(wsUrl);
+    try {
+      const ws = new WebSocket(wsUrl);
+      
+      // Set connection state immediately
+      wsRef.current = ws;
 
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      setIsConnected(true);
-    };
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        setIsConnected(true);
+        
+        // Send ping to keep connection alive
+        const pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          } else {
+            clearInterval(pingInterval);
+          }
+        }, 30000); // Ping every 30 seconds
+        
+        // Store interval ID for cleanup
+        (ws as any).pingInterval = pingInterval;
+      };
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected', event.code, event.reason);
+        setIsConnected(false);
+        
+        // Clear ping interval
+        if ((ws as any).pingInterval) {
+          clearInterval((ws as any).pingInterval);
+        }
+        
+        // Don't reconnect if component is unmounting or chat is closed
+        if (!isOpen) {
+          return;
+        }
+        
+        // Try to reconnect after 3 seconds if not a normal closure
+        // Code 1006 = abnormal closure (no close frame)
+        // Code 1000 = normal closure
+        if (event.code !== 1000 && isOpen) {
+          setTimeout(() => {
+            if (isOpen && wsRef.current?.readyState !== WebSocket.OPEN && wsRef.current?.readyState !== WebSocket.CONNECTING) {
+              console.log('Attempting to reconnect WebSocket...');
+              connectWebSocket();
+            }
+          }, 3000);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsConnected(false);
+        // Don't try to reconnect immediately on error, let onclose handle it
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const chunk: StreamChunk = JSON.parse(event.data);
+          
+          // Handle pong response
+          if (chunk.type === 'pong') {
+            return; // Just acknowledge, don't process
+          }
+          
+          handleStreamChunk(chunk);
+        } catch (e) {
+          console.error('Failed to parse message:', e);
+        }
+      };
+
+      // wsRef.current is already set above
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
       setIsConnected(false);
-      // Try to reconnect after 3 seconds
-      setTimeout(() => {
-        if (isOpen) connectWebSocket();
-      }, 3000);
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setIsConnected(false);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const chunk: StreamChunk = JSON.parse(event.data);
-        handleStreamChunk(chunk);
-      } catch (e) {
-        console.error('Failed to parse message:', e);
-      }
-    };
-
-    wsRef.current = ws;
+      wsRef.current = null;
+    }
   }, [isOpen]);
 
   const handleStreamChunk = (chunk: StreamChunk) => {
@@ -478,13 +558,48 @@ export default function AIChatWidget({
 
   useEffect(() => {
     if (isOpen) {
-      connectWebSocket();
+      // Small delay to ensure component is fully mounted
+      const timeoutId = setTimeout(() => {
+        connectWebSocket();
+      }, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    } else {
+      // Close connection when chat is closed
+      if (wsRef.current) {
+        const ws = wsRef.current;
+        // Clear ping interval
+        if ((ws as any).pingInterval) {
+          clearInterval((ws as any).pingInterval);
+        }
+        // Only close if connection is open or connecting
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close(1000, 'Chat closed');
+        }
+        wsRef.current = null;
+      }
     }
-
-    return () => {
-      wsRef.current?.close();
-    };
   }, [isOpen, connectWebSocket]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        const ws = wsRef.current;
+        // Clear ping interval
+        if ((ws as any).pingInterval) {
+          clearInterval((ws as any).pingInterval);
+        }
+        // Only close if connection is open
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close(1000, 'Component unmounted');
+        }
+        wsRef.current = null;
+      }
+    };
+  }, []);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -692,16 +807,45 @@ export default function AIChatWidget({
   return (
     <>
       {/* Chat button */}
-      <button
-        onClick={() => handleOpenChange(true)}
-        className={`fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all z-[10000] ${isOpen ? 'hidden' : ''}`}
-      >
-        <MessageCircle size={24} />
-      </button>
+      {!isOpen && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Chat button clicked');
+            handleOpenChange(true);
+          }}
+          className="fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all z-[10000] flex items-center justify-center cursor-pointer"
+          aria-label="Open AI Chat"
+          title="Open AI Chat Assistant"
+          style={{ 
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 10000
+          }}
+        >
+          <MessageCircle size={24} />
+        </button>
+      )}
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-[440px] h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col z-[10000] border border-blue-200 overflow-hidden">
+        <div 
+          className="fixed bottom-6 right-6 w-[440px] h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col z-[10000] border border-blue-200 overflow-hidden"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '440px',
+            height: '650px',
+            zIndex: 10000,
+            display: 'flex',
+            visibility: 'visible',
+            opacity: 1
+          }}
+          data-testid="chat-window"
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
             <div className="flex items-center gap-2">

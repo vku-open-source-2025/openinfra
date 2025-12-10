@@ -171,10 +171,20 @@ class IncidentService:
         """Assign incident to a technician."""
         incident = await self.get_incident_by_id(incident_id)
 
+        # Check if incident was marked as spam risk
+        is_spam_risk = (
+            incident.ai_verification_status == "to_be_verified" and
+            incident.ai_confidence_score is not None and
+            incident.ai_confidence_score < 0.5
+        )
+        
         # Auto-create maintenance record if linked to an asset
         if incident.asset_id:
             try:
-                maintenance_id = await self.create_maintenance_from_incident(incident_id, assigned_by)
+                # Pass technician_id to create_maintenance_from_incident so it can handle spam risk
+                maintenance_id = await self.create_maintenance_from_incident(
+                    incident_id, assigned_by, technician_id=assigned_to
+                )
                 
                 # Assign the maintenance to the technician as well
                 if self.maintenance_service:
@@ -186,6 +196,7 @@ class IncidentService:
                     "updated_at": datetime.utcnow(),
                     "maintenance_record_id": maintenance_id
                 }
+                # Note: create_maintenance_from_incident already handles spam risk verification
             except Exception as e:
                 logger.error(f"Failed to create maintenance for incident {incident_id}: {e}")
                 # Fallback to just assigning the incident without maintenance (or raise error based on policy)
@@ -194,12 +205,38 @@ class IncidentService:
                     "status": IncidentStatus.INVESTIGATING.value,
                     "updated_at": datetime.utcnow()
                 }
+                # Mark as verified if spam risk (when maintenance creation fails)
+                if is_spam_risk:
+                    update_data["ai_verification_status"] = "verified"
+                    update_data["ai_confidence_score"] = 0.8
+                    update_data["ai_verification_reason"] = (
+                        f"Verified by admin action: Technician assigned. "
+                        f"Original AI score: {incident.ai_confidence_score:.2f}"
+                    )
+                    update_data["ai_verified_at"] = datetime.utcnow()
+                    logger.info(
+                        f"Incident {incident_id} marked as verified due to technician assignment "
+                        f"(was spam risk with score {incident.ai_confidence_score})"
+                    )
         else:
             update_data = {
                 "assigned_to": assigned_to,
                 "status": IncidentStatus.INVESTIGATING.value,
                 "updated_at": datetime.utcnow()
             }
+            # Mark as verified if spam risk (when no asset_id, so no maintenance created)
+            if is_spam_risk:
+                update_data["ai_verification_status"] = "verified"
+                update_data["ai_confidence_score"] = 0.8
+                update_data["ai_verification_reason"] = (
+                    f"Verified by admin action: Technician assigned. "
+                    f"Original AI score: {incident.ai_confidence_score:.2f}"
+                )
+                update_data["ai_verified_at"] = datetime.utcnow()
+                logger.info(
+                    f"Incident {incident_id} marked as verified due to technician assignment "
+                    f"(was spam risk with score {incident.ai_confidence_score})"
+                )
 
         updated = await self.repository.update(incident_id, update_data)
         if not updated:
@@ -274,15 +311,21 @@ class IncidentService:
     async def create_maintenance_from_incident(
         self,
         incident_id: str,
-        created_by: str
+        created_by: str,
+        technician_id: Optional[str] = None
     ) -> str:
         """Create a maintenance work order from incident."""
-        incident = await self.get_incident_by_id(incident_id)
+        try:
+            incident = await self.get_incident_by_id(incident_id)
+            logger.info(f"Creating maintenance for incident {incident_id}, asset_id={incident.asset_id}, technician_id={technician_id}")
 
-        if not incident.asset_id:
-            raise ValueError("Incident must be linked to an asset to create maintenance")
+            if not incident.asset_id:
+                raise ValueError("Incident must be linked to an asset to create maintenance")
 
-        if self.maintenance_service:
+            if not self.maintenance_service:
+                logger.error("Maintenance service is not available")
+                raise RuntimeError("Maintenance service not available")
+
             # Create maintenance record
             from app.domain.models.maintenance import MaintenanceCreate, MaintenancePriority, MaintenanceType
             priority = MaintenancePriority.HIGH if incident.severity.value in ["high", "critical"] else MaintenancePriority.MEDIUM
@@ -293,19 +336,59 @@ class IncidentService:
                 title=f"Maintenance for incident {incident.incident_number}",
                 description=f"Maintenance created from incident {incident.incident_number}: {incident.description}",
                 scheduled_date=datetime.utcnow(),
-                estimated_duration=120  # Default 2 hours
+                estimated_duration=120,  # Default 2 hours
+                assigned_to=technician_id
             )
+            logger.debug(f"Maintenance data: {maintenance_data.dict()}")
             maintenance = await self.maintenance_service.create_maintenance(maintenance_data, created_by)
+            logger.info(f"Created maintenance record {maintenance.id}")
 
-            # Link maintenance to incident
-            await self.repository.update(
-                incident_id,
-                {"maintenance_record_id": str(maintenance.id)}
-            )
+            # Link maintenance to incident and update status if technician is assigned
+            update_data = {
+                "maintenance_record_id": str(maintenance.id),
+                "updated_at": datetime.utcnow()
+            }
+            
+            # If technician is assigned, transition incident to assigned status
+            if technician_id:
+                update_data["assigned_to"] = technician_id
+                # Only update status if incident is in acknowledged or reported state
+                if incident.status in [IncidentStatus.ACKNOWLEDGED.value, IncidentStatus.REPORTED.value]:
+                    update_data["status"] = IncidentStatus.ASSIGNED.value
+                
+                # If incident was marked as spam risk but admin assigned technician,
+                # mark it as verified (useful ticket)
+                is_spam_risk = (
+                    incident.ai_verification_status == "to_be_verified" and
+                    incident.ai_confidence_score is not None and
+                    incident.ai_confidence_score < 0.5
+                )
+                if is_spam_risk:
+                    update_data["ai_verification_status"] = "verified"
+                    update_data["ai_confidence_score"] = 0.8  # Set to verified threshold
+                    update_data["ai_verification_reason"] = (
+                        f"Verified by admin action: Technician assigned for maintenance. "
+                        f"Original AI score: {incident.ai_confidence_score:.2f}"
+                    )
+                    update_data["ai_verified_at"] = datetime.utcnow()
+                    logger.info(
+                        f"Incident {incident_id} marked as verified due to technician assignment "
+                        f"(was spam risk with score {incident.ai_confidence_score})"
+                    )
+            
+            await self.repository.update(incident_id, update_data)
+            logger.info(f"Updated incident {incident_id} with maintenance record")
 
             return str(maintenance.id)
-        else:
-            raise RuntimeError("Maintenance service not available")
+        except ValueError as e:
+            logger.error(f"ValueError creating maintenance: {e}")
+            raise
+        except RuntimeError as e:
+            logger.error(f"RuntimeError creating maintenance: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error creating maintenance from incident {incident_id}: {e}", exc_info=True)
+            raise
 
     async def add_comment(
         self,
@@ -322,7 +405,9 @@ class IncidentService:
             is_internal=is_internal
         )
 
-        await self.repository.add_comment(incident_id, comment.dict())
+        # Ensure user_id is included in the dict even if it's None
+        comment_dict = comment.dict(exclude_none=False)
+        await self.repository.add_comment(incident_id, comment_dict)
         return await self.get_incident_by_id(incident_id)
 
     async def upvote_incident(

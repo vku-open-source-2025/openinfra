@@ -559,7 +559,7 @@ export default function ApiDocsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white relative">
             <Header />
 
             {/* Sidebar - fixed on desktop */}

@@ -17,6 +17,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,7 @@ API_ENDPOINTS = {
 
 
 class GeminiLiveLLM:
+    """LLM wrapper for Live API (WebSocket streaming) - requires Live API compatible model."""
     def __init__(self, api_key: str, model: str, system_instruction: str = None):
         self.client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
         self.model = model
@@ -107,6 +109,51 @@ class GeminiLiveLLM:
             async for response in session.receive():
                 if response.text:
                     yield AIMessage(content=response.text)
+
+
+class GeminiStreamLLM:
+    """LLM wrapper for regular generateContent API with streaming - works with all models."""
+    def __init__(self, api_key: str, model: str, system_instruction: str = None):
+        self.model = model
+        self.system_instruction = system_instruction
+        # Use LangChain's ChatGoogleGenerativeAI for proper async streaming support
+        self.llm = ChatGoogleGenerativeAI(
+            model=model,
+            google_api_key=api_key,
+            temperature=0.7,
+            streaming=True,
+        )
+        # Set system instruction if provided
+        if system_instruction:
+            # LangChain handles system instructions via messages
+            self.system_message = SystemMessage(content=system_instruction)
+        else:
+            self.system_message = None
+
+    async def astream(self, messages: List[Any]):
+        # Prepare messages for LangChain
+        langchain_messages = []
+        
+        # Add system instruction if provided
+        if self.system_message:
+            langchain_messages.append(self.system_message)
+        
+        # Convert existing messages
+        for msg in messages:
+            if isinstance(msg, SystemMessage):
+                # Skip if we already have a system message
+                continue
+            elif isinstance(msg, HumanMessage):
+                langchain_messages.append(msg)
+            elif isinstance(msg, AIMessage):
+                langchain_messages.append(msg)
+            else:
+                # Convert unknown message types to HumanMessage
+                langchain_messages.append(HumanMessage(content=str(msg.content)))
+        
+        # Stream using LangChain's async streaming
+        async for chunk in self.llm.astream(langchain_messages):
+            yield chunk
 
 
 class AIAgentService:
@@ -195,11 +242,27 @@ When user requests to TEST/CALL an API:
 
 ALWAYS respond in the SAME LANGUAGE the user uses. If they write in Vietnamese, respond in Vietnamese. If English, respond in English."""
 
-        self.llm = GeminiLiveLLM(
-            api_key=self.api_key,
-            model="gemini-2.5-flash-live-preview",
-            system_instruction=self.system_prompt
-        )
+        # Choose LLM implementation based on USE_LIVE flag
+        # Live API: Uses WebSocket (bidiGenerateContent) - requires Live API compatible model
+        # Non-Live: Uses regular generateContentStream API - works with all models
+        if settings.GEMINI_CHAT_MODEL_USE_LIVE:
+            # Use Live API with Live API compatible model (gemini-2.0-flash)
+            model = settings.GEMINI_CHAT_MODEL_LIVE
+            self.llm = GeminiLiveLLM(
+                api_key=self.api_key,
+                model=model,
+                system_instruction=self.system_prompt
+            )
+            logger.info(f"Using Live API with model: {model}")
+        else:
+            # Use regular streaming API with stable model (gemini-2.5-flash)
+            model = settings.GEMINI_CHAT_MODEL_STABLE
+            self.llm = GeminiStreamLLM(
+                api_key=self.api_key,
+                model=model,
+                system_instruction=self.system_prompt
+            )
+            logger.info(f"Using regular streaming API with model: {model}")
     
     async def _call_real_api(self, endpoint_key: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Actually call a real API endpoint"""
@@ -635,8 +698,8 @@ console.log(data);'''
             
             context_message = "\n\n".join(context_parts) if context_parts else "Không tìm thấy dữ liệu liên quan."
             
-            # Build messages
-            messages = [SystemMessage(content=self.system_prompt)]
+            # Build messages (system message is handled by LLM wrapper)
+            messages = []
             
             # Add chat history
             if chat_history:
