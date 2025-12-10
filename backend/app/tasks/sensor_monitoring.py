@@ -1,7 +1,7 @@
 """Celery tasks for IoT sensor monitoring."""
 
 from app.celery_app import app as celery_app
-from app.infrastructure.database.mongodb import get_database
+from app.infrastructure.database.mongodb import get_database, db as database_manager
 from app.domain.services.alert_service import AlertService
 from app.domain.models.alert import Alert, AlertSeverity, AlertSourceType
 from app.infrastructure.database.repositories.mongo_iot_repository import (
@@ -20,6 +20,41 @@ import uuid
 import asyncio
 
 logger = logging.getLogger(__name__)
+
+
+def run_async(coro):
+    """
+    Safely run async coroutine in Celery task.
+    Handles event loop creation properly for prefork workers.
+
+    In Celery prefork workers, each worker process is forked, so we need
+    to create a fresh event loop. Motor requires a valid event loop to work.
+    """
+    # In prefork workers, there should be no existing event loop
+    # Create a new one for this task BEFORE any Motor operations
+    loop = None
+    try:
+        # Try to get existing event loop
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                raise RuntimeError("Loop is closed")
+        except RuntimeError:
+            # No event loop or it's closed - create new one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        # Ensure database connection uses this event loop
+        # Motor client will automatically use the current event loop
+        if database_manager.client is None:
+            database_manager.connect()
+
+        # Run the coroutine
+        return loop.run_until_complete(coro)
+    finally:
+        # Note: We don't close the loop here because Motor connections
+        # may need to reuse it. The loop will be cleaned up when the process exits.
+        pass
 
 
 async def _check_sensor_offline_status_async():
@@ -70,15 +105,12 @@ async def _check_sensor_offline_status_async():
 def check_sensor_offline_status():
     """Check for offline sensors and create alerts."""
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(_check_sensor_offline_status_async())
-            return result
-        finally:
-            loop.close()
+        result = run_async(_check_sensor_offline_status_async())
+        if asyncio.iscoroutine(result):
+            raise ValueError("Function returned a coroutine instead of a value")
+        return result
     except Exception as e:
-        logger.error(f"Error checking sensor offline status: {e}")
+        logger.error(f"Error checking sensor offline status: {e}", exc_info=True)
         raise
 
 
@@ -116,15 +148,12 @@ async def _aggregate_sensor_data_hourly_async():
 def aggregate_sensor_data_hourly():
     """Aggregate sensor data hourly (runs every hour)."""
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(_aggregate_sensor_data_hourly_async())
-            return result
-        finally:
-            loop.close()
+        result = run_async(_aggregate_sensor_data_hourly_async())
+        if asyncio.iscoroutine(result):
+            raise ValueError("Function returned a coroutine instead of a value")
+        return result
     except Exception as e:
-        logger.error(f"Error aggregating sensor data: {e}")
+        logger.error(f"Error aggregating sensor data: {e}", exc_info=True)
         raise
 
 
@@ -449,14 +478,10 @@ def ai_automated_risk_detection():
     This is a sync wrapper that runs the async implementation.
     """
     try:
-        # Create new event loop for this task
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            result = loop.run_until_complete(_ai_automated_risk_detection_async())
-            return result
-        finally:
-            loop.close()
+        result = run_async(_ai_automated_risk_detection_async())
+        if asyncio.iscoroutine(result):
+            raise ValueError("Function returned a coroutine instead of a value")
+        return result
     except Exception as e:
         logger.error(f"Error in AI automated risk detection: {e}", exc_info=True)
         raise

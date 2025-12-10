@@ -78,14 +78,14 @@ class RainForecastService:
         return readings
 
     def resample_rainfall_data(
-        self, readings: List[Dict], interval: str = "1H"
+        self, readings: List[Dict], interval: str = "1h"
     ) -> pd.Series:
         """
         Resample irregular sensor readings to regular hourly intervals.
 
         Args:
             readings: List of reading dictionaries with timestamp and value
-            interval: Pandas frequency string (default: '1H' for hourly)
+            interval: Pandas frequency string (default: '1h' for hourly)
 
         Returns:
             Pandas Series with datetime index and rainfall values
