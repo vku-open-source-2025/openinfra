@@ -15,6 +15,14 @@ async def error_handler_middleware(request: Request, call_next):
     request_id = str(uuid.uuid4())
     request.state.request_id = request_id
 
+    # CORS headers to ensure error responses are accessible
+    cors_headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "*",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Credentials": "true",
+    }
+
     try:
         response = await call_next(request)
         return response
@@ -29,13 +37,15 @@ async def error_handler_middleware(request: Request, call_next):
                 "detail": "Invalid request parameters",
                 "errors": e.errors(),
                 "request_id": request_id
-            }
+            },
+            headers=cors_headers
         )
     except AppException as e:
         logger.error(
             f"Application error: {e.detail}",
             extra={"request_id": request_id, "error_code": e.error_code}
         )
+        headers = {**cors_headers, **(e.headers or {})}
         return JSONResponse(
             status_code=e.status_code,
             content={
@@ -46,7 +56,7 @@ async def error_handler_middleware(request: Request, call_next):
                 "error_code": e.error_code,
                 "request_id": request_id
             },
-            headers=e.headers
+            headers=headers
         )
     except StarletteHTTPException as e:
         logger.error(f"HTTP error: {e.detail}", extra={"request_id": request_id})
@@ -58,7 +68,8 @@ async def error_handler_middleware(request: Request, call_next):
                 "status": e.status_code,
                 "detail": e.detail,
                 "request_id": request_id
-            }
+            },
+            headers=cors_headers
         )
     except Exception as e:
         logger.exception(f"Unhandled error: {str(e)}", extra={"request_id": request_id})
@@ -68,7 +79,8 @@ async def error_handler_middleware(request: Request, call_next):
                 "type": "internal_error",
                 "title": "Internal Server Error",
                 "status": 500,
-                "detail": "An unexpected error occurred. Please contact support.",
+                "detail": str(e) if logger.level <= logging.DEBUG else "An unexpected error occurred. Please contact support.",
                 "request_id": request_id
-            }
+            },
+            headers=cors_headers
         )

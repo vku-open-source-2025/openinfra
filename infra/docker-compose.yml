@@ -4,8 +4,8 @@ services:
   mongo:
     env_file: .env
     image: mongo:latest
-    # ports:
-    #   - "${MONGO_PORT}:27017" # Exposed only internally in the network
+    ports:
+      - "${MONGO_PORT}:27017" # Exposed only internally in the network
     volumes:
       - mongo_data:/data/db
     networks:

@@ -179,6 +179,30 @@ async def get_merge_suggestion_repository():
     return MongoMergeSuggestionRepository(db)
 
 
+async def get_incident_verification_agent():
+    """Get incident verification agent instance."""
+    from app.services.incident_verification_agent import IncidentVerificationAgent
+    from app.domain.services.iot_service import IoTService
+    from app.infrastructure.database.repositories.mongo_iot_repository import MongoIoTSensorRepository
+    from app.infrastructure.database.repositories.mongo_sensor_data_repository import MongoSensorDataRepository
+    
+    db: AsyncIOMotorDatabase = await get_database()
+    incident_repo = await get_incident_repository()
+    duplicate_service = await get_duplicate_detection_service()
+    
+    # Create IoT service
+    iot_repo = MongoIoTSensorRepository(db)
+    sensor_data_repo = MongoSensorDataRepository(db)
+    iot_service = IoTService(iot_repo, sensor_data_repo)
+    
+    return IncidentVerificationAgent(
+        db=db,
+        incident_repository=incident_repo,
+        duplicate_detection_service=duplicate_service,
+        iot_service=iot_service
+    )
+
+
 async def get_incident_service():
     """Get incident service instance."""
     from app.domain.services.incident_service import IncidentService

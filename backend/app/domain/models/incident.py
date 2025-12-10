@@ -28,6 +28,7 @@ class IncidentStatus(str, Enum):
     """Incident status enumeration."""
     REPORTED = "reported"
     ACKNOWLEDGED = "acknowledged"
+    ASSIGNED = "assigned"
     INVESTIGATING = "investigating"
     RESOLVED = "resolved"
     CLOSED = "closed"

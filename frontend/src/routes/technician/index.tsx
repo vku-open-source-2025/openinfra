@@ -5,19 +5,22 @@ import { maintenanceApi } from "../../api/maintenance";
 import { useAuthStore } from "../../stores/authStore";
 import { IncidentCard } from "../../components/incidents/IncidentCard";
 import { MaintenanceCard } from "../../components/maintenance/MaintenanceCard";
-import { Loader2, AlertTriangle, Wrench } from "lucide-react";
+import { Loader2, Search, AlertTriangle, Wrench } from "lucide-react";
 import { useState } from "react";
+import { Input } from "../../components/ui/input";
+import { Select } from "../../components/ui/select";
 
 export const Route = createFileRoute("/technician/")({
     component: TechnicianTaskList,
 });
 
-type TaskTab = "all" | "incidents" | "maintenance";
-
 function TechnicianTaskList() {
     const { user } = useAuthStore();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<TaskTab>("all");
+    const [activeTab, setActiveTab] = useState<"all" | "incidents" | "maintenance">("all");
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string>("");
+    const [severityFilter, setSeverityFilter] = useState<string>("");
 
     // Fetch assigned incidents (investigating status means assigned to technician)
     const { data: allMyIncidents, isLoading: loadingIncidents } = useQuery({
@@ -73,12 +76,58 @@ function TechnicianTaskList() {
         return dateB - dateA; // Newest first
     });
 
-    const filteredTasks =
-        activeTab === "all"
-            ? allTasks
-            : activeTab === "incidents"
-            ? allTasks.filter((t) => t.type === "incident")
-            : allTasks.filter((t) => t.type === "maintenance");
+    // Apply filters
+    let filteredTasks = allTasks;
+
+    // Filter by active tab
+    if (activeTab === "incidents") {
+        filteredTasks = filteredTasks.filter((t) => t.type === "incident");
+    } else if (activeTab === "maintenance") {
+        filteredTasks = filteredTasks.filter((t) => t.type === "maintenance");
+    }
+    // activeTab === "all" shows all tasks
+
+    // Filter by status
+    if (statusFilter) {
+        filteredTasks = filteredTasks.filter((t) => {
+            if (t.type === "incident") {
+                return t.data.status === statusFilter;
+            } else {
+                return t.data.status === statusFilter;
+            }
+        });
+    }
+
+    // Filter by severity (only for incidents)
+    if (severityFilter) {
+        filteredTasks = filteredTasks.filter((t) => {
+            if (t.type === "incident") {
+                return t.data.severity === severityFilter;
+            }
+            // Maintenance tasks don't have severity, so they're excluded when severity filter is active
+            return false;
+        });
+    }
+
+    // Filter by search
+    if (search) {
+        const searchLower = search.toLowerCase();
+        filteredTasks = filteredTasks.filter((t) => {
+            if (t.type === "incident") {
+                return (
+                    t.data.title?.toLowerCase().includes(searchLower) ||
+                    t.data.description?.toLowerCase().includes(searchLower) ||
+                    t.data.incident_number?.toLowerCase().includes(searchLower)
+                );
+            } else {
+                return (
+                    t.data.title?.toLowerCase().includes(searchLower) ||
+                    t.data.description?.toLowerCase().includes(searchLower) ||
+                    t.data.work_order_number?.toLowerCase().includes(searchLower)
+                );
+            }
+        });
+    }
 
     if (isLoading) {
         return (
@@ -89,27 +138,26 @@ function TechnicianTaskList() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="p-6 space-y-4">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold text-xl">Công việc của tôi</h2>
                 <div className="flex items-center gap-2 text-sm">
                     <span className="text-slate-600">
-                        {allMyIncidents?.length || 0} incidents,{" "}
-                        {activeMaintenance.length} maintenance
+                        {filteredTasks.length} / {allTasks.length} công việc
                     </span>
                 </div>
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-2 border-b border-slate-200">
-                    <button
+            <div className="flex gap-2 border-b border-slate-200 mb-4">
+                <button
                     onClick={() => setActiveTab("all")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === "all"
                             ? "border-blue-600 text-blue-600"
                             : "border-transparent text-slate-500 hover:text-slate-700"
                     }`}
-                    >
+                >
                     Tất cả công việc
                 </button>
                 <button
@@ -134,6 +182,49 @@ function TechnicianTaskList() {
                     <Wrench className="inline h-4 w-4 mr-1" />
                     Bảo trì ({activeMaintenance.length})
                 </button>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="bg-white p-4 rounded-lg border border-slate-200 mb-4">
+                <div className="flex flex-wrap gap-4">
+                    <div className="flex-1 min-w-[200px]">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input
+                                placeholder="Tìm kiếm tasks..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                    </div>
+                    <div className="w-[180px]">
+                        <Select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            placeholder="Tất cả trạng thái"
+                        >
+                            <option value="investigating">Đang điều tra</option>
+                            <option value="resolved">Đã giải quyết</option>
+                            <option value="waiting_approval">Chờ phê duyệt</option>
+                            <option value="scheduled">Đã lên lịch</option>
+                            <option value="in_progress">Đang thực hiện</option>
+                            <option value="completed">Hoàn thành</option>
+                        </Select>
+                    </div>
+                    <div className="w-[180px]">
+                        <Select
+                            value={severityFilter}
+                            onChange={(e) => setSeverityFilter(e.target.value)}
+                            placeholder="Tất cả mức độ"
+                        >
+                            <option value="low">Thấp</option>
+                            <option value="medium">Trung bình</option>
+                            <option value="high">Cao</option>
+                            <option value="critical">Nghiêm trọng</option>
+                        </Select>
+                    </div>
+                </div>
             </div>
 
             {filteredTasks.length > 0 ? (
@@ -171,13 +262,14 @@ function TechnicianTaskList() {
             ) : (
                 <div className="text-center p-8 text-slate-500 bg-white rounded-lg border border-slate-200">
                     <p>
-                            {activeTab === "all" &&
-                                "Không có công việc nào được phân công cho bạn."}
-                            {activeTab === "incidents" &&
-                                "Không có sự cố nào được phân công cho bạn."}
-                            {activeTab === "maintenance" &&
-                                "Không có lệnh bảo trì nào được phân công cho bạn."}
-                        </p>
+                        {search || statusFilter || severityFilter
+                            ? "Không có công việc nào khớp với bộ lọc của bạn."
+                            : activeTab === "all"
+                            ? "Không có công việc nào được phân công cho bạn."
+                            : activeTab === "incidents"
+                            ? "Không có sự cố nào được phân công cho bạn."
+                            : "Không có lệnh bảo trì nào được phân công cho bạn."}
+                    </p>
                 </div>
             )}
         </div>

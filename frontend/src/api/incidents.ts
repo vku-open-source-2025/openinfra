@@ -91,15 +91,14 @@ export const incidentsApi = {
     return response.data;
   },
 
-  createMaintenance: async (id: string): Promise<{ incident_id: string; maintenance_id: string; message: string }> => {
+  createMaintenance: async (id: string, technicianId?: string): Promise<{ incident_id: string; maintenance_id: string; message: string }> => {
     const response = await httpClient.post<{ incident_id: string; maintenance_id: string; message: string }>(
-      `/incidents/${id}/create-maintenance`
+      `/incidents/${id}/create-maintenance`,
+      null,
+      {
+        params: technicianId ? { technician_id: technicianId } : undefined,
+      }
     );
-    return response.data;
-  },
-
-  approveCost: async (id: string): Promise<Incident> => {
-    const response = await httpClient.post<Incident>(`/incidents/${id}/approve-cost`);
     return response.data;
   },
 

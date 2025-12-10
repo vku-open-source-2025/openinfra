@@ -23,6 +23,28 @@ async def get_current_user_profile(
     return user_service.to_response(current_user)
 
 
+@router.get("/technicians", response_model=List[UserResponse])
+async def list_technicians(
+    status: Optional[str] = Query("active", description="Filter by status"),
+    current_user = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service)
+):
+    """List technicians (available to all authenticated users for assignment purposes)."""
+    try:
+        logger.info(f"Listing technicians with role=technician, status={status} for user {current_user.id}")
+        users = await user_service.list_users(skip=0, limit=100, role="technician", status=status)
+        logger.info(f"Found {len(users)} technicians matching criteria")
+        if len(users) == 0:
+            logger.warning(f"No technicians found with role=technician and status={status}")
+        return [user_service.to_response(user) for user in users]
+    except Exception as e:
+        logger.error(f"Error listing technicians: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list technicians: {str(e)}"
+        )
+
+
 @router.put("/me", response_model=UserResponse)
 async def update_current_user_profile(
     updates: UserUpdateRequest,

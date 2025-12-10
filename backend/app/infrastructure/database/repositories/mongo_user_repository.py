@@ -79,15 +79,20 @@ class MongoUserRepository(UserRepository):
         status: Optional[str] = None,
     ) -> List[User]:
         """List users with pagination and filtering."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         query = {}
         if role:
             query["role"] = role
         if status:
             query["status"] = status
 
+        logger.debug(f"Querying users with filter: {query}")
         cursor = self.collection.find(query).skip(skip).limit(limit)
         users = []
         async for user_doc in cursor:
             user_doc = convert_objectid_to_str(user_doc)
             users.append(User(**user_doc))
+        logger.debug(f"Found {len(users)} users matching query")
         return users

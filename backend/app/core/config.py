@@ -39,6 +39,23 @@ class Settings(BaseSettings):
     GEMINI_TEXT_MODEL: str = "text-embedding-004"
     GEMINI_VISION_MODEL: str = "gemini-2.5-flash"
     
+    # Gemini Chat/Agent Models
+    # Set GEMINI_CHAT_MODEL_USE_LIVE=true to use Live API for real-time streaming
+    # Default: gemini-2.5-flash (stable, production-ready, uses generateContent API)
+    # Live: gemini-2.0-flash (supports Live API/bidiGenerateContent for WebSocket streaming)
+    # Note: gemini-2.5-flash does NOT support Live API - use gemini-2.0-flash for Live API
+    # Alternative: gemini-live-2.5-flash-preview (half-cascade, deprecated soon)
+    GEMINI_CHAT_MODEL_USE_LIVE: bool = False
+    GEMINI_CHAT_MODEL_STABLE: str = "gemini-2.5-flash"  # Regular generateContent API
+    GEMINI_CHAT_MODEL_LIVE: str = "gemini-2.0-flash"  # Live API (bidiGenerateContent) compatible
+    # Optional: Use gemini-live-2.5-flash-preview for 2.5 features with Live API (deprecated soon)
+    # GEMINI_CHAT_MODEL_LIVE: str = "gemini-live-2.5-flash-preview"
+    
+    @property
+    def GEMINI_CHAT_MODEL(self) -> str:
+        """Get the active chat model based on GEMINI_CHAT_MODEL_USE_LIVE flag."""
+        return self.GEMINI_CHAT_MODEL_LIVE if self.GEMINI_CHAT_MODEL_USE_LIVE else self.GEMINI_CHAT_MODEL_STABLE
+    
     # Duplicate Detection Configuration
     DUPLICATE_SIMILARITY_THRESHOLD: float = 0.85
     DUPLICATE_TEXT_WEIGHT: float = 0.6
