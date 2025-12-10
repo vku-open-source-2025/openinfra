@@ -13,12 +13,22 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useAuthStore } from "../../stores/authStore";
+import { useBiometricAuth } from "../../hooks/useBiometricAuth";
 import type { ProfileUpdateRequest } from "../../types/user";
+import { Fingerprint, ShieldCheck, ShieldOff } from "lucide-react";
 
 const ProfileSettings: React.FC = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const { user, setUser, logout } = useAuthStore();
+    const { user, setUser, logout, accessToken, refreshToken } = useAuthStore();
+    const {
+        isAvailable: biometricAvailable,
+        isEnabled: biometricEnabled,
+        isLoading: biometricLoading,
+        error: biometricError,
+        registerBiometric,
+        disableBiometric,
+    } = useBiometricAuth();
     const [formData, setFormData] = useState<Partial<ProfileUpdateRequest>>({});
     const [passwordData, setPasswordData] = useState({
         current_password: "",
@@ -291,6 +301,69 @@ const ProfileSettings: React.FC = () => {
                     </div>
                 </Form>
             </div>
+
+            {/* Biometric Authentication Section */}
+            {biometricAvailable && (
+                <div className="bg-white rounded-lg border border-slate-200 p-6">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Fingerprint className="w-5 h-5" />
+                        Biometric Login
+                    </h2>
+                    <p className="text-sm text-slate-500 mb-4">
+                        Use fingerprint or face recognition for quick and secure login
+                    </p>
+                    
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                            {biometricEnabled ? (
+                                <ShieldCheck className="w-8 h-8 text-green-600" />
+                            ) : (
+                                <ShieldOff className="w-8 h-8 text-slate-400" />
+                            )}
+                            <div>
+                                <p className="font-medium">
+                                    {biometricEnabled ? 'Biometric Enabled' : 'Biometric Disabled'}
+                                </p>
+                                <p className="text-sm text-slate-500">
+                                    {biometricEnabled 
+                                        ? 'You can login using fingerprint or face recognition' 
+                                        : 'Enable to login faster next time'}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {biometricEnabled ? (
+                            <Button
+                                variant="outline"
+                                onClick={disableBiometric}
+                                disabled={biometricLoading}
+                            >
+                                Disable
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={async () => {
+                                    if (currentUser && accessToken && refreshToken) {
+                                        await registerBiometric(
+                                            currentUser.username,
+                                            accessToken,
+                                            refreshToken,
+                                            currentUser
+                                        );
+                                    }
+                                }}
+                                disabled={biometricLoading}
+                            >
+                                {biometricLoading ? 'Setting up...' : 'Enable'}
+                            </Button>
+                        )}
+                    </div>
+                    
+                    {biometricError && (
+                        <p className="text-sm text-red-600 mt-2">{biometricError}</p>
+                    )}
+                </div>
+            )}
 
             <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h2 className="text-lg font-semibold mb-4">Account Actions</h2>

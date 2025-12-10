@@ -2,12 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { LogIn } from "lucide-react";
 
 interface NavigationItem {
     label: string;
     to: string;
     search?: Record<string, unknown>;
     isButton?: boolean;
+    isLogin?: boolean;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -18,6 +20,11 @@ const navigationItems: NavigationItem[] = [
     {
         label: "API Docs",
         to: "/docs",
+    },
+    {
+        label: "Login",
+        to: "/login",
+        isLogin: true,
     },
     {
         label: "Get Started",
@@ -92,6 +99,20 @@ const Header: React.FC = () => {
                                     <span className="text-white font-semibold text-center">
                                         {item.label}
                                     </span>
+                                </Link>
+                            );
+                        }
+
+                        if (item.isLogin) {
+                            return (
+                                <Link
+                                    key={item.to}
+                                    to={item.to}
+                                    onClick={closeMobileMenu}
+                                    className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors flex items-center gap-1.5"
+                                >
+                                    <LogIn className="w-4 h-4" />
+                                    {item.label}
                                 </Link>
                             );
                         }
