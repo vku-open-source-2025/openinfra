@@ -1,5 +1,6 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import AIChatWidget from "../components/AIChatWidget";
 import {
     Code,
     Database,
@@ -1145,6 +1146,7 @@ export default function ApiDocsPage() {
                 </section>
             </main>
             <Footer />
+            <AIChatWidget />
         </div>
     );
 }
