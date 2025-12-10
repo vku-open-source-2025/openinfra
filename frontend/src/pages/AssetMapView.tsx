@@ -21,6 +21,7 @@ import type { Asset } from "../types/asset";
 import { getIconForAsset, getColorForFeatureCode } from "../utils/mapIcons";
 import AssetLayerFilter from "../components/AssetLayerFilter";
 import AssetInfoPanel from "../components/AssetInfoModal";
+import AIChatWidget from "../components/AIChatWidget";
 import "leaflet/dist/leaflet.css";
 
 // Disable default Leaflet marker icons
@@ -158,6 +159,8 @@ const AssetMapView: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
     const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
+    const [openChatbot, setOpenChatbot] = useState(false);
+    const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
     const hasInitializedAssets = useRef(false);
     const isUpdatingFromUrl = useRef(false);
@@ -263,6 +266,9 @@ const AssetMapView: React.FC = () => {
             isUpdatingFromUrl.current = true;
             setSelectedAsset(asset);
             setIsModalOpen(true);
+            // Close chat panel when opening asset details
+            setOpenChatbot(false);
+            setAssetToAddToChat(null);
             navigate({ to: "/admin/map", search: { assetId } });
         },
         [navigate]
@@ -278,6 +284,18 @@ const AssetMapView: React.FC = () => {
     const handleViewDetails = useCallback(
         (assetId: string) => {
             navigate({ to: "/admin/assets/$id", params: { id: assetId } });
+        },
+        [navigate]
+    );
+
+    const handleAddToChat = useCallback(
+        (asset: Asset) => {
+            setAssetToAddToChat(asset);
+            setOpenChatbot(true);
+            // Close the asset info panel when adding to chat
+            setIsModalOpen(false);
+            setSelectedAsset(null);
+            navigate({ to: "/admin/map", search: { assetId: undefined } });
         },
         [navigate]
     );
@@ -317,7 +335,7 @@ const AssetMapView: React.FC = () => {
                     <div className="text-center">
                         <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                         <p className="text-slate-500 font-medium">
-                            Loading assets...
+                            Đang tải danh sách tài sản...
                         </p>
                     </div>
                 </div>
@@ -431,7 +449,27 @@ const AssetMapView: React.FC = () => {
                 isOpen={isModalOpen}
                 onClose={handleModalClose}
                 onViewDetails={handleViewDetails}
+                onAddToChat={handleAddToChat}
                 isLoading={isLoadingAssetDetails}
+            />
+
+            {/* AI Chatbot Widget */}
+            <AIChatWidget 
+                openChat={openChatbot}
+                onOpenChange={(isOpen) => {
+                    setOpenChatbot(isOpen);
+                    if (isOpen) {
+                        // Close asset details panel when opening chat
+                        isUpdatingFromUrl.current = true;
+                        setIsModalOpen(false);
+                        setSelectedAsset(null);
+                        navigate({ to: "/admin/map", search: { assetId: undefined } });
+                    } else {
+                        // Reset asset to add when closing
+                        setAssetToAddToChat(null);
+                    }
+                }}
+                addAssetToContext={assetToAddToChat}
             />
         </div>
     );

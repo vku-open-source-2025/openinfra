@@ -33,11 +33,10 @@ const AboutUs: React.FC = () => {
             <section className="pt-32 pb-16 px-6">
                 <div className="container mx-auto max-w-4xl text-center">
                     <h1 className="text-4xl md:text-5xl font-semibold text-slate-800 mb-4">
-                        About <span className="text-sky-500">OpenInfra</span>
+                        Về <span className="text-sky-500">OpenInfra</span>
                     </h1>
                     <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-                        An open-source infrastructure management platform for
-                        smart cities
+                        Nền tảng quản lý hạ tầng mã nguồn mở dành cho đô thị thông minh
                     </p>
                 </div>
             </section>
@@ -47,17 +46,17 @@ const AboutUs: React.FC = () => {
                 <div className="container mx-auto max-w-3xl">
                     <div className="bg-sky-50/50 rounded-2xl p-8 md:p-12">
                         <h2 className="text-2xl font-semibold text-slate-700 mb-4">
-                            Our Mission
+                            Sứ mệnh của chúng tôi
                         </h2>
                         <p className="text-slate-600 leading-relaxed mb-4">
-                            OpenInfra is a GIS-based system designed to help
-                            local governments efficiently manage and monitor
-                            public infrastructure assets across Vietnam.
+                            OpenInfra là hệ thống dựa trên GIS được xây dựng nhằm hỗ trợ
+                            chính quyền địa phương quản lý và giám sát tài sản hạ tầng
+                            công cộng trên khắp Việt Nam một cách hiệu quả.
                         </p>
                         <p className="text-slate-600 leading-relaxed">
-                            We provide real-time IoT monitoring, interactive
-                            mapping, and maintenance tracking — built with open
-                            standards for transparency and accessibility.
+                            Chúng tôi cung cấp giám sát IoT thời gian thực, bản đồ tương
+                            tác và theo dõi bảo trì — được phát triển theo các chuẩn mở
+                            để đảm bảo minh bạch và dễ tiếp cận.
                         </p>
                     </div>
                 </div>
@@ -67,14 +66,14 @@ const AboutUs: React.FC = () => {
             <section className="py-12 px-6">
                 <div className="container mx-auto max-w-3xl">
                     <h2 className="text-2xl font-semibold text-slate-700 text-center mb-8">
-                        Features
+                        Tính năng
                     </h2>
                     <div className="grid md:grid-cols-2 gap-4">
                         {[
-                            "Interactive GIS Mapping",
-                            "IoT Sensor Integration",
-                            "Maintenance Tracking",
-                            "Open Data API",
+                            "Bản đồ GIS tương tác",
+                            "Tích hợp cảm biến IoT",
+                            "Theo dõi bảo trì",
+                            "API dữ liệu mở",
                         ].map((feature, idx) => (
                             <div
                                 key={idx}
@@ -94,10 +93,10 @@ const AboutUs: React.FC = () => {
             <section className="py-16 px-6 bg-slate-50/50">
                 <div className="container mx-auto max-w-4xl">
                     <h2 className="text-2xl font-semibold text-slate-700 text-center mb-3">
-                        Our Team
+                        Đội ngũ
                     </h2>
                     <p className="text-slate-500 text-center mb-10">
-                        Students from VKU passionate about open-source
+                        Các bạn sinh viên VKU đam mê mã nguồn mở
                     </p>
                     <div className="grid md:grid-cols-3 gap-6">
                         {teamMembers.map((member, idx) => (
@@ -147,10 +146,10 @@ const AboutUs: React.FC = () => {
             <section className="py-16 px-6">
                 <div className="container mx-auto max-w-4xl">
                     <h2 className="text-2xl font-semibold text-slate-700 text-center mb-3">
-                        Sponsors
+                        Đơn vị đồng hành
                     </h2>
                     <p className="text-slate-500 text-center mb-10">
-                        Supported by organizations believing in open-source
+                        Nhận được sự ủng hộ từ các tổ chức tin tưởng vào mã nguồn mở
                     </p>
                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
                         <a
@@ -167,7 +166,7 @@ const AboutUs: React.FC = () => {
                                 />
                             </div>
                             <span className="mt-3 text-sm text-slate-400">
-                                VKU University
+                                Đại học VKU
                             </span>
                         </a>
 
@@ -185,7 +184,7 @@ const AboutUs: React.FC = () => {
                                 />
                             </div>
                             <span className="mt-3 text-sm text-slate-400">
-                                VKU IT Club
+                                CLB IT VKU
                             </span>
                         </a>
                     </div>
@@ -196,7 +195,7 @@ const AboutUs: React.FC = () => {
             <section className="py-12 px-6">
                 <div className="container mx-auto max-w-2xl text-center">
                     <p className="text-slate-500 mb-6">
-                        OpenInfra is open-source. Contributions are welcome!
+                        OpenInfra là dự án mở. Mọi đóng góp đều được trân trọng!
                     </p>
                     <div className="flex flex-wrap justify-center gap-3">
                         <a
@@ -218,7 +217,7 @@ const AboutUs: React.FC = () => {
                             to="/docs"
                             className="inline-flex items-center gap-2 bg-sky-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-sky-600 transition-colors"
                         >
-                            API Docs
+                            Tài liệu API
                         </Link>
                         {/* <Link
                             to="/map"
@@ -234,7 +233,7 @@ const AboutUs: React.FC = () => {
             <section className="py-6 px-6 border-t border-slate-100">
                 <div className="container mx-auto max-w-4xl text-center">
                     <p className="text-slate-400 text-xs">
-                        Code licensed under{" "}
+                        Mã nguồn theo giấy phép{" "}
                         <a
                             href="https://www.apache.org/licenses/LICENSE-2.0"
                             target="_blank"
@@ -243,7 +242,7 @@ const AboutUs: React.FC = () => {
                         >
                             Apache 2.0
                         </a>{" "}
-                        · Data licensed under{" "}
+                        · Dữ liệu theo giấy phép{" "}
                         <a
                             href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
                             target="_blank"

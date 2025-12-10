@@ -42,19 +42,19 @@ const UserCreate: React.FC = () => {
     setErrors({})
 
     if (!formData.username?.trim()) {
-      setErrors({ username: "Username is required" })
+      setErrors({ username: "Tên đăng nhập là bắt buộc" })
       return
     }
     if (!formData.email?.trim()) {
-      setErrors({ email: "Email is required" })
+      setErrors({ email: "Email là bắt buộc" })
       return
     }
     if (!formData.password || formData.password.length < 6) {
-      setErrors({ password: "Password must be at least 6 characters" })
+      setErrors({ password: "Mật khẩu tối thiểu 6 ký tự" })
       return
     }
     if (!formData.full_name?.trim()) {
-      setErrors({ full_name: "Full name is required" })
+      setErrors({ full_name: "Họ tên là bắt buộc" })
       return
     }
 
@@ -64,7 +64,7 @@ const UserCreate: React.FC = () => {
   if (currentUser?.role !== "admin") {
     return (
       <div className="p-6 text-center text-red-500">
-        Access denied. Admin privileges required.
+        Từ chối truy cập. Cần quyền quản trị.
       </div>
     )
   }
@@ -73,16 +73,16 @@ const UserCreate: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/users" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Users
+        Quay lại danh sách
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Create New User</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Tạo người dùng mới</h1>
 
         <Form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField>
-              <FormLabel required>Username</FormLabel>
+              <FormLabel required>Tên đăng nhập</FormLabel>
               <Input
                 value={formData.username || ""}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -103,7 +103,7 @@ const UserCreate: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel required>Password</FormLabel>
+              <FormLabel required>Mật khẩu</FormLabel>
               <Input
                 type="password"
                 value={formData.password || ""}
@@ -114,17 +114,17 @@ const UserCreate: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel required>Full Name</FormLabel>
+              <FormLabel required>Họ tên</FormLabel>
               <Input
                 value={formData.full_name || ""}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="John Doe"
+                placeholder="Nguyễn Văn A"
               />
               {errors.full_name && <FormError>{errors.full_name}</FormError>}
             </FormField>
 
             <FormField>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel>Số điện thoại</FormLabel>
               <Input
                 value={formData.phone || ""}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -133,15 +133,15 @@ const UserCreate: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel required>Role</FormLabel>
+              <FormLabel required>Vai trò</FormLabel>
               <Select
                 value={formData.role || "citizen"}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
               >
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="technician">Technician</option>
-                <option value="citizen">Citizen</option>
+                <option value="admin">Quản trị</option>
+                <option value="manager">Quản lý</option>
+                <option value="technician">Kỹ thuật</option>
+                <option value="citizen">Người dân</option>
               </Select>
             </FormField>
           </div>
@@ -150,14 +150,14 @@ const UserCreate: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create User"}
+              {createMutation.isPending ? "Đang tạo..." : "Tạo người dùng"}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/users" })}
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </Form>

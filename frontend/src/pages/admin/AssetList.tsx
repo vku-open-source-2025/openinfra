@@ -30,27 +30,42 @@ const AssetList: React.FC = () => {
             asset.feature_type.toLowerCase().includes(searchLower)
         );
     });
-    console.log({ filteredAssets });
 
     if (error) {
         return (
             <div className="p-6">
                 <div className="text-center py-12 text-red-500">
-                    Error loading assets. Please try again.
+                    Lỗi tải danh sách tài sản. Vui lòng thử lại.
                 </div>
             </div>
         );
     }
+
+    const renderLifecycle = (value?: string) => {
+        if (!value) return "";
+        switch (value) {
+            case "operational":
+                return "Đang vận hành";
+            case "under_repair":
+                return "Đang sửa chữa";
+            case "damaged":
+                return "Hư hỏng";
+            case "decommissioned":
+                return "Ngưng sử dụng";
+            default:
+                return value;
+        }
+    };
 
     return (
         <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">
-                        Assets
+                        Tài sản
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Manage infrastructure assets
+                        Quản lý tài sản hạ tầng
                     </p>
                 </div>
                 <Button
@@ -60,7 +75,7 @@ const AssetList: React.FC = () => {
                     }}
                 >
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Asset
+                    Tạo tài sản
                 </Button>
             </div>
 
@@ -75,7 +90,7 @@ const AssetList: React.FC = () => {
                             />
                             <Input
                                 type="text"
-                                placeholder="Search assets..."
+                                placeholder="Tìm kiếm tài sản..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="pl-10"
@@ -88,12 +103,12 @@ const AssetList: React.FC = () => {
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                         >
-                            <option value="">All Statuses</option>
-                            <option value="operational">Operational</option>
-                            <option value="under_repair">Under Repair</option>
-                            <option value="damaged">Damaged</option>
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="operational">Đang vận hành</option>
+                            <option value="under_repair">Đang sửa chữa</option>
+                            <option value="damaged">Hư hỏng</option>
                             <option value="decommissioned">
-                                Decommissioned
+                                Ngưng sử dụng
                             </option>
                         </select>
                     </div>
@@ -146,18 +161,17 @@ const AssetList: React.FC = () => {
                                                         : "bg-gray-100 text-gray-700"
                                                 }`}
                                             >
-                                                {asset.lifecycle?.lifecycle_status?.replace(
-                                                    "_",
-                                                    " "
-                                                ) || asset.status}
+                                                {renderLifecycle(
+                                                    asset.lifecycle?.lifecycle_status || asset.status
+                                                )}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-slate-600">
                                             <span>
-                                                Code: {asset.feature_code}
+                                                Mã: {asset.feature_code}
                                             </span>
                                             <span>
-                                                Type: {asset.feature_type}
+                                                Loại: {asset.feature_type}
                                             </span>
                                             {asset.location && (
                                                 <span className="flex items-center gap-1">
@@ -177,7 +191,7 @@ const AssetList: React.FC = () => {
                                             undefined && (
                                             <div className="mt-2">
                                                 <span className="text-xs text-slate-500">
-                                                    Health Score:{" "}
+                                                    Điểm sức khỏe:{" "}
                                                 </span>
                                                 <span
                                                     className={`text-sm font-semibold ${
@@ -211,7 +225,7 @@ const AssetList: React.FC = () => {
                 </div>
             ) : (
                 <div className="text-center py-12 text-slate-500">
-                    <p>No assets found.</p>
+                    <p>Không tìm thấy tài sản.</p>
                 </div>
             )}
         </div>

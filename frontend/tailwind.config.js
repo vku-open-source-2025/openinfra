@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Poppins", ...defaultTheme.fontFamily.sans],
-        montserrat: ["Montserrat", ...defaultTheme.fontFamily.sans],
+        sans: ["Inter", "Noto Sans", ...defaultTheme.fontFamily.sans],
+        montserrat: ["Montserrat", "Inter", "Noto Sans", ...defaultTheme.fontFamily.sans],
       },
     },
     colors: {

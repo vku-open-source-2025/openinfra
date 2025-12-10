@@ -57,7 +57,7 @@ const UserList: React.FC = () => {
   if (currentUser?.role !== "admin") {
     return (
       <div className="p-6 text-center text-red-500">
-        Access denied. Admin privileges required.
+        Từ chối truy cập. Cần quyền quản trị.
       </div>
     )
   }
@@ -66,19 +66,19 @@ const UserList: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-          <p className="text-slate-500 mt-1">Manage system users and permissions</p>
+          <h1 className="text-2xl font-bold text-slate-900">Quản lý người dùng</h1>
+          <p className="text-slate-500 mt-1">Quản lý người dùng và phân quyền hệ thống</p>
         </div>
         <Button onClick={() => navigate({ to: "/admin/users/create" })}>
           <Plus className="h-4 w-4 mr-2" />
-          Create User
+          Tạo người dùng
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px]">
           <Input
-            placeholder="Search users..."
+            placeholder="Tìm kiếm người dùng..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -86,23 +86,23 @@ const UserList: React.FC = () => {
         <Select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          placeholder="All Roles"
+          placeholder="Tất cả vai trò"
         >
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="manager">Manager</option>
-          <option value="technician">Technician</option>
-          <option value="citizen">Citizen</option>
+          <option value="">Tất cả vai trò</option>
+          <option value="admin">Quản trị</option>
+          <option value="manager">Quản lý</option>
+          <option value="technician">Kỹ thuật</option>
+          <option value="citizen">Người dân</option>
         </Select>
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          placeholder="All Statuses"
+          placeholder="Tất cả trạng thái"
         >
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="suspended">Suspended</option>
+          <option value="">Tất cả trạng thái</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="inactive">Ngưng hoạt động</option>
+          <option value="suspended">Tạm khóa</option>
         </Select>
       </div>
 
@@ -118,12 +118,12 @@ const UserList: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Full Name</TableHead>
+                  <TableHead>Tên đăng nhập</TableHead>
+                  <TableHead>Họ tên</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Vai trò</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -148,7 +148,11 @@ const UserList: React.FC = () => {
                         }
                         className="capitalize"
                       >
-                        {user.status}
+                        {user.status === "active"
+                          ? "Đang hoạt động"
+                          : user.status === "suspended"
+                          ? "Tạm khóa"
+                          : "Ngưng hoạt động"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -165,7 +169,7 @@ const UserList: React.FC = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (confirm(`Are you sure you want to delete ${user.username}?`)) {
+                              if (confirm(`Bạn chắc chắn muốn xóa ${user.username}?`)) {
                                 deleteMutation.mutate(user.id)
                               }
                             }}
@@ -187,7 +191,7 @@ const UserList: React.FC = () => {
         </>
       ) : (
         <div className="text-center py-12 text-slate-500">
-          <p>No users found.</p>
+          <p>Không tìm thấy người dùng.</p>
         </div>
       )}
     </div>

@@ -30,7 +30,7 @@ export function RegisterPage() {
       login(response.access_token, response.refresh_token, response.user);
       navigate({ to: '/admin' });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      setError(err.response?.data?.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -40,8 +40,8 @@ export function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Create an account</CardTitle>
-          <CardDescription>Register to access the system</CardDescription>
+          <CardTitle>Tạo tài khoản</CardTitle>
+          <CardDescription>Đăng ký để truy cập hệ thống</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,14 +52,14 @@ export function RegisterPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Tên đăng nhập</Label>
               <Input
                 id="username"
                 type="text"
                 required
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="Choose a username"
+                placeholder="Chọn tên đăng nhập"
               />
             </div>
 
@@ -71,53 +71,53 @@ export function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Enter your email"
+                placeholder="Nhập email"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name</Label>
+              <Label htmlFor="full_name">Họ và tên</Label>
               <Input
                 id="full_name"
                 type="text"
                 required
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="Enter your full name"
+                placeholder="Nhập họ và tên"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (Optional)</Label>
+              <Label htmlFor="phone">Số điện thoại (không bắt buộc)</Label>
               <Input
                 id="phone"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Enter your phone number"
+                placeholder="Nhập số điện thoại"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Choose a password"
+                placeholder="Chọn mật khẩu"
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Registering...' : 'Register'}
+              {loading ? 'Đang đăng ký...' : 'Đăng ký'}
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600">Already have an account? </span>
+              <span className="text-gray-600">Đã có tài khoản? </span>
               <Link to="/login" className="text-blue-600 hover:text-blue-500">
-                Sign in here
+                Đăng nhập
               </Link>
             </div>
           </form>

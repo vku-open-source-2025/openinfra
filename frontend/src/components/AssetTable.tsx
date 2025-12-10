@@ -27,10 +27,10 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selected
                 <table className="min-w-full divide-y divide-slate-200">
                     <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Code</th>
-                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
-                            <th className="relative px-6 py-3"><span className="sr-only">Action</span></th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Loại</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Mã</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày tạo</th>
+                            <th className="relative px-6 py-3"><span className="sr-only">Hành động</span></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">
@@ -56,7 +56,7 @@ const AssetTable: React.FC<AssetTableProps> = ({ assets, onAssetSelect, selected
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                    {new Date(asset.created_at).toLocaleDateString()}
+                                    {new Date(asset.created_at).toLocaleDateString("vi-VN")}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <ChevronRight size={16} className="text-slate-400" />

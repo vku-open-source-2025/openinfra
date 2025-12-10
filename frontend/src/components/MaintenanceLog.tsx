@@ -14,9 +14,9 @@ const MaintenanceLogList: React.FC<MaintenanceLogListProps> = ({ assetId }) => {
         enabled: !!assetId,
     });
 
-    if (isLoading) return <div className="text-sm text-slate-500 py-4">Loading history...</div>;
-    if (error) return <div className="text-sm text-red-500 py-4">Error loading history</div>;
-    if (!logs || logs.length === 0) return <div className="text-sm text-slate-400 py-4 italic">No maintenance history found.</div>;
+    if (isLoading) return <div className="text-sm text-slate-500 py-4">Đang tải lịch sử...</div>;
+    if (error) return <div className="text-sm text-red-500 py-4">Lỗi khi tải lịch sử bảo trì</div>;
+    if (!logs || logs.length === 0) return <div className="text-sm text-slate-400 py-4 italic">Chưa có lịch sử bảo trì.</div>;
 
     return (
         <div className="relative border-l-2 border-slate-200 ml-3 space-y-6 py-2">
@@ -42,22 +42,32 @@ const MaintenanceLogList: React.FC<MaintenanceLogListProps> = ({ assetId }) => {
                             <div className="flex justify-between items-start mb-1">
                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColor} flex items-center gap-1`}>
                                     <StatusIcon size={12} />
-                                    {log.status}
+                                    {log.status === 'Completed'
+                                        ? 'Hoàn thành'
+                                        : log.status === 'In Progress'
+                                        ? 'Đang thực hiện'
+                                        : log.status === 'Pending'
+                                        ? 'Chờ xử lý'
+                                        : log.status}
                                 </span>
                                 <span className="text-xs text-slate-400">
-                                    {new Date(log.scheduled_date).toLocaleDateString()}
+                                    {new Date(log.scheduled_date).toLocaleDateString("vi-VN")}
                                 </span>
                             </div>
                             <p className="text-sm font-medium text-slate-800 mb-1">{log.description}</p>
                             <div className="flex items-center gap-2 text-xs text-slate-500">
-                                <span>Tech: {log.technician}</span>
+                                <span>Kỹ thuật: {log.technician}</span>
                                 {(log as any).approval_status && (
                                     <span className={`px-2 py-0.5 rounded text-xs ${
                                         (log as any).approval_status === "approved" ? "bg-green-100 text-green-700" :
                                         (log as any).approval_status === "rejected" ? "bg-red-100 text-red-700" :
                                         "bg-yellow-100 text-yellow-700"
                                     }`}>
-                                        {(log as any).approval_status}
+                                        {(log as any).approval_status === "approved"
+                                            ? "Đã duyệt"
+                                            : (log as any).approval_status === "rejected"
+                                            ? "Từ chối"
+                                            : "Đang duyệt"}
                                     </span>
                                 )}
                             </div>

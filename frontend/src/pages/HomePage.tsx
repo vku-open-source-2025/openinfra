@@ -18,28 +18,28 @@ import { usePWA } from "../hooks/usePWA";
 const featureCards = [
     {
         icon: MapPin,
-        title: "Interactive Map",
+        title: "Bản đồ tương tác",
         description:
-            "All infrastructure displayed visually, with interactive search and navigation on the map.",
+            "Toàn bộ hạ tầng hiển thị trực quan, tìm kiếm và điều hướng ngay trên bản đồ.",
     },
     {
         icon: Droplet,
-        title: "Water Management",
+        title: "Quản lý nước",
         description:
-            "Monitor flow rates, leak alerts, and proactive maintenance planning.",
+            "Giám sát lưu lượng, cảnh báo rò rỉ và lập kế hoạch bảo trì chủ động.",
     },
     {
         icon: BarChart3,
-        title: "Detailed Analytics",
+        title: "Phân tích chi tiết",
         description:
-            "Operational metrics, charts, and statistics to help you make quick decisions.",
+            "Số liệu vận hành, biểu đồ và thống kê giúp bạn ra quyết định nhanh.",
     },
 ];
 
 const benefitHighlights = [
-    { title: "Reduce Response Time", desc: "Detect issues faster." },
-    { title: "Cost Savings", desc: "Optimize operations efficiently." },
-    { title: "Reliability", desc: "Continuous monitoring system." },
+    { title: "Rút ngắn thời gian phản ứng", desc: "Phát hiện sự cố nhanh hơn." },
+    { title: "Tiết kiệm chi phí", desc: "Tối ưu vận hành hiệu quả." },
+    { title: "Độ tin cậy", desc: "Hệ thống giám sát liên tục." },
 ];
 
 const dashboardImage =
@@ -96,64 +96,66 @@ const HomePage = () => {
 
     const assetCountLabel =
         assetCount !== null
-            ? `${new Intl.NumberFormat("en-US", {
+            ? `${new Intl.NumberFormat("vi-VN", {
                 notation: "compact",
                 maximumFractionDigits: 1,
-            }).format(assetCount)} Active monitoring points`
+            }).format(assetCount)} điểm giám sát đang hoạt động`
             : loadingAssets
-                ? "Loading monitoring points..."
-                : "200+ Active monitoring points";
+                ? "Đang tải số điểm giám sát..."
+                : "200+ điểm giám sát đang hoạt động";
 
     const statCards = [
         {
             icon: Activity,
-            label: "Active Monitoring Points",
+            label: "Điểm giám sát đang hoạt động",
             value:
                 assetCount !== null
-                    ? new Intl.NumberFormat("en-US", {
+                    ? new Intl.NumberFormat("vi-VN", {
                         notation: "compact",
                         maximumFractionDigits: 1,
                     }).format(assetCount)
                     : "—",
-            hint: loadingAssets ? "Loading..." : "Updated with latest data",
+            hint: loadingAssets ? "Đang tải..." : "Cập nhật dữ liệu mới nhất",
             color: "from-cyan-500 to-blue-500",
             bgColor: "from-cyan-50 to-blue-50",
             iconColor: "text-cyan-500",
         },
         {
             icon: Award,
-            label: "Data Contributors",
+            label: "Người đóng góp dữ liệu",
             value:
                 contributorCount !== null
-                    ? new Intl.NumberFormat("en-US").format(contributorCount)
+                    ? new Intl.NumberFormat("vi-VN").format(contributorCount)
                     : "—",
             hint: loadingLeaderboard
-                ? "Loading..."
-                : "From contribution leaderboard",
+                ? "Đang tải..."
+                : "Từ bảng xếp hạng đóng góp",
             color: "from-amber-500 to-orange-500",
             bgColor: "from-amber-50 to-orange-50",
             iconColor: "text-amber-500",
         },
         {
             icon: BarChart3,
-            label: "Data Contributions",
+            label: "Lượt đóng góp dữ liệu",
             value:
                 totalContributions !== null
-                    ? new Intl.NumberFormat("en-US", {
+                    ? new Intl.NumberFormat("vi-VN", {
                         notation: "compact",
                         maximumFractionDigits: 1,
                     }).format(totalContributions)
                     : "—",
-            hint: loadingLeaderboard ? "Loading..." : "Total data submissions",
+            hint: loadingLeaderboard
+                ? "Đang tải..."
+                : "Tổng lượt gửi dữ liệu",
             color: "from-emerald-500 to-teal-500",
             bgColor: "from-emerald-50 to-teal-50",
             iconColor: "text-emerald-500",
         },
         {
             icon: MapPin,
-            label: "Systems in Use",
+            label: "Hệ thống đang sử dụng",
             value: "7",
-            hint: "7 systems currently using the service",
+            hint: "7 hệ thống đang dùng dịch vụ",
             color: "from-purple-500 to-pink-500",
             bgColor: "from-purple-50 to-pink-50",
             iconColor: "text-purple-500",
@@ -172,32 +174,31 @@ const HomePage = () => {
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="space-y-6">
                             <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                                Digital Infrastructure Solution
+                                Giải pháp hạ tầng số
                             </div>
                             <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
-                                Smart Infrastructure Management{" "}
+                                Quản lý hạ tầng thông minh{" "}
                                 <span className="bg-gradient-to-r from-main-blue to-main-cyan bg-clip-text text-transparent">
-                                    Made Easy
+                                    trở nên dễ dàng
                                 </span>
                             </h1>
                             <p className="text-lg text-slate-600 leading-relaxed">
-                                Digital infrastructure map helps you monitor,
-                                manage, and optimize your entire system from an
-                                intuitive dashboard.
+                                Bản đồ hạ tầng số giúp bạn giám sát, quản lý và tối ưu
+                                toàn bộ hệ thống từ một bảng điều khiển trực quan.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 pt-2">
                                 <Link
                                     to="/map"
                                     className="inline-flex items-center justify-center px-6 py-3 text-white font-semibold rounded-full bg-gradient-to-r from-[#00F2FE] from-21% to-[#4FACFE] shadow-lg hover:shadow-xl transition-shadow"
                                 >
-                                    Try it now{" "}
+                                    Trải nghiệm ngay{" "}
                                     <ArrowRight className="w-4 h-4 ml-2" />
                                 </Link>
                                 <Link
                                     to="/docs"
                                     className="inline-flex items-center justify-center px-6 py-3 border border-slate-200 text-slate-700 rounded-full hover:border-blue hover:text-blue transition-colors"
                                 >
-                                    Use API
+                                    Dùng API
                                 </Link>
                                 {canShowInstallButton && (
                                     <button
@@ -205,7 +206,7 @@ const HomePage = () => {
                                         className="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-colors shadow-lg"
                                     >
                                         <Download className="w-4 h-4 mr-2" />
-                                        Install App
+                                        Cài đặt ứng dụng
                                     </button>
                                 )}
                             </div>
@@ -215,7 +216,7 @@ const HomePage = () => {
                                 <div className="relative overflow-hidden rounded-xl group">
                                     <img
                                         src={mapImage}
-                                        alt="Infrastructure Map"
+                                    alt="Bản đồ hạ tầng"
                                         className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
@@ -223,7 +224,7 @@ const HomePage = () => {
                                             to="/map"
                                             className="px-8 py-3 bg-white/90 text-blue font-semibold rounded-full shadow-lg hover:bg-white transition-colors backdrop-blur-sm"
                                         >
-                                            Try it now
+                                            Trải nghiệm ngay
                                         </Link>
                                     </div>
                                 </div>
@@ -246,14 +247,14 @@ const HomePage = () => {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                             <div>
                                 <div className="text-sm uppercase tracking-wide text-blue-600 font-semibold">
-                                    Key Numbers
+                                    Các chỉ số chính
                                 </div>
                                 <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-1">
-                                    Proven Effectiveness
+                                    Hiệu quả đã được kiểm chứng
                                 </h2>
                                 <p className="text-slate-600 mt-2">
-                                    Data collected, contributors, and systems
-                                    operating in real-time.
+                                    Dữ liệu thu thập, người đóng góp và hệ thống
+                                    vận hành theo thời gian thực.
                                 </p>
                             </div>
                         </div>
@@ -299,11 +300,10 @@ const HomePage = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
                             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
-                                Key Features
+                                Tính năng nổi bật
                             </h2>
                             <p className="text-lg text-slate-600">
-                                Everything you need to manage infrastructure
-                                efficiently
+                                Đầy đủ công cụ để quản lý hạ tầng hiệu quả
                             </p>
                         </div>
                         <div className="grid md:grid-cols-3 gap-8">
@@ -332,10 +332,10 @@ const HomePage = () => {
                 >
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                            Benefits
+                            Lợi ích
                         </h2>
                         <p className="text-lg text-slate-600">
-                            Optimize your infrastructure management
+                            Tối ưu quản lý hạ tầng của bạn
                         </p>
                     </div>
                     <div className="grid md:grid-cols-2 gap-12">
@@ -356,7 +356,7 @@ const HomePage = () => {
                         <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-200 shadow-md">
                             <img
                                 src={dashboardImage}
-                                alt="Dashboard"
+                                alt="Bảng điều khiển"
                                 className="rounded-lg w-full object-cover"
                             />
                         </div>
@@ -367,24 +367,24 @@ const HomePage = () => {
                 <section className="bg-white py-20">
                     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
                         <h2 className="text-3xl md:text-5xl font-bold text-slate-900">
-                            Try it now
+                            Dùng thử ngay
                         </h2>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            Explore the visual infrastructure map or integrate
-                            open data into your application via API
+                            Khám phá bản đồ hạ tầng trực quan hoặc tích hợp dữ liệu mở
+                            vào ứng dụng của bạn qua API
                         </p>
                         <div className="flex flex-col sm:flex-row gap-6 justify-center pt-6">
                             <Link
                                 to="/map"
                                 className="inline-flex items-center justify-center px-10 py-4 text-white font-bold text-lg rounded-full bg-gradient-to-r from-[#00F2FE] from-21% to-[#4FACFE] shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                             >
-                                Explore Map →
+                                Khám phá bản đồ →
                             </Link>
                             <Link
                                 to="/docs"
                                 className="inline-flex items-center justify-center px-10 py-4 border-2 border-slate-300 text-slate-700 font-bold text-lg rounded-full hover:border-[#4FACFE] hover:text-[#4FACFE] transition-all transform hover:scale-105"
                             >
-                                Use API
+                                Dùng API
                             </Link>
                         </div>
                     </div>
@@ -394,15 +394,14 @@ const HomePage = () => {
                 <section className="bg-slate-50 py-20">
                     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
                         <div className="inline-block px-4 py-1 bg-cyan-100 text-cyan-700 rounded-full text-sm font-medium mb-4">
-                            Open Source
+                            Mã nguồn mở
                         </div>
                         <h2 className="text-3xl md:text-5xl font-bold text-slate-900">
-                            Contribute to Us
+                            Cùng đóng góp với chúng tôi
                         </h2>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            OpenInfra is an open source project. You can
-                            contribute code, report bugs, or add infrastructure
-                            data to help build the community.
+                            OpenInfra là dự án mã nguồn mở. Bạn có thể đóng góp mã,
+                            báo lỗi hoặc bổ sung dữ liệu hạ tầng để xây dựng cộng đồng.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-6 justify-center pt-6">
                             <a
@@ -422,7 +421,7 @@ const HomePage = () => {
                                         clipRule="evenodd"
                                     />
                                 </svg>
-                                Source Code
+                                Xem mã nguồn
                             </a>
                         </div>
                         {/* License Links */}
@@ -433,7 +432,7 @@ const HomePage = () => {
                                 rel="noopener noreferrer"
                                 className="hover:text-[#4FACFE] transition-colors"
                             >
-                                Code: Apache 2.0
+                                Mã nguồn: Apache 2.0
                             </a>
                             <span className="text-slate-400">·</span>
                             <a
@@ -442,7 +441,7 @@ const HomePage = () => {
                                 rel="noopener noreferrer"
                                 className="hover:text-[#4FACFE] transition-colors"
                             >
-                                Data: OGL v3.0
+                                Dữ liệu: OGL v3.0
                             </a>
                         </div>
                     </div>

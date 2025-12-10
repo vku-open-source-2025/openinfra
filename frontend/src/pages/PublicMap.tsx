@@ -66,6 +66,11 @@ const PublicMap: React.FC = () => {
     const handleAssetSelect = (asset: Asset | null) => {
         setSelectedAsset(asset);
         setShowAssetInfoModal(asset !== null);
+        // Close chat panel when opening asset details
+        if (asset !== null) {
+            setOpenChatbot(false);
+            setAssetToAddToChat(null);
+        }
         // Update URL without causing re-render
         const newUrl = asset
             ? `${window.location.pathname}?assetId=${getAssetId(asset)}`
@@ -86,7 +91,7 @@ const PublicMap: React.FC = () => {
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-500 font-medium">
-                        Loading system resources...
+                        Đang tải tài nguyên hệ thống...
                     </p>
                 </div>
             </div>
@@ -95,7 +100,7 @@ const PublicMap: React.FC = () => {
     if (error)
         return (
             <div className="p-8 text-center text-red-500">
-                Error loading assets
+                Lỗi khi tải danh sách tài sản
             </div>
         );
 
@@ -167,11 +172,11 @@ const PublicMap: React.FC = () => {
                                                         : "bg-red-100 text-red-700"
                                                 }`}
                                             >
-                                                {
-                                                    (
-                                                        selectedAsset as AssetWithStatus
-                                                    ).status
-                                                }
+                                                {(
+                                                    selectedAsset as AssetWithStatus
+                                                ).status === "Online"
+                                                    ? "Trực tuyến"
+                                                    : "Ngoại tuyến"}
                                             </span>
                                         )}
                                     </div>
@@ -182,7 +187,7 @@ const PublicMap: React.FC = () => {
                                 <button
                                     onClick={handleCloseAssetInfoModal}
                                     className="p-1 hover:bg-slate-200 rounded transition-colors shrink-0"
-                                    title="Close"
+                                    title="Đóng"
                                 >
                                     <X size={20} />
                                 </button>
@@ -194,7 +199,7 @@ const PublicMap: React.FC = () => {
                                     {/* Location */}
                                     <div>
                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                            Location
+                                            Vị trí
                                         </h4>
                                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                             {selectedAsset.geometry.type ===
@@ -206,7 +211,7 @@ const PublicMap: React.FC = () => {
                                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                                     <div>
                                                         <p className="text-slate-500 text-xs">
-                                                            Latitude
+                                                            Vĩ độ
                                                         </p>
                                                         <p className="font-mono font-medium">
                                                             {(
@@ -218,7 +223,7 @@ const PublicMap: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-slate-500 text-xs">
-                                                            Longitude
+                                                            Kinh độ
                                                         </p>
                                                         <p className="font-mono font-medium">
                                                             {(
@@ -232,7 +237,7 @@ const PublicMap: React.FC = () => {
                                             ) : (
                                                 <div className="text-sm">
                                                     <p className="text-slate-500 text-xs mb-1">
-                                                        Geometry Type
+                                                        Loại hình học
                                                     </p>
                                                     <p className="font-mono font-medium mb-2">
                                                         {
@@ -241,14 +246,14 @@ const PublicMap: React.FC = () => {
                                                         }
                                                     </p>
                                                     <p className="text-slate-500 text-xs mb-1">
-                                                        Details
+                                                        Chi tiết
                                                     </p>
                                                     <p className="font-mono font-medium">
                                                         {selectedAsset.geometry
                                                             .type ===
                                                         "LineString"
-                                                            ? `${selectedAsset.geometry.coordinates.length} points`
-                                                            : "Complex Geometry"}
+                                                            ? `${selectedAsset.geometry.coordinates.length} điểm`
+                                                            : "Hình học phức tạp"}
                                                     </p>
                                                 </div>
                                             )}
@@ -258,7 +263,7 @@ const PublicMap: React.FC = () => {
                                     {/* Maintenance History */}
                                     <div>
                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                            Maintenance History
+                                            Lịch sử bảo trì
                                         </h4>
                                         <MaintenanceLogList
                                             assetId={getAssetId(selectedAsset)}
@@ -268,7 +273,7 @@ const PublicMap: React.FC = () => {
                                     {/* IoT Sensor Data */}
                                     <div>
                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                            IoT Sensor Data
+                                            Dữ liệu cảm biến IoT
                                         </h4>
                                         <IoTSensorChart
                                             assetId={getAssetId(selectedAsset)}
@@ -287,11 +292,12 @@ const PublicMap: React.FC = () => {
                                     onClick={() => {
                                         setAssetToAddToChat(selectedAsset);
                                         setOpenChatbot(true);
+                                        handleCloseAssetInfoModal();
                                     }}
                                     className="flex flex-row items-center gap-2"
                                 >
                                     <MessageCircle size={16} />
-                                    Add to Chat
+                                    Thêm vào hội thoại
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -306,7 +312,7 @@ const PublicMap: React.FC = () => {
                                     className="flex flex-row items-center gap-2"
                                 >
                                     <ExternalLink size={16} />
-                                    View Details
+                                    Xem chi tiết
                                 </Button>
                                 <Button
                                     className="flex flex-row items-center gap-2"
@@ -314,7 +320,7 @@ const PublicMap: React.FC = () => {
                                     onClick={() => setShowReportModal(true)}
                                 >
                                     <AlertTriangle size={16} />
-                                    Report
+                                    Báo cáo
                                 </Button>
                             </div>
                         </div>
@@ -344,7 +350,12 @@ const PublicMap: React.FC = () => {
                     openChat={openChatbot}
                     onOpenChange={(isOpen) => {
                         setOpenChatbot(isOpen);
-                        if (!isOpen) {
+                        if (isOpen) {
+                            // Close asset details panel when opening chat
+                            setShowAssetInfoModal(false);
+                            setSelectedAsset(null);
+                            window.history.replaceState({}, "", window.location.pathname);
+                        } else {
                             // Reset asset to add when closing
                             setAssetToAddToChat(null);
                         }

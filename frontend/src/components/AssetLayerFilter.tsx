@@ -105,11 +105,11 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="bg-white rounded-lg shadow-lg border border-slate-200 p-3 hover:bg-slate-50 transition-colors flex items-center gap-2"
-                title="Filter Asset Layers"
+                title="Lọc lớp tài sản"
             >
                 <Filter size={20} className="text-slate-700" />
                 <span className="text-sm font-medium text-slate-700 hidden sm:inline">
-                    Layers
+                    Lớp dữ liệu
                 </span>
                 {selectedLayers.size < availableFeatureCodes.length && (
                     <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">
@@ -123,7 +123,7 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
                     <div className="p-4 border-b border-slate-200 flex items-center justify-between">
                         <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                             <Filter size={18} />
-                            Asset Layers
+                            Lớp tài sản
                         </h3>
                         <button
                             onClick={() => setIsOpen(false)}
@@ -138,20 +138,20 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
                             onClick={selectAll}
                             className="flex-1 text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition-colors"
                         >
-                            Select All
+                            Chọn tất cả
                         </button>
                         <button
                             onClick={deselectAll}
                             className="flex-1 text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition-colors"
                         >
-                            Deselect All
+                            Bỏ chọn
                         </button>
                     </div>
 
                     <div className="max-h-96 overflow-y-auto p-2">
                         {availableFeatureCodes.length === 0 ? (
                             <div className="text-center py-8 text-slate-500 text-sm">
-                                No asset layers available
+                                Chưa có lớp tài sản nào
                             </div>
                         ) : (
                             <div className="space-y-1">
@@ -186,7 +186,7 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
                                                     {label}
                                                 </div>
                                                 <div className="text-xs text-slate-500">
-                                                    {count} {count === 1 ? 'asset' : 'assets'}
+                                                    {count} {count === 1 ? 'tài sản' : 'tài sản'}
                                                 </div>
                                             </div>
                                             <div className="flex-shrink-0">
