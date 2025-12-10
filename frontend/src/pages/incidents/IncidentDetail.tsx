@@ -522,7 +522,6 @@ const IncidentDetail: React.FC = () => {
                     />
                 </div>
             </div>
-        </div>
     );
 };
 

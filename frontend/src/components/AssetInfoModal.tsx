@@ -9,16 +9,19 @@ import {
     X,
     ChevronUp,
     ChevronDown,
+    MessageCircle,
 } from "lucide-react";
 import type { Asset } from "../types/asset";
 import { getHealthScoreColor, getHealthScoreLabel } from "../utils/healthScore";
 import { format, formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 
 interface AssetInfoPanelProps {
     asset: Asset | null;
     isOpen: boolean;
     onClose: () => void;
     onViewDetails?: (assetId: string) => void;
+    onAddToChat?: (asset: Asset) => void;
     isLoading?: boolean;
 }
 
@@ -27,6 +30,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
     isOpen,
     onClose,
     onViewDetails,
+    onAddToChat,
     isLoading = false,
 }) => {
     const navigate = useNavigate();
@@ -55,6 +59,24 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                 return "bg-slate-100 text-slate-700";
             default:
                 return "bg-blue-100 text-blue-700";
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status.toLowerCase()) {
+            case "active":
+            case "operational":
+                return "Đang hoạt động";
+            case "maintenance":
+            case "under_repair":
+                return "Đang bảo trì";
+            case "inactive":
+            case "damaged":
+                return "Ngưng hoạt động";
+            case "decommissioned":
+                return "Ngừng sử dụng";
+            default:
+                return "Chưa xác định";
         }
     };
 
@@ -93,9 +115,9 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                 Array.isArray(asset.geometry.coordinates)
             ) {
                 const [lng, lat] = asset.geometry.coordinates as number[];
-                return `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+                return `Vĩ độ: ${lat.toFixed(6)}, Kinh độ: ${lng.toFixed(6)}`;
             }
-            return "Location not available";
+            return "Chưa có thông tin vị trí";
         }
 
         const parts = [
@@ -105,7 +127,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
             location.city,
         ].filter(Boolean);
 
-        return parts.length > 0 ? parts.join(", ") : "Location not available";
+        return parts.length > 0 ? parts.join(", ") : "Chưa có thông tin vị trí";
     };
 
     return (
@@ -127,7 +149,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                     <div className="flex-1 min-w-0">
                         {isLoading && (
                             <div className="mb-2 text-xs text-slate-500">
-                                Loading asset details...
+                                Đang tải chi tiết tài sản...
                             </div>
                         )}
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -139,13 +161,13 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                     status
                                 )}`}
                             >
-                                {status}
+                                {getStatusLabel(status)}
                             </span>
                         </div>
                         <h3 className="text-xl font-bold text-slate-900 truncate">
                             {(asset as Asset & { name?: string }).name ||
                                 asset.feature_type ||
-                                "Asset"}
+                                "Tài sản"}
                         </h3>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -155,7 +177,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                 setIsCollapsed(!isCollapsed);
                             }}
                             className="p-1 hover:bg-slate-200 rounded transition-colors"
-                            title={isCollapsed ? "Expand" : "Collapse"}
+                            title={isCollapsed ? "Mở rộng" : "Thu gọn"}
                         >
                             {isCollapsed ? (
                                 <ChevronDown size={18} />
@@ -169,7 +191,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                 onClose();
                             }}
                             className="p-1 hover:bg-slate-200 rounded transition-colors"
-                            title="Close"
+                            title="Đóng"
                         >
                             <X size={18} />
                         </button>
@@ -188,7 +210,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                                    Location
+                                    Vị trí
                                 </p>
                                 <p className="text-sm text-slate-900 font-medium">
                                     {formatAddress()}
@@ -205,7 +227,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-2">
                                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                            Health Score
+                                            Điểm sức khỏe
                                         </p>
                                         <span
                                             className={`text-sm font-bold ${
@@ -228,7 +250,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                         />
                                     </div>
                                     <p className="text-xs text-slate-600">
-                                        Status: {healthLabel}
+                                        Trạng thái: {healthLabel}
                                     </p>
                                 </div>
                             </div>
@@ -242,7 +264,7 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                                        Category
+                                        Phân loại
                                     </p>
                                     <p className="text-sm text-slate-900 font-medium">
                                         {asset.category}
@@ -259,20 +281,21 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                                        Last Maintenance
+                                        Bảo trì gần nhất
                                     </p>
                                     <p className="text-sm text-slate-900 font-medium">
                                         {formatDistanceToNow(
                                             new Date(lastMaintenance),
                                             {
                                                 addSuffix: true,
+                                                locale: vi,
                                             }
                                         )}
                                     </p>
                                     <p className="text-xs text-slate-500 mt-0.5">
                                         {format(
                                             new Date(lastMaintenance),
-                                            "MMM d, yyyy"
+                                            "dd/MM/yyyy"
                                         )}
                                     </p>
                                 </div>
@@ -287,19 +310,19 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                                        Next Maintenance
+                                        Lịch bảo trì kế tiếp
                                     </p>
                                     <p className="text-sm text-slate-900 font-medium">
                                         {format(
                                             new Date(
                                                 asset.lifecycle.next_maintenance_date
                                             ),
-                                            "MMM d, yyyy"
+                                            "dd/MM/yyyy"
                                         )}
                                     </p>
                                     {asset.lifecycle.maintenance_overdue && (
                                         <p className="text-xs text-red-600 font-medium mt-0.5">
-                                            Overdue
+                                            Quá hạn
                                         </p>
                                     )}
                                 </div>
@@ -309,14 +332,24 @@ const AssetInfoPanel: React.FC<AssetInfoPanelProps> = ({
                 </div>
             )}
 
-            {/* Action Button */}
+            {/* Action Buttons */}
             {!isCollapsed && (
-                <div className="p-4 border-t border-slate-100 bg-slate-50">
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
+                    {onAddToChat && (
+                        <Button
+                            variant="outline"
+                            onClick={() => onAddToChat(asset)}
+                            className="flex-1 flex items-center justify-center gap-2"
+                        >
+                            <MessageCircle size={16} />
+                            Thêm vào hội thoại
+                        </Button>
+                    )}
                     <Button
                         onClick={handleViewDetails}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className={`${onAddToChat ? 'flex-1' : 'w-full'} bg-blue-600 hover:bg-blue-700 text-white`}
                     >
-                        View Details
+                        Xem chi tiết
                     </Button>
                 </div>
             )}

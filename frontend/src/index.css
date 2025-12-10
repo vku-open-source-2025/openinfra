@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @layer utilities {
@@ -41,7 +42,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  font-family: "Poppins", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", "Noto Sans", system-ui, -apple-system, sans-serif;
 }
 
 .leaflet-container {

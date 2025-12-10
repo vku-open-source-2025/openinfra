@@ -71,7 +71,7 @@ export function LoginPage() {
       login(response.access_token, response.refresh_token, response.user);
       navigate({ to: '/admin' });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.detail || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin.');
     } finally {
       setLoading(false);
     }
@@ -116,9 +116,9 @@ export function LoginPage() {
             <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
               <Fingerprint className="w-8 h-8 text-blue-600" />
             </div>
-            <CardTitle>Enable Biometric Login?</CardTitle>
+            <CardTitle>Bật đăng nhập sinh trắc học?</CardTitle>
             <CardDescription>
-              Use fingerprint or face recognition for faster, secure login next time
+              Sử dụng vân tay hoặc khuôn mặt để đăng nhập nhanh và an toàn hơn cho lần sau
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -130,12 +130,12 @@ export function LoginPage() {
               {biometricLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Setting up...
+                  Đang thiết lập...
                 </>
               ) : (
                 <>
                   <Fingerprint className="w-4 h-4 mr-2" />
-                  Enable Biometric Login
+                  Bật đăng nhập sinh trắc học
                 </>
               )}
             </Button>
@@ -145,7 +145,7 @@ export function LoginPage() {
               className="w-full"
               disabled={biometricLoading}
             >
-              Skip for now
+              Bỏ qua
             </Button>
             {biometricError && (
               <p className="text-sm text-red-600 text-center">{biometricError}</p>
@@ -160,8 +160,8 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign in to your account</CardTitle>
-          <CardDescription>Enter your credentials to access the system</CardDescription>
+          <CardTitle>Đăng nhập tài khoản</CardTitle>
+          <CardDescription>Nhập thông tin để truy cập hệ thống</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Biometric Login Button */}
@@ -179,7 +179,7 @@ export function LoginPage() {
                 ) : (
                   <div className="flex flex-col items-center">
                     <Fingerprint className="w-6 h-6 text-blue-600 mb-1" />
-                    <span className="text-sm text-blue-600">Use Biometric</span>
+                    <span className="text-sm text-blue-600">Dùng sinh trắc học</span>
                   </div>
                 )}
               </Button>
@@ -191,7 +191,7 @@ export function LoginPage() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">or continue with password</span>
+                  <span className="px-2 bg-white text-gray-500">hoặc tiếp tục với mật khẩu</span>
                 </div>
               </div>
             </div>
@@ -205,37 +205,37 @@ export function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Tên đăng nhập</Label>
               <Input
                 id="username"
                 type="text"
                 required
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                placeholder="Enter your username"
+                placeholder="Nhập tên đăng nhập"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter your password"
+                placeholder="Nhập mật khẩu"
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-gray-600">Don't have an account? </span>
+              <span className="text-gray-600">Chưa có tài khoản? </span>
               <Link to="/register" className="text-blue-600 hover:text-blue-500">
-                Register here
+                Đăng ký ngay
               </Link>
             </div>
           </form>

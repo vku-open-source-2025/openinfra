@@ -52,7 +52,7 @@ const UserDetail: React.FC = () => {
     setErrors({})
 
     if (!formData.email?.trim()) {
-      setErrors({ email: "Email is required" })
+      setErrors({ email: "Email là bắt buộc" })
       return
     }
 
@@ -62,7 +62,7 @@ const UserDetail: React.FC = () => {
   if (currentUser?.role !== "admin") {
     return (
       <div className="p-6 text-center text-red-500">
-        Access denied. Admin privileges required.
+        Từ chối truy cập. Cần quyền quản trị.
       </div>
     )
   }
@@ -79,7 +79,7 @@ const UserDetail: React.FC = () => {
   if (!user) {
     return (
       <div className="p-6 text-center text-red-500">
-        User not found.
+        Không tìm thấy người dùng.
       </div>
     )
   }
@@ -88,16 +88,16 @@ const UserDetail: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/users" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Users
+        Quay lại danh sách
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Edit User</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Chỉnh sửa người dùng</h1>
 
         <Form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>Tên đăng nhập</FormLabel>
               <Input value={user.username} disabled className="bg-slate-50" />
             </FormField>
 
@@ -112,7 +112,7 @@ const UserDetail: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel required>Full Name</FormLabel>
+              <FormLabel required>Họ tên</FormLabel>
               <Input
                 value={formData.full_name || ""}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
@@ -120,7 +120,7 @@ const UserDetail: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel>Phone</FormLabel>
+              <FormLabel>Số điện thoại</FormLabel>
               <Input
                 value={formData.phone || ""}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -128,32 +128,32 @@ const UserDetail: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel required>Role</FormLabel>
+              <FormLabel required>Vai trò</FormLabel>
               <Select
                 value={formData.role || "citizen"}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
               >
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="technician">Technician</option>
-                <option value="citizen">Citizen</option>
+                <option value="admin">Quản trị</option>
+                <option value="manager">Quản lý</option>
+                <option value="technician">Kỹ thuật</option>
+                <option value="citizen">Người dân</option>
               </Select>
             </FormField>
 
             <FormField>
-              <FormLabel required>Status</FormLabel>
+              <FormLabel required>Trạng thái</FormLabel>
               <Select
                 value={formData.status || "active"}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as UserStatus })}
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Ngưng hoạt động</option>
+                <option value="suspended">Tạm khóa</option>
               </Select>
             </FormField>
 
             <FormField>
-              <FormLabel>Department</FormLabel>
+              <FormLabel>Phòng ban</FormLabel>
               <Input
                 value={formData.department || ""}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
@@ -163,14 +163,14 @@ const UserDetail: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Updating..." : "Update User"}
+              {updateMutation.isPending ? "Đang cập nhật..." : "Cập nhật"}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/users" })}
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </Form>

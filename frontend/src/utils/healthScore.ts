@@ -81,11 +81,11 @@ export function getHealthScoreColor(score: number): string {
  * Get health score label
  */
 export function getHealthScoreLabel(score: number): string {
-  if (score >= 80) return 'Excellent';
-  if (score >= 60) return 'Good';
-  if (score >= 40) return 'Fair';
-  if (score >= 20) return 'Poor';
-  return 'Critical';
+  if (score >= 80) return 'Xuất sắc';
+  if (score >= 60) return 'Tốt';
+  if (score >= 40) return 'Trung bình';
+  if (score >= 20) return 'Kém';
+  return 'Nguy kịch';
 }
 
 /**

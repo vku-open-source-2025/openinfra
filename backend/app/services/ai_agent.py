@@ -8,6 +8,8 @@ import json
 import asyncio
 import logging
 import httpx
+from google import genai
+from google.genai import types
 from typing import AsyncGenerator, Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
@@ -83,6 +85,30 @@ API_ENDPOINTS = {
 }
 
 
+class GeminiLiveLLM:
+    def __init__(self, api_key: str, model: str, system_instruction: str = None):
+        self.client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
+        self.model = model
+        self.config = {"response_modalities": ["TEXT"]}
+        if system_instruction:
+            self.config["system_instruction"] = system_instruction
+
+    async def astream(self, messages: List[Any]):
+        # Construct prompt from messages
+        full_prompt = ""
+        for msg in messages:
+            if isinstance(msg, SystemMessage):
+                continue
+            role = "User" if isinstance(msg, HumanMessage) else "Model"
+            full_prompt += f"{role}: {msg.content}\n\n"
+            
+        async with self.client.aio.live.connect(model=self.model, config=self.config) as session:
+            await session.send(input=full_prompt, end_of_turn=True)
+            async for response in session.receive():
+                if response.text:
+                    yield AIMessage(content=response.text)
+
+
 class AIAgentService:
     """AI Agent for infrastructure data querying and API assistance with real API calling"""
     
@@ -96,11 +122,7 @@ class AIAgentService:
             self.llm = None
             return
             
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            google_api_key=self.api_key,
-            temperature=0.7,
-        )
+        # LLM initialized after system prompt
         
         self.system_prompt = """You are the OpenInfra AI Assistant - an intelligent helper for the OpenInfra smart infrastructure management system.
 
@@ -172,6 +194,12 @@ When user requests to TEST/CALL an API:
 ## Language Rule
 
 ALWAYS respond in the SAME LANGUAGE the user uses. If they write in Vietnamese, respond in Vietnamese. If English, respond in English."""
+
+        self.llm = GeminiLiveLLM(
+            api_key=self.api_key,
+            model="gemini-2.5-flash-live-preview",
+            system_instruction=self.system_prompt
+        )
     
     async def _call_real_api(self, endpoint_key: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Actually call a real API endpoint"""

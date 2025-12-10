@@ -7,33 +7,33 @@ const Footer = () => {
             <div className="flex h-44 items-center justify-between px-10 w-full max-w-4xl mx-auto max-lg:flex-col max-lg:h-auto max-lg:items-start max-lg:my-6">
                 <div className="flex flex-col items-start max-lg:my-2">
                     <p className="mb-4 text-sm font-semibold uppercase text-[#4c5664]">
-                        Explore
+                        Khám phá
                     </p>
                     <div className="flex flex-col space-y-3">
                         <Link
                             to="/map"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            Infrastructure Map
+                            Bản đồ hạ tầng
                         </Link>
                         <Link
                             to="/docs"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            API Documentation
+                            Tài liệu API
                         </Link>
                     </div>
                 </div>
                 <div className="flex flex-col items-start max-lg:my-2">
                     <p className="mb-4 text-sm font-semibold uppercase text-[#4c5664]">
-                        Project
+                        Dự án
                     </p>
                     <div className="flex flex-col space-y-3">
                         <a
                             href="#about-us"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            About
+                            Giới thiệu
                         </a>
                         <a
                             href="https://github.com/vku-open-source-2025/openinfra"
@@ -47,7 +47,7 @@ const Footer = () => {
                 </div>
                 <div className="flex flex-col items-start max-lg:my-2">
                     <p className="mb-4 text-sm font-semibold uppercase text-[#4c5664]">
-                        Contribute
+                        Đóng góp
                     </p>
                     <div className="flex flex-col space-y-3">
                         <a
@@ -56,7 +56,7 @@ const Footer = () => {
                             rel="noopener noreferrer"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            Submit Data
+                            Gửi dữ liệu
                         </a>
                         <a
                             href="https://github.com/vku-open-source-2025/openinfra/issues"
@@ -64,13 +64,13 @@ const Footer = () => {
                             rel="noopener noreferrer"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            Report Bug
+                            Báo lỗi
                         </a>
                     </div>
                 </div>
                 <div className="flex flex-col items-start max-lg:my-2">
                     <p className="mb-4 text-sm font-semibold uppercase text-[#4c5664]">
-                        License
+                        Giấy phép
                     </p>
                     <div className="flex flex-col space-y-3">
                         <a
@@ -79,7 +79,7 @@ const Footer = () => {
                             rel="noopener noreferrer"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            Apache 2.0 (Code)
+                            Apache 2.0 (Mã nguồn)
                         </a>
                         <a
                             href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
@@ -87,14 +87,14 @@ const Footer = () => {
                             rel="noopener noreferrer"
                             className="text-sm text-[#6C7580] flex w-fit items-center space-x-2 capitalize hover:underline"
                         >
-                            OGL (Data)
+                            OGL (Dữ liệu)
                         </a>
                     </div>
                 </div>
             </div>
             <div className="flex flex-col items-center mb-6">
                 <p className="text-sm text-[#6C7580]">
-                    © OpenInfra 2025. Code licensed under{" "}
+                    © OpenInfra 2025. Mã nguồn theo giấy phép{" "}
                     <a
                         href="https://github.com/vku-open-source-2025/openinfra/blob/main/LICENSE"
                         target="_blank"
@@ -103,7 +103,7 @@ const Footer = () => {
                     >
                         Apache 2.0
                     </a>
-                    . Data licensed under{" "}
+                    . Dữ liệu theo giấy phép{" "}
                     <a
                         href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
                         target="_blank"

@@ -15,13 +15,13 @@ const DataIngest: React.FC = () => {
       setSelectedFile(null);
       setErrors({});
       // Show success message
-      alert(data.message || "CSV file uploaded successfully!");
+      alert(data.message || "Tải lên CSV thành công!");
     },
     onError: (error: any) => {
       if (error.response?.data?.detail) {
         setErrors({ submit: error.response.data.detail });
       } else {
-        setErrors({ submit: "Failed to upload CSV file. Please try again." });
+        setErrors({ submit: "Tải CSV thất bại. Vui lòng thử lại." });
       }
     },
   });
@@ -36,14 +36,14 @@ const DataIngest: React.FC = () => {
 
     // Validate file type
     if (!file.name.endsWith(".csv")) {
-      setErrors({ file: "Please select a CSV file" });
+      setErrors({ file: "Vui lòng chọn tệp CSV" });
       setSelectedFile(null);
       return;
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setErrors({ file: "File size must be less than 10MB" });
+      setErrors({ file: "Kích thước tệp phải nhỏ hơn 10MB" });
       setSelectedFile(null);
       return;
     }
@@ -56,7 +56,7 @@ const DataIngest: React.FC = () => {
     setErrors({});
 
     if (!selectedFile) {
-      setErrors({ file: "Please select a CSV file" });
+      setErrors({ file: "Vui lòng chọn tệp CSV" });
       return;
     }
 
@@ -71,18 +71,18 @@ const DataIngest: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Data Ingestion</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Nạp dữ liệu</h1>
         <p className="text-slate-500 mt-1">
-          Upload CSV files to bulk import assets into the system
+          Tải tệp CSV để nhập hàng loạt tài sản vào hệ thống
         </p>
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold mb-4">Upload CSV File</h2>
+        <h2 className="text-lg font-semibold mb-4">Tải tệp CSV</h2>
 
         <Form onSubmit={handleSubmit}>
           <FormField>
-            <FormLabel required>CSV File</FormLabel>
+            <FormLabel required>Tệp CSV</FormLabel>
             <div className="mt-2">
               <label
                 htmlFor="csv-upload"
@@ -103,9 +103,9 @@ const DataIngest: React.FC = () => {
                     <>
                       <Upload className="w-10 h-10 mb-2 text-slate-400" />
                       <p className="mb-2 text-sm text-slate-500">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
+                        <span className="font-semibold">Nhấn để tải lên</span> hoặc kéo thả tệp
                       </p>
-                      <p className="text-xs text-slate-500">CSV files only (MAX. 10MB)</p>
+                      <p className="text-xs text-slate-500">Chỉ hỗ trợ CSV (tối đa 10MB)</p>
                     </>
                   )}
                 </div>
@@ -128,7 +128,7 @@ const DataIngest: React.FC = () => {
                   className="text-sm text-slate-600 hover:text-slate-800"
                   disabled={uploadMutation.isPending}
                 >
-                  Remove file
+                  Xóa tệp
                 </button>
               </div>
             )}
@@ -138,7 +138,7 @@ const DataIngest: React.FC = () => {
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-red-800">Upload Failed</p>
+                <p className="text-sm font-medium text-red-800">Tải lên thất bại</p>
                 <p className="text-sm text-red-600">{errors.submit}</p>
               </div>
             </div>
@@ -148,9 +148,9 @@ const DataIngest: React.FC = () => {
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
               <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-green-800">Upload Successful</p>
+                <p className="text-sm font-medium text-green-800">Tải lên thành công</p>
                 <p className="text-sm text-green-600">
-                  {uploadMutation.data?.message || "CSV file processed successfully"}
+                  {uploadMutation.data?.message || "Đã xử lý tệp CSV thành công"}
                 </p>
               </div>
             </div>
@@ -164,12 +164,12 @@ const DataIngest: React.FC = () => {
               {uploadMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
+                  Đang tải lên...
                 </>
               ) : (
                 <>
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload CSV
+                  Tải CSV
                 </>
               )}
             </Button>
@@ -180,7 +180,7 @@ const DataIngest: React.FC = () => {
                 onClick={handleReset}
                 disabled={uploadMutation.isPending}
               >
-                Cancel
+                Hủy
               </Button>
             )}
           </div>
@@ -188,13 +188,13 @@ const DataIngest: React.FC = () => {
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">CSV Format Requirements</h3>
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">Yêu cầu định dạng CSV</h3>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-          <li>File must be in CSV format (.csv extension)</li>
-          <li>Maximum file size: 10MB</li>
-          <li>Required columns: asset_code, name, feature_type, feature_code, latitude, longitude</li>
-          <li>Optional columns: category, status, address, properties</li>
-          <li>The system will process the file asynchronously</li>
+          <li>Tệp phải ở định dạng CSV (đuôi .csv)</li>
+          <li>Kích thước tối đa: 10MB</li>
+          <li>Các cột bắt buộc: asset_code, name, feature_type, feature_code, latitude, longitude</li>
+          <li>Các cột tùy chọn: category, status, address, properties</li>
+          <li>Hệ thống sẽ xử lý tệp bất đồng bộ</li>
         </ul>
       </div>
     </div>

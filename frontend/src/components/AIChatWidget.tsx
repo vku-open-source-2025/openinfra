@@ -47,50 +47,50 @@ const API_DEFINITIONS: Record<string, ApiCardData> = {
   '/api/opendata/assets': {
     endpoint: '/api/opendata/assets',
     method: 'GET',
-    description: 'Get infrastructure assets list (JSON-LD format)',
+    description: 'Lấy danh sách tài sản hạ tầng (định dạng JSON-LD)',
     params: [
-      { name: 'skip', type: 'number', description: 'Records to skip', default: 0, required: false },
-      { name: 'limit', type: 'number', description: 'Max records', default: 100, required: false },
-      { name: 'feature_type', type: 'string', description: 'Filter by type (e.g., Power Station)', default: '', required: false },
-      { name: 'feature_code', type: 'string', description: 'Filter by code (e.g., tram_dien)', default: '', required: false },
+      { name: 'skip', type: 'number', description: 'Số bản ghi bỏ qua', default: 0, required: false },
+      { name: 'limit', type: 'number', description: 'Số bản ghi tối đa', default: 100, required: false },
+      { name: 'feature_type', type: 'string', description: 'Lọc theo loại (ví dụ: trạm điện)', default: '', required: false },
+      { name: 'feature_code', type: 'string', description: 'Lọc theo mã (ví dụ: tram_dien)', default: '', required: false },
     ]
   },
   '/api/opendata/feature-types': {
     endpoint: '/api/opendata/feature-types',
     method: 'GET',
-    description: 'Get asset types and counts',
+    description: 'Lấy các loại tài sản và số lượng',
     params: []
   },
   '/api/v1/assets': {
     endpoint: '/api/v1/assets',
     method: 'GET',
-    description: 'Get assets list (internal)',
+    description: 'Lấy danh sách tài sản (nội bộ)',
     params: [
-      { name: 'skip', type: 'number', description: 'Records to skip', default: 0, required: false },
-      { name: 'limit', type: 'number', description: 'Max records', default: 50, required: false },
-      { name: 'feature_type', type: 'string', description: 'Filter by type', default: '', required: false },
+      { name: 'skip', type: 'number', description: 'Số bản ghi bỏ qua', default: 0, required: false },
+      { name: 'limit', type: 'number', description: 'Số bản ghi tối đa', default: 50, required: false },
+      { name: 'feature_type', type: 'string', description: 'Lọc theo loại', default: '', required: false },
     ]
   },
   '/api/v1/iot/sensors': {
     endpoint: '/api/v1/iot/sensors',
     method: 'GET',
-    description: 'Get IoT sensors list',
+    description: 'Lấy danh sách cảm biến IoT',
     params: [
-      { name: 'skip', type: 'number', description: 'Records to skip', default: 0, required: false },
-      { name: 'limit', type: 'number', description: 'Max records', default: 50, required: false },
-      { name: 'sensor_type', type: 'string', description: 'Sensor type', default: '', required: false },
-      { name: 'status', type: 'string', description: 'Status (online/offline)', default: '', required: false },
+      { name: 'skip', type: 'number', description: 'Số bản ghi bỏ qua', default: 0, required: false },
+      { name: 'limit', type: 'number', description: 'Số bản ghi tối đa', default: 50, required: false },
+      { name: 'sensor_type', type: 'string', description: 'Loại cảm biến', default: '', required: false },
+      { name: 'status', type: 'string', description: 'Trạng thái (online/offline)', default: '', required: false },
     ]
   },
   '/api/v1/incidents': {
     endpoint: '/api/v1/incidents',
     method: 'GET',
-    description: 'Get infrastructure incidents list',
+    description: 'Lấy danh sách sự cố hạ tầng',
     params: [
-      { name: 'skip', type: 'number', description: 'Records to skip', default: 0, required: false },
-      { name: 'limit', type: 'number', description: 'Max records', default: 50, required: false },
-      { name: 'status', type: 'string', description: 'Status (open/in_progress/resolved)', default: '', required: false },
-      { name: 'severity', type: 'string', description: 'Severity (low/medium/high/critical)', default: '', required: false },
+      { name: 'skip', type: 'number', description: 'Số bản ghi bỏ qua', default: 0, required: false },
+      { name: 'limit', type: 'number', description: 'Số bản ghi tối đa', default: 50, required: false },
+      { name: 'status', type: 'string', description: 'Trạng thái (open/in_progress/resolved)', default: '', required: false },
+      { name: 'severity', type: 'string', description: 'Mức độ (low/medium/high/critical)', default: '', required: false },
     ]
   },
 };
@@ -150,7 +150,7 @@ function ApiCard({ apiData, onClose, initialResult }: {
       setResult(data);
       setShowResult(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Lỗi không xác định');
     } finally {
       setIsLoading(false);
     }
@@ -170,7 +170,7 @@ function ApiCard({ apiData, onClose, initialResult }: {
       <div className="px-4 py-3 border-b border-blue-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50">
         <div className="flex items-center gap-2">
           <Code size={16} className="text-blue-500" />
-          <span className="font-mono text-sm text-slate-700 font-semibold">API Tester</span>
+          <span className="font-mono text-sm text-slate-700 font-semibold">Trình kiểm thử API</span>
         </div>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition">
           <X size={16} />
@@ -194,7 +194,7 @@ function ApiCard({ apiData, onClose, initialResult }: {
       {/* Parameters */}
       {apiData.params.length > 0 && (
         <div className="px-4 py-3 border-b border-blue-100 space-y-3">
-          <div className="text-xs text-slate-500 uppercase font-semibold tracking-wide">Parameters</div>
+          <div className="text-xs text-slate-500 uppercase font-semibold tracking-wide">Tham số</div>
           {apiData.params.map(param => (
             <div key={param.name} className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
@@ -237,12 +237,12 @@ function ApiCard({ apiData, onClose, initialResult }: {
           {isLoading ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              <span>Calling API...</span>
+              <span>Đang gọi API...</span>
             </>
           ) : (
             <>
               <Play size={16} />
-              <span>Call API</span>
+              <span>Gọi API</span>
             </>
           )}
         </button>
@@ -267,10 +267,10 @@ function ApiCard({ apiData, onClose, initialResult }: {
           >
             <span className="flex items-center gap-2">
               <Database size={14} className="text-green-500" />
-              <span>Result</span>
+              <span>Kết quả</span>
               {Array.isArray(result.features) && (
                 <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
-                  {result.features.length} items
+                  {result.features.length} mục
                 </span>
               )}
             </span>
@@ -282,7 +282,7 @@ function ApiCard({ apiData, onClose, initialResult }: {
               <button
                 onClick={copyResult}
                 className="absolute top-2 right-2 p-1.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-500 hover:text-slate-700 transition z-10"
-                title="Copy JSON"
+                title="Sao chép JSON"
               >
                 {copiedResult ? <Check size={12} /> : <Copy size={12} />}
               </button>
@@ -316,7 +316,7 @@ export default function AIChatWidget({
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Hello! I\'m OpenInfra AI Assistant. I can help you with:\n\n• Query infrastructure data (assets, sensors, incidents)\n• Guide API usage with JSON-LD format\n• Provide code examples\n• **Test APIs directly** - type "test api" to try!\n• **Select an asset on the map** to ask questions about it!\n\nHow can I help you?',
+      content: 'Xin chào! Tôi là trợ lý OpenInfra AI. Tôi có thể hỗ trợ bạn:\n\n• Truy vấn dữ liệu hạ tầng (tài sản, cảm biến, sự cố)\n• Hướng dẫn sử dụng API với định dạng JSON-LD\n• Cung cấp ví dụ mã\n• **Kiểm thử API trực tiếp** - gõ "test api" để thử!\n• **Chọn một tài sản trên bản đồ** để đặt câu hỏi về nó!\n\nBạn cần giúp gì?',
       timestamp: new Date(),
     }
   ]);
@@ -342,20 +342,20 @@ export default function AIChatWidget({
   const addAssetToContext = useCallback((asset: Asset) => {
     setAssetInContext(asset);
     // Add a system message to inform the user
-    const assetInfo = `Asset added to context:\n• Type: ${asset.feature_type}\n• Code: ${asset.feature_code}\n• ID: ${getAssetId(asset).slice(-6)}`;
+    const assetInfo = `Đã thêm tài sản vào ngữ cảnh:\n• Loại: ${asset.feature_type}\n• Mã: ${asset.feature_code}\n• ID: ${getAssetId(asset).slice(-6)}`;
     setMessages(prev => [...prev, {
       id: `asset-${Date.now()}`,
       role: 'system',
-      content: `✅ ${assetInfo}\n\nYou can now ask questions about this asset!`,
+      content: `✅ ${assetInfo}\n\nBạn có thể đặt câu hỏi về tài sản này!`,
       timestamp: new Date(),
     }]);
   }, []);
 
   // Handle external open control
   useEffect(() => {
-    if (openChat && !isOpen) {
-      setIsOpen(true);
-      onOpenChange?.(true);
+    if (openChat !== isOpen) {
+      setIsOpen(openChat);
+      onOpenChange?.(openChat);
     }
   }, [openChat, isOpen, onOpenChange]);
 
@@ -652,9 +652,9 @@ export default function AIChatWidget({
                   className="flex items-center gap-1 hover:text-white transition"
                 >
                   {copiedCode === code ? (
-                    <><Check size={12} /> Copied</>
+                    <><Check size={12} /> Đã sao chép</>
                   ) : (
-                    <><Copy size={12} /> Copy</>
+                    <><Copy size={12} /> Sao chép</>
                   )}
                 </button>
               </div>
@@ -694,14 +694,14 @@ export default function AIChatWidget({
       {/* Chat button */}
       <button
         onClick={() => handleOpenChange(true)}
-        className={`fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all z-50 ${isOpen ? 'hidden' : ''}`}
+        className={`fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all z-[10000] ${isOpen ? 'hidden' : ''}`}
       >
         <MessageCircle size={24} />
       </button>
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-[440px] h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-blue-200 overflow-hidden">
+        <div className="fixed bottom-6 right-6 w-[440px] h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col z-[10000] border border-blue-200 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
             <div className="flex items-center gap-2">
@@ -709,7 +709,7 @@ export default function AIChatWidget({
               <div>
                 <span className="font-semibold">OpenInfra AI</span>
                 <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${isConnected ? 'bg-green-500/30' : 'bg-red-500/30'}`}>
-                  {isConnected ? 'Connected' : 'Offline'}
+                  {isConnected ? 'Đang kết nối' : 'Mất kết nối'}
                 </span>
               </div>
             </div>
@@ -725,13 +725,13 @@ export default function AIChatWidget({
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <p className="text-xs text-blue-700">
-                  <span className="font-semibold">Context:</span> {assetInContext.feature_type} ({assetInContext.feature_code})
+                  <span className="font-semibold">Ngữ cảnh:</span> {assetInContext.feature_type} ({assetInContext.feature_code})
                 </p>
                 <button
                   onClick={() => setAssetInContext(null)}
                   className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
                 >
-                  Clear
+                  Xóa
                 </button>
               </div>
             </div>
@@ -740,10 +740,10 @@ export default function AIChatWidget({
           {/* Quick API Buttons */}
           <div className="px-3 py-2 border-b border-blue-100 bg-blue-50/50 flex gap-2 overflow-x-auto">
             {[
-              { label: '📦 Assets', query: 'opendata assets' },
-              { label: '📋 Types', query: 'feature types' },
-              { label: '📡 Sensors', query: 'sensors' },
-              { label: '🚨 Incidents', query: 'incidents' },
+              { label: '📦 Tài sản', query: 'opendata assets' },
+              { label: '📋 Loại', query: 'feature types' },
+              { label: '📡 Cảm biến', query: 'sensors' },
+              { label: '🚨 Sự cố', query: 'incidents' },
             ].map(btn => (
               <button
                 key={btn.query}
@@ -783,7 +783,7 @@ export default function AIChatWidget({
                   {msg.role === 'assistant' && msg.content === '' && isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 size={16} className="animate-spin" />
-                      <span className="text-slate-500">Thinking...</span>
+                      <span className="text-slate-500">Đang xử lý...</span>
                     </div>
                   ) : (
                     renderMessage(msg.content)
@@ -810,7 +810,7 @@ export default function AIChatWidget({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                placeholder='Ask about API or type "test api"...'
+                placeholder='Hỏi về API hoặc gõ "test api"...'
                 className="flex-1 bg-blue-50 text-slate-700 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 border border-blue-200 placeholder-slate-400"
                 disabled={isLoading}
               />
@@ -823,7 +823,7 @@ export default function AIChatWidget({
               </button>
             </div>
             <p className="text-xs text-slate-400 mt-2 text-center">
-              OpenInfra AI • Query database & Test APIs
+              OpenInfra AI • Truy vấn dữ liệu & kiểm thử API
             </p>
           </div>
         </div>

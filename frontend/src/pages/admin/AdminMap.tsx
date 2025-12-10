@@ -89,7 +89,7 @@ const AdminMap: React.FC = () => {
             );
 
         setRoutePoints(points);
-        alert(`Route optimized for ${points.length} stops!`);
+        alert(`Đã tối ưu lộ trình cho ${points.length} điểm dừng!`);
     };
 
     if (isLoading)
@@ -98,7 +98,7 @@ const AdminMap: React.FC = () => {
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-500 font-medium">
-                        Loading system resources...
+                        Đang tải tài nguyên hệ thống...
                     </p>
                 </div>
             </div>
@@ -107,7 +107,7 @@ const AdminMap: React.FC = () => {
     if (error)
         return (
             <div className="p-8 text-center text-red-500">
-                Error loading assets
+                Lỗi khi tải danh sách tài sản
             </div>
         );
 
@@ -161,8 +161,8 @@ const AdminMap: React.FC = () => {
                     >
                         <h3 className="font-bold text-lg">
                             {filteredAssets
-                                ? `Filtered Assets (${filteredAssets.length})`
-                                : "System Assets"}
+                                ? `Tài sản đã lọc (${filteredAssets.length})`
+                                : "Tài sản hệ thống"}
                         </h3>
                         <div className="flex gap-2 items-center">
                             {!assetTableCollapsed && (
@@ -175,7 +175,7 @@ const AdminMap: React.FC = () => {
                                         className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium hover:bg-blue-100 transition-colors flex items-center gap-1"
                                     >
                                         <Activity size={12} />
-                                        Optimize Route
+                                        Tối ưu lộ trình
                                     </button>
                                     {filteredAssets && (
                                         <button
@@ -185,7 +185,7 @@ const AdminMap: React.FC = () => {
                                             }}
                                             className="text-xs text-red-600 font-medium hover:text-red-800"
                                         >
-                                            Clear Filter
+                                            Xóa bộ lọc
                                         </button>
                                     )}
                                 </>
@@ -199,7 +199,7 @@ const AdminMap: React.FC = () => {
                                 }}
                                 className="p-1 hover:bg-slate-200 rounded transition-colors"
                                 title={
-                                    assetTableCollapsed ? "Expand" : "Collapse"
+                                    assetTableCollapsed ? "Mở rộng" : "Thu gọn"
                                 }
                             >
                                 {assetTableCollapsed ? (
@@ -260,11 +260,11 @@ const AdminMap: React.FC = () => {
                                                             : "bg-red-100 text-red-700"
                                                     }`}
                                                 >
-                                                    {
-                                                        (
-                                                            selectedAsset as AssetWithStatus
-                                                        ).status
-                                                    }
+                                                    {(
+                                                        selectedAsset as AssetWithStatus
+                                                    ).status === "Online"
+                                                        ? "Trực tuyến"
+                                                        : "Ngoại tuyến"}
                                                 </span>
                                             )}
                                         </div>
@@ -300,7 +300,7 @@ const AdminMap: React.FC = () => {
                                     <div className="space-y-6">
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                Location
+                                                Vị trí
                                             </h4>
                                             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                                 {selectedAsset.geometry.type ===
@@ -320,7 +320,7 @@ const AdminMap: React.FC = () => {
                                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                                         <div>
                                                             <p className="text-slate-500 text-xs">
-                                                                Latitude
+                                                                Vĩ độ
                                                             </p>
                                                             <p className="font-mono font-medium">
                                                                 {(
@@ -332,7 +332,7 @@ const AdminMap: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <p className="text-slate-500 text-xs">
-                                                                Longitude
+                                                                Kinh độ
                                                             </p>
                                                             <p className="font-mono font-medium">
                                                                 {(
@@ -346,7 +346,7 @@ const AdminMap: React.FC = () => {
                                                 ) : (
                                                     <div className="text-sm">
                                                         <p className="text-slate-500 text-xs mb-1">
-                                                            Geometry Type
+                                                            Loại hình học
                                                         </p>
                                                         <p className="font-mono font-medium mb-2">
                                                             {
@@ -356,15 +356,15 @@ const AdminMap: React.FC = () => {
                                                             }
                                                         </p>
                                                         <p className="text-slate-500 text-xs mb-1">
-                                                            Details
+                                                            Chi tiết
                                                         </p>
                                                         <p className="font-mono font-medium">
                                                             {selectedAsset
                                                                 .geometry
                                                                 .type ===
                                                             "LineString"
-                                                                ? `${selectedAsset.geometry.coordinates.length} points`
-                                                                : "Complex Geometry"}
+                                                                ? `${selectedAsset.geometry.coordinates.length} điểm`
+                                                                : "Hình học phức tạp"}
                                                         </p>
                                                     </div>
                                                 )}
@@ -373,7 +373,7 @@ const AdminMap: React.FC = () => {
 
                                         <div>
                                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                Maintenance History
+                                                Lịch sử bảo trì
                                             </h4>
                                             <MaintenanceLogList
                                                 assetId={getAssetId(selectedAsset)}
@@ -390,14 +390,14 @@ const AdminMap: React.FC = () => {
                                         className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
                                     >
                                         <QrCode size={16} />
-                                        QR Code
+                                        Mã QR
                                     </button>
                                     <button
                                         onClick={() => setShowNFCModal(true)}
                                         className="flex-1 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2"
                                     >
                                         <Radio size={16} />
-                                        Write NFC
+                                        Ghi NFC
                                     </button>
                                 </div>
                             )}
@@ -411,11 +411,10 @@ const AdminMap: React.FC = () => {
                                 />
                             </div>
                             <p className="font-medium text-slate-500">
-                                No Asset Selected
+                                Chưa chọn tài sản
                             </p>
                             <p className="text-sm mt-2">
-                                Select an asset from the map or list to view
-                                details.
+                                Chọn một tài sản trên bản đồ hoặc danh sách để xem chi tiết.
                             </p>
                         </div>
                     )}

@@ -14,20 +14,20 @@ interface NavigationItem {
 
 const navigationItems: NavigationItem[] = [
     {
-        label: "About Us",
+        label: "Về chúng tôi",
         to: "/about",
     },
     {
-        label: "API Docs",
+        label: "Tài liệu API",
         to: "/docs",
     },
     {
-        label: "Login",
+        label: "Đăng nhập",
         to: "/login",
         isLogin: true,
     },
     {
-        label: "Get Started",
+        label: "Bắt đầu ngay",
         to: "/map",
         isButton: true,
     },
@@ -61,7 +61,7 @@ const Header: React.FC = () => {
                     type="button"
                     className="text-xl hidden max-lg:block absolute right-4 text-[#6C7580] cursor-pointer hover:text-[#4FACFE] transition-colors"
                     onClick={toggleMobileMenu}
-                    aria-label="Toggle mobile menu"
+                    aria-label="Chuyển đổi menu trên di động"
                     aria-expanded={isMobileMenuOpen}
                 >
                     <FontAwesomeIcon icon={faBars} />
@@ -80,7 +80,7 @@ const Header: React.FC = () => {
                         type="button"
                         className="absolute top-6 right-6 text-3xl text-[#6C7580] hidden max-lg:block cursor-pointer hover:text-[#4FACFE] transition-colors"
                         onClick={closeMobileMenu}
-                        aria-label="Close mobile menu"
+                        aria-label="Đóng menu trên di động"
                     >
                         <FontAwesomeIcon icon={faXmark} />
                     </button>
