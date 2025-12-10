@@ -1,0 +1,655 @@
+#!/usr/bin/env python3
+"""
+Simulate IoT Rainfall Sensor Data and Trigger AI Risk Detection
+
+This script generates realistic rainfall sensor data and demonstrates
+the AI automated risk detection system.
+
+Usage:
+    python scripts/simulate_rainfall_detection.py [--scenario normal|spike|gradual|mixed]
+    python scripts/simulate_rainfall_detection.py --scenario spike --trigger-task
+
+Scenarios:
+    normal: Normal rainfall pattern (no anomalies expected)
+    spike: Sudden spike in rainfall (should detect anomaly)
+    gradual: Gradual increase (may detect if significant)
+    mixed: Combination of patterns
+"""
+
+import asyncio
+import sys
+import os
+import random
+import argparse
+from datetime import datetime, timedelta
+from typing import List, Dict, Optional
+import numpy as np
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from motor.motor_asyncio import AsyncIOMotorClient
+from bson import ObjectId
+from app.core.config import settings
+from app.infrastructure.database.mongodb import db, get_database
+from app.services.rain_forecast_service import RainForecastService
+from app.tasks.sensor_monitoring import detect_ai_risks
+
+# Configuration
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+MONGODB_DB = os.getenv("DATABASE_NAME", os.getenv("MONGODB_DB", "gis_db"))
+
+
+class RainfallSimulator:
+    """Simulate rainfall sensor data with various patterns."""
+
+    def __init__(self, sensor_id: str, asset_id: str):
+        self.sensor_id = sensor_id
+        self.asset_id = asset_id
+        self.cumulative_rainfall = 0.0  # Track cumulative rainfall
+
+    def generate_historical_data(
+        self, days: int = 7, interval_minutes: int = 15
+    ) -> List[Dict]:
+        """
+        Generate historical rainfall data for ARIMA model training.
+
+        Args:
+            days: Number of days of historical data
+            interval_minutes: Interval between readings
+
+        Returns:
+            List of reading dictionaries
+        """
+        readings = []
+        end_time = datetime.utcnow() - timedelta(hours=1)  # End 1 hour ago
+        start_time = end_time - timedelta(days=days)
+        current_time = start_time
+
+        # Reset cumulative for historical data
+        self.cumulative_rainfall = 0.0
+
+        while current_time <= end_time:
+            hour = current_time.hour
+            day_of_week = current_time.weekday()
+
+            # Simulate realistic rainfall patterns:
+            # - More rain during certain hours (afternoon storms)
+            # - Some daily variation
+            # - Occasional rain events
+
+            # Base probability of rain
+            if 14 <= hour <= 18:  # Afternoon
+                rain_probability = 0.3
+                intensity_multiplier = 1.5
+            elif 6 <= hour <= 10:  # Morning
+                rain_probability = 0.2
+                intensity_multiplier = 1.2
+            else:  # Night/evening
+                rain_probability = 0.1
+                intensity_multiplier = 0.8
+
+            # Check if it's raining
+            is_raining = random.random() < rain_probability
+
+            if is_raining:
+                # Generate rainfall amount (mm per interval)
+                base_rate = random.uniform(0.1, 2.0) * intensity_multiplier
+                # Add some variation
+                rate = max(0, base_rate + np.random.normal(0, 0.3))
+            else:
+                rate = 0.0
+
+            # Update cumulative rainfall
+            self.cumulative_rainfall += rate * (interval_minutes / 60.0)
+
+            reading = {
+                "sensor_id": self.sensor_id,
+                "asset_id": self.asset_id,
+                "timestamp": current_time,
+                "value": self.cumulative_rainfall,
+                "unit": "mm",
+                "quality": "good",
+                "quality_flags": [],
+                "status": "normal",
+                "threshold_exceeded": False,
+                "metadata": {
+                    "source": "simulation",
+                    "rate_mm_per_hour": rate * (60 / interval_minutes),
+                    "scenario": "historical",
+                },
+            }
+
+            readings.append(reading)
+            current_time += timedelta(minutes=interval_minutes)
+
+        return readings
+
+    def generate_current_readings(
+        self,
+        scenario: str = "normal",
+        hours: int = 2,
+        interval_minutes: int = 15,
+    ) -> List[Dict]:
+        """
+        Generate current readings with specified scenario.
+
+        Args:
+            scenario: 'normal', 'spike', 'gradual', or 'mixed'
+            hours: Number of hours of current data
+            interval_minutes: Interval between readings
+
+        Returns:
+            List of reading dictionaries
+        """
+        readings = []
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
+        current_time = start_time
+
+        if scenario == "spike":
+            # Generate sudden spike pattern
+            readings = self._generate_spike_pattern(
+                start_time, end_time, interval_minutes
+            )
+        elif scenario == "gradual":
+            # Generate gradual increase
+            readings = self._generate_gradual_pattern(
+                start_time, end_time, interval_minutes
+            )
+        elif scenario == "mixed":
+            # Mix of patterns
+            readings = self._generate_mixed_pattern(
+                start_time, end_time, interval_minutes
+            )
+        else:  # normal
+            readings = self._generate_normal_pattern(
+                start_time, end_time, interval_minutes
+            )
+
+        return readings
+
+    def _generate_normal_pattern(
+        self, start_time: datetime, end_time: datetime, interval_minutes: int
+    ) -> List[Dict]:
+        """Generate normal rainfall pattern."""
+        readings = []
+        current_time = start_time
+
+        while current_time <= end_time:
+            hour = current_time.hour
+            # Normal pattern: occasional light rain
+            rain_probability = 0.15 if 14 <= hour <= 18 else 0.05
+
+            if random.random() < rain_probability:
+                rate = random.uniform(0.1, 1.5)  # Light to moderate rain
+            else:
+                rate = 0.0
+
+            self.cumulative_rainfall += rate * (interval_minutes / 60.0)
+
+            reading = {
+                "sensor_id": self.sensor_id,
+                "asset_id": self.asset_id,
+                "timestamp": current_time,
+                "value": self.cumulative_rainfall,
+                "unit": "mm",
+                "quality": "good",
+                "quality_flags": [],
+                "status": "normal",
+                "threshold_exceeded": False,
+                "metadata": {
+                    "source": "simulation",
+                    "rate_mm_per_hour": rate * (60 / interval_minutes),
+                    "scenario": "normal",
+                },
+            }
+
+            readings.append(reading)
+            current_time += timedelta(minutes=interval_minutes)
+
+        return readings
+
+    def _generate_spike_pattern(
+        self, start_time: datetime, end_time: datetime, interval_minutes: int
+    ) -> List[Dict]:
+        """Generate sudden spike pattern (anomaly scenario)."""
+        readings = []
+        current_time = start_time
+        spike_started = False
+
+        while current_time <= end_time:
+            hour = current_time.hour
+            elapsed_hours = (current_time - start_time).total_seconds() / 3600
+
+            # Create a sudden spike in the last 30 minutes
+            if elapsed_hours >= 1.5 and not spike_started:
+                spike_started = True
+                # Very high rainfall rate
+                rate = random.uniform(15.0, 25.0)  # mm/hour - very high!
+            elif spike_started and elapsed_hours < 2.0:
+                # Continue spike
+                rate = random.uniform(10.0, 20.0)
+            else:
+                # Normal pattern before spike
+                rain_probability = 0.1
+                if random.random() < rain_probability:
+                    rate = random.uniform(0.1, 1.0)
+                else:
+                    rate = 0.0
+
+            self.cumulative_rainfall += rate * (interval_minutes / 60.0)
+
+            reading = {
+                "sensor_id": self.sensor_id,
+                "asset_id": self.asset_id,
+                "timestamp": current_time,
+                "value": self.cumulative_rainfall,
+                "unit": "mm",
+                "quality": "good",
+                "quality_flags": [],
+                "status": "normal",
+                "threshold_exceeded": False,
+                "metadata": {
+                    "source": "simulation",
+                    "rate_mm_per_hour": rate * (60 / interval_minutes),
+                    "scenario": "spike",
+                },
+            }
+
+            readings.append(reading)
+            current_time += timedelta(minutes=interval_minutes)
+
+        return readings
+
+    def _generate_gradual_pattern(
+        self, start_time: datetime, end_time: datetime, interval_minutes: int
+    ) -> List[Dict]:
+        """Generate gradual increase pattern."""
+        readings = []
+        current_time = start_time
+
+        while current_time <= end_time:
+            elapsed_hours = (current_time - start_time).total_seconds() / 3600
+
+            # Gradually increase rainfall rate
+            base_rate = elapsed_hours * 2.0  # Gradual increase
+            rate = max(0, base_rate + random.uniform(-0.5, 1.0))
+
+            self.cumulative_rainfall += rate * (interval_minutes / 60.0)
+
+            reading = {
+                "sensor_id": self.sensor_id,
+                "asset_id": self.asset_id,
+                "timestamp": current_time,
+                "value": self.cumulative_rainfall,
+                "unit": "mm",
+                "quality": "good",
+                "quality_flags": [],
+                "status": "normal",
+                "threshold_exceeded": False,
+                "metadata": {
+                    "source": "simulation",
+                    "rate_mm_per_hour": rate * (60 / interval_minutes),
+                    "scenario": "gradual",
+                },
+            }
+
+            readings.append(reading)
+            current_time += timedelta(minutes=interval_minutes)
+
+        return readings
+
+    def _generate_mixed_pattern(
+        self, start_time: datetime, end_time: datetime, interval_minutes: int
+    ) -> List[Dict]:
+        """Generate mixed pattern (normal + spike)."""
+        readings = []
+        current_time = start_time
+        spike_occurred = False
+
+        while current_time <= end_time:
+            elapsed_hours = (current_time - start_time).total_seconds() / 3600
+
+            # Normal pattern for first hour, then spike
+            if elapsed_hours < 1.0:
+                rain_probability = 0.1
+                if random.random() < rain_probability:
+                    rate = random.uniform(0.1, 1.0)
+                else:
+                    rate = 0.0
+            elif elapsed_hours < 1.5 and not spike_occurred:
+                # Sudden spike
+                spike_occurred = True
+                rate = random.uniform(18.0, 25.0)
+            elif spike_occurred and elapsed_hours < 1.8:
+                # Continue spike
+                rate = random.uniform(12.0, 18.0)
+            else:
+                # Return to normal
+                rain_probability = 0.1
+                if random.random() < rain_probability:
+                    rate = random.uniform(0.1, 1.5)
+                else:
+                    rate = 0.0
+
+            self.cumulative_rainfall += rate * (interval_minutes / 60.0)
+
+            reading = {
+                "sensor_id": self.sensor_id,
+                "asset_id": self.asset_id,
+                "timestamp": current_time,
+                "value": self.cumulative_rainfall,
+                "unit": "mm",
+                "quality": "good",
+                "quality_flags": [],
+                "status": "normal",
+                "threshold_exceeded": False,
+                "metadata": {
+                    "source": "simulation",
+                    "rate_mm_per_hour": rate * (60 / interval_minutes),
+                    "scenario": "mixed",
+                },
+            }
+
+            readings.append(reading)
+            current_time += timedelta(minutes=interval_minutes)
+
+        return readings
+
+
+async def get_or_create_rainfall_sensor(database) -> tuple[str, str]:
+    """
+    Get or create a rainfall sensor for testing.
+
+    Returns:
+        Tuple of (sensor_id, asset_id)
+    """
+    # Try to find existing rainfall sensor
+    existing_sensor = await database["iot_sensors"].find_one(
+        {"sensor_type": "rainfall"}
+    )
+
+    if existing_sensor:
+        sensor_id = str(existing_sensor["_id"])
+        asset_id = existing_sensor.get("asset_id", "")
+        print(f"✓ Found existing rainfall sensor: {sensor_id}")
+        return sensor_id, asset_id
+
+    # Create a test asset if needed
+    test_asset = await database["assets"].find_one({"feature_code": "cong_thoat_nuoc"})
+    if not test_asset:
+        # Create a simple test asset
+        asset_result = await database["assets"].insert_one(
+            {
+                "feature_code": "cong_thoat_nuoc",
+                "feature_type": "Cống thoát nước",
+                "ten": "Test Rainfall Asset",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [108.0, 16.0],
+                },
+                "created_at": datetime.utcnow(),
+            }
+        )
+        asset_id = str(asset_result.inserted_id)
+        print(f"✓ Created test asset: {asset_id}")
+    else:
+        asset_id = str(test_asset["_id"])
+
+    # Create rainfall sensor
+    sensor_result = await database["iot_sensors"].insert_one(
+        {
+            "sensor_code": f"RAIN-SIM-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            "asset_id": asset_id,
+            "sensor_type": "rainfall",
+            "measurement_unit": "mm",
+            "sample_rate": 60,
+            "status": "online",
+            "connection_type": "wifi",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        }
+    )
+
+    sensor_id = str(sensor_result.inserted_id)
+    print(f"✓ Created rainfall sensor: {sensor_id}")
+    return sensor_id, asset_id
+
+
+async def insert_readings(database, readings: List[Dict]) -> int:
+    """Insert readings into MongoDB."""
+    if not readings:
+        return 0
+
+    # Bulk insert
+    result = await database["sensor_readings"].insert_many(readings)
+    return len(result.inserted_ids)
+
+
+async def run_ai_detection(database, sensor_id: str) -> Dict:
+    """Run AI risk detection for the sensor."""
+    # Get recent readings (last hour)
+    to_time = datetime.utcnow()
+    from_time = to_time - timedelta(hours=1)
+
+    cursor = (
+        database["sensor_readings"]
+        .find(
+            {
+                "sensor_id": sensor_id,
+                "timestamp": {"$gte": from_time, "$lte": to_time},
+            }
+        )
+        .sort("timestamp", 1)
+    )
+
+    readings = []
+    async for reading in cursor:
+        readings.append(
+            {
+                "timestamp": reading.get("timestamp"),
+                "value": reading.get("value"),
+                "unit": reading.get("unit"),
+                "quality": reading.get("quality"),
+                "status": reading.get("status"),
+                "metadata": reading.get("metadata", {}),
+            }
+        )
+
+    # Get sensor info
+    sensor = await database["iot_sensors"].find_one({"_id": ObjectId(sensor_id)})
+    if not sensor:
+        return {"error": "Sensor not found"}
+
+    sensor_type = sensor.get("sensor_type", "rainfall")
+
+    # Group readings for detection
+    grouped_readings = {
+        sensor_id: {
+            "sensor_type": sensor_type,
+            "readings": readings,
+            "sensor_info": {
+                "sensor_code": sensor.get("sensor_code"),
+                "asset_id": sensor.get("asset_id"),
+                "manufacturer": sensor.get("manufacturer"),
+                "model": sensor.get("model"),
+                "measurement_unit": sensor.get("measurement_unit", "mm"),
+            },
+        }
+    }
+
+    # Run detection
+    result = await detect_ai_risks(grouped_readings, db=database)
+    return result
+
+
+async def main():
+    """Main function."""
+    parser = argparse.ArgumentParser(
+        description="Simulate rainfall sensor data and trigger AI detection"
+    )
+    parser.add_argument(
+        "--scenario",
+        choices=["normal", "spike", "gradual", "mixed"],
+        default="spike",
+        help="Rainfall scenario to simulate",
+    )
+    parser.add_argument(
+        "--trigger-task",
+        action="store_true",
+        help="Trigger the Celery task instead of direct detection",
+    )
+    parser.add_argument(
+        "--skip-historical",
+        action="store_true",
+        help="Skip generating historical data (use existing)",
+    )
+    parser.add_argument(
+        "--hours",
+        type=int,
+        default=2,
+        help="Number of hours of current data to generate",
+    )
+
+    args = parser.parse_args()
+
+    print("=" * 70)
+    print("Rainfall Sensor Data Simulation & AI Detection")
+    print("=" * 70)
+    print(f"Scenario: {args.scenario}")
+    print(f"Current data hours: {args.hours}")
+    print()
+
+    # Connect to database
+    db.connect()
+    if db.client is None:
+        print("❌ Failed to connect to database")
+        return
+    database = await get_database()
+    if database is None:
+        print("❌ Failed to get database instance")
+        return
+    print("✓ Connected to database")
+
+    # Get or create sensor
+    sensor_id, asset_id = await get_or_create_rainfall_sensor(database)
+    print()
+
+    # Generate historical data (7 days for ARIMA training)
+    if not args.skip_historical:
+        print("Generating historical data (7 days)...")
+        simulator = RainfallSimulator(sensor_id, asset_id)
+        historical_readings = simulator.generate_historical_data(
+            days=7, interval_minutes=15
+        )
+
+        # Check if we already have enough historical data
+        existing_count = await database["sensor_readings"].count_documents(
+            {"sensor_id": sensor_id}
+        )
+
+        if existing_count < len(historical_readings):
+            # Clear old simulated data
+            await database["sensor_readings"].delete_many(
+                {
+                    "sensor_id": sensor_id,
+                    "metadata.source": "simulation",
+                }
+            )
+
+            # Insert historical data
+            inserted = await insert_readings(database, historical_readings)
+            print(f"✓ Inserted {inserted} historical readings")
+        else:
+            print(f"✓ Historical data already exists ({existing_count} readings)")
+    else:
+        print("⏭ Skipping historical data generation")
+        simulator = RainfallSimulator(sensor_id, asset_id)
+
+    print()
+
+    # Generate current readings with specified scenario
+    print(f"Generating current readings (scenario: {args.scenario})...")
+    current_readings = simulator.generate_current_readings(
+        scenario=args.scenario, hours=args.hours, interval_minutes=15
+    )
+
+    # Insert current readings
+    inserted = await insert_readings(database, current_readings)
+    print(f"✓ Inserted {inserted} current readings")
+    print()
+
+    # Show reading statistics
+    if current_readings:
+        values = [r["value"] for r in current_readings]
+        rates = [r["metadata"].get("rate_mm_per_hour", 0) for r in current_readings]
+        print("Reading Statistics:")
+        print(f"  Total readings: {len(current_readings)}")
+        print(f"  Cumulative rainfall: {max(values):.2f} mm")
+        print(f"  Max rate: {max(rates):.2f} mm/hour")
+        print(f"  Avg rate: {sum(rates) / len(rates):.2f} mm/hour")
+        print()
+
+    # Run AI detection
+    if args.trigger_task:
+        print("⚠ Triggering Celery task (ai_automated_risk_detection)...")
+        print("   Note: This requires Celery worker to be running")
+        print("   Run: celery -A app.celery_app worker --loglevel=info")
+        print("   Then: celery -A app.celery_app beat --loglevel=info")
+        print()
+        print("   Or trigger manually:")
+        print(f"   from app.tasks.sensor_monitoring import ai_automated_risk_detection")
+        print(f"   await ai_automated_risk_detection()")
+    else:
+        print("Running AI risk detection...")
+        print("-" * 70)
+
+        detection_result = await run_ai_detection(database, sensor_id)
+
+        if "error" in detection_result:
+            print(f"❌ Error: {detection_result['error']}")
+        else:
+            risks = detection_result.get("risks", [])
+            summary = detection_result.get("summary", {})
+
+            print(f"\nDetection Results:")
+            print(f"  Sensors processed: {len(detection_result.get('risks', []))}")
+            print(f"  Total risks detected: {summary.get('total_risks', 0)}")
+            print(f"  Critical risks: {summary.get('critical_risks', 0)}")
+            print(f"  Warning risks: {summary.get('warning_risks', 0)}")
+            print(f"  Info risks: {summary.get('info_risks', 0)}")
+            print()
+
+            if risks:
+                print("Detected Risks:")
+                for i, risk in enumerate(risks, 1):
+                    print(f"\n  Risk #{i}:")
+                    print(f"    Type: {risk.get('risk_type', 'unknown')}")
+                    print(f"    Level: {risk.get('risk_level', 'unknown')}")
+                    print(f"    Confidence: {risk.get('confidence', 0):.2%}")
+                    print(f"    Description: {risk.get('description', 'N/A')}")
+
+                    forecast_data = risk.get("forecast_data", {})
+                    if forecast_data:
+                        print(f"    Forecast:")
+                        print(
+                            f"      Method: {forecast_data.get('forecast_method', 'N/A')}"
+                        )
+                        print(
+                            f"      Forecast rate: {forecast_data.get('forecast_rate', 0):.2f} mm/h"
+                        )
+                        print(
+                            f"      Current rate: {forecast_data.get('current_rate', 0):.2f} mm/h"
+                        )
+            else:
+                print("✓ No risks detected (normal pattern)")
+
+    print()
+    print("=" * 70)
+    print("Simulation complete!")
+    print("=" * 70)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
