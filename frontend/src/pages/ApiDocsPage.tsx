@@ -927,7 +927,7 @@ export default function ApiDocsPage() {
                                             Tool
                                         </th>
                                         <th className="text-left px-4 py-2 font-semibold text-green-800">
-                                            Description
+                                            Mô tả
                                         </th>
                                     </tr>
                                 </thead>
@@ -1137,7 +1137,7 @@ export default function ApiDocsPage() {
                             {API_BASE_URL}
                         </code>
                         <p className="text-slate-600 mt-4">
-                            No API key required. Open data, free to use.
+                            Không yêu cầu khóa API. Dữ liệu mở, miễn phí sử dụng.
                         </p>
                     </div>
                 </section>

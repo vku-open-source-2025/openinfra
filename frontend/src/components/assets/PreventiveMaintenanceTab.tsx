@@ -250,7 +250,7 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
             </div>
             <div>
               <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-                Cycle Description (optional)
+                Mô tả chu kỳ (tùy chọn)
               </label>
               <Input
                 type="text"
@@ -260,26 +260,26 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-                Warning Days
+                <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
+                Số ngày cảnh báo
               </label>
               <Input
                 type="number"
                 value={warningDays}
                 onChange={(e) => setWarningDays(e.target.value)}
-                placeholder="Days before due date to show warning"
+                placeholder="Số ngày trước hạn để hiển thị cảnh báo"
                 min="1"
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-                Responsible Team (optional)
+                <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
+                Nhóm chịu trách nhiệm (tùy chọn)
               </label>
               <Input
                 type="text"
                 value={responsibleTeam}
                 onChange={(e) => setResponsibleTeam(e.target.value)}
-                placeholder="Team name"
+                placeholder="Tên nhóm"
               />
             </div>
             <div className="flex gap-2 pt-4">
@@ -288,13 +288,13 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
                 onClick={() => setShowEditModal(false)}
                 disabled={updateMutation.isPending}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={!cycleDays || updateMutation.isPending}
               >
-                {updateMutation.isPending ? "Saving..." : plan ? "Update Plan" : "Create Plan"}
+                {updateMutation.isPending ? "Đang lưu..." : plan ? "Cập nhật kế hoạch" : "Tạo kế hoạch"}
               </Button>
             </div>
           </div>

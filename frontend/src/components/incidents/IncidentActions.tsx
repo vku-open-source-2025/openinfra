@@ -133,7 +133,7 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                         className="w-full bg-green-600 hover:bg-green-700"
                     >
                         <ShieldCheck className="h-4 w-4 mr-2" />
-                        Verify as Legitimate
+                        Xác minh là hợp lệ
                     </Button>
                 )}
 
@@ -144,7 +144,7 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                     className="w-full"
                 >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Acknowledge Incident
+                    Xác nhận sự cố
                 </Button>
             )}
 
@@ -153,9 +153,9 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                     <Select
                         value={selectedUserId}
                         onChange={(e) => setSelectedUserId(e.target.value)}
-                        placeholder="Select technician..."
+                        placeholder="Chọn kỹ thuật viên..."
                     >
-                        <option value="">Select technician...</option>
+                        <option value="">Chọn kỹ thuật viên...</option>
                         {availableUsers.map((user) => (
                             <option key={user.id} value={user.id}>
                                 {user.full_name}
@@ -168,7 +168,7 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                         className="w-full"
                     >
                         <User className="h-4 w-4 mr-2" />
-                        Assign to Technician
+                        Gán cho kỹ thuật viên
                     </Button>
                 </div>
             )}
@@ -181,15 +181,15 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                             setResolutionType(e.target.value as any)
                         }
                     >
-                        <option value="fixed">Fixed</option>
-                        <option value="duplicate">Duplicate</option>
-                        <option value="invalid">Invalid</option>
-                        <option value="deferred">Deferred</option>
+                        <option value="fixed">Đã sửa</option>
+                        <option value="duplicate">Trùng lặp</option>
+                        <option value="invalid">Không hợp lệ</option>
+                        <option value="deferred">Hoãn</option>
                     </Select>
                     <textarea
                         value={resolutionNotes}
                         onChange={(e) => setResolutionNotes(e.target.value)}
-                        placeholder="Resolution notes..."
+                        placeholder="Ghi chú xử lý..."
                         rows={3}
                         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                     />
@@ -199,7 +199,7 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                         className="w-full"
                     >
                         <Wrench className="h-4 w-4 mr-2" />
-                        Resolve Incident
+                        Xử lý sự cố
                     </Button>
                 </div>
             )}
@@ -212,7 +212,7 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                             <textarea
                                 value={closeNotes}
                                 onChange={(e) => setCloseNotes(e.target.value)}
-                                placeholder="Closing notes (optional)..."
+                                placeholder="Ghi chú đóng (tùy chọn)..."
                                 rows={2}
                                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                             />
@@ -223,14 +223,14 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                                     className="flex-1 bg-green-600 hover:bg-green-700"
                                 >
                                     <Archive className="h-4 w-4 mr-2" />
-                                    Close Ticket
+                                    Đóng phiếu
                                 </Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowCloseForm(false)}
                                     className="flex-1"
                                 >
-                                    Cancel
+                                    Hủy
                                 </Button>
                             </div>
                         </>
@@ -272,14 +272,14 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                                         className="flex-1 bg-red-600 hover:bg-red-700"
                                     >
                                         <XCircle className="h-4 w-4 mr-2" />
-                                        Confirm Reject
+                                        Xác nhận từ chối
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => setShowRejectForm(false)}
                                         className="flex-1"
                                     >
-                                        Cancel
+                                        Hủy
                                     </Button>
                                 </div>
                             </>
@@ -290,7 +290,7 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                                 className="w-full text-red-600 border-red-200 hover:bg-red-50"
                             >
                                 <XCircle className="h-4 w-4 mr-2" />
-                                Reject Ticket
+                                Từ chối phiếu
                             </Button>
                         )}
                     </div>

@@ -40,7 +40,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ logs }) => {
             </div>
 
             <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-lg overflow-hidden flex-1">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                {['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'].map(day => (
                     <div key={day} className="bg-slate-50 p-2 text-center text-xs font-semibold text-slate-500 uppercase">
                         {day}
                     </div>
@@ -50,7 +50,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ logs }) => {
                     return (
                         <div
                             key={day.toString()}
-                            className={`bg-white p-2 min-h-[80px] ${!isSameMonth(day, monthStart) ? 'text-slate-300 bg-slate-50/50' : ''}`}
+                                className={`bg-white p-2 min-h-20 ${!isSameMonth(day, monthStart) ? 'text-slate-300 bg-slate-50/50' : ''}`}
                         >
                             <div className="text-right text-sm mb-1">{format(day, 'd')}</div>
                             <div className="space-y-1">
@@ -60,6 +60,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ logs }) => {
                                             'bg-amber-100 text-amber-700'
                                         }`}>
                                         {log.description}
+                                        <div className="ml-1 inline-block text-[10px] text-slate-500">{log.status === 'Completed' ? 'Hoàn thành' : log.status === 'In Progress' ? 'Đang thực hiện' : 'Đang chờ'}</div>
                                     </div>
                                 ))}
                             </div>

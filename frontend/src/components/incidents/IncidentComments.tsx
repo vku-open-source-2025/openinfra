@@ -38,7 +38,7 @@ export const IncidentComments: React.FC<IncidentCommentsProps> = ({
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <MessageSquare className="h-5 w-5 text-slate-500" />
-        <h3 className="font-semibold">Comments ({comments.length})</h3>
+        <h3 className="font-semibold">Bình luận ({comments.length})</h3>
       </div>
 
       <div className="space-y-3">
@@ -53,18 +53,18 @@ export const IncidentComments: React.FC<IncidentCommentsProps> = ({
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-slate-400" />
                 <span className="font-medium text-sm">
-                  {comment.user_name || "Anonymous"}
+                  {comment.user_name || "Ẩn danh"}
                 </span>
                 {comment.is_internal && (
                   <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
-                    Internal
+                    Nội bộ
                   </span>
                 )}
               </div>
               <span className="text-xs text-slate-500">
                 {(() => {
                   const dateStr = comment.posted_at || comment.created_at;
-                  if (!dateStr) return "Unknown";
+                  if (!dateStr) return "Không xác định";
                   const date = new Date(dateStr);
                   return isNaN(date.getTime()) ? "Unknown" : format(date, "MMM d, yyyy HH:mm");
                 })()}
@@ -77,7 +77,7 @@ export const IncidentComments: React.FC<IncidentCommentsProps> = ({
 
       <div className="border-t pt-4">
         <Textarea
-          placeholder="Add a comment..."
+          placeholder="Thêm bình luận..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           rows={3}
@@ -91,11 +91,11 @@ export const IncidentComments: React.FC<IncidentCommentsProps> = ({
               onChange={(e) => setIsInternal(e.target.checked)}
               className="rounded"
             />
-            <span>Internal comment (visible to staff only)</span>
+            <span>Bình luận nội bộ (chỉ nhân viên thấy)</span>
           </label>
         )}
         <Button onClick={handleSubmit} disabled={!newComment.trim() || isSubmitting}>
-          Add Comment
+          Thêm bình luận
         </Button>
       </div>
     </div>

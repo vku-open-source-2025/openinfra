@@ -162,29 +162,29 @@ const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
                   <p className="text-slate-600 mb-4">Xem trước không có sẵn cho loại tệp này.</p>
                   <Button onClick={() => handleDownload(selectedDocument)}>
                     <Download className="h-4 w-4 mr-2" />
-                    Tải tệp
+                    Tải xuống
                   </Button>
                 </div>
               )}
               <div className="mt-4 pt-4 border-t border-slate-200">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <label className="text-xs text-slate-500 uppercase tracking-wide">File Type</label>
+                    <label className="text-xs text-slate-500 uppercase tracking-wide">Loại tệp</label>
                     <p className="text-slate-900 mt-1">{selectedDocument.file_type}</p>
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500 uppercase tracking-wide">Uploaded</label>
+                    <label className="text-xs text-slate-500 uppercase tracking-wide">Ngày tải lên</label>
                     <p className="text-slate-900 mt-1">
                       {format(new Date(selectedDocument.uploaded_at), "dd/MM/yyyy HH:mm")}
                     </p>
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500 uppercase tracking-wide">Uploaded By</label>
+                    <label className="text-xs text-slate-500 uppercase tracking-wide">Người tải lên</label>
                     <p className="text-slate-900 mt-1">{selectedDocument.uploaded_by}</p>
                   </div>
                   {selectedDocument.version && (
                     <div>
-                      <label className="text-xs text-slate-500 uppercase tracking-wide">Version</label>
+                      <label className="text-xs text-slate-500 uppercase tracking-wide">Phiên bản</label>
                       <p className="text-slate-900 mt-1">v{selectedDocument.version}</p>
                     </div>
                   )}

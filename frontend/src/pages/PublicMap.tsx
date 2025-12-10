@@ -106,7 +106,7 @@ const PublicMap: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-            <div className="bg-slate-900 z-50">
+            <div className="bg-slate-900 z-53">
                 <Header />
             </div>
 
@@ -146,7 +146,7 @@ const PublicMap: React.FC = () => {
 
                 {/* Asset Info Modal */}
                 {showAssetInfoModal && selectedAsset && (
-                    <div className="fixed top-20 right-0 bottom-0 z-[9999] flex items-start justify-end p-4">
+                    <div className="fixed top-20 right-0 bottom-0 z-[52] flex items-start justify-end p-4">
                         <div className="bg-white rounded-l-xl shadow-xl w-full max-w-2xl h-full overflow-hidden flex flex-col animate-in slide-in-from-right fade-in duration-200">
                             {/* Modal Header */}
                             <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-3 shrink-0">

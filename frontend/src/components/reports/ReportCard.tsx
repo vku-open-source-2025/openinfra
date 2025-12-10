@@ -19,9 +19,9 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onDownload }) =>
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-slate-900 mb-1">{report.report_code}</h3>
-            <p className="text-sm text-slate-600 capitalize">{report.type} Report</p>
+            <p className="text-sm text-slate-600 capitalize">Báo cáo {report.type}</p>
             <p className="text-xs text-slate-500 mt-1">
-              Created {format(new Date(report.created_at), "MMM d, yyyy HH:mm")}
+              Tạo lúc {format(new Date(report.created_at), "MMM d, yyyy HH:mm")}
             </p>
           </div>
         </div>
@@ -33,9 +33,9 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onDownload }) =>
           Format: <span className="font-medium uppercase">{report.format}</span>
         </div>
         {report.status === "completed" && report.file_url && onDownload && (
-          <Button size="sm" variant="outline" onClick={onDownload}>
+            <Button size="sm" variant="outline" onClick={onDownload}>
             <Download className="h-3 w-3 mr-1" />
-            Download
+            Tải xuống
           </Button>
         )}
       </div>
@@ -44,7 +44,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onDownload }) =>
         <div className="mt-3 pt-3 border-t">
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <span>Generating report...</span>
+            <span>Đang tạo báo cáo...</span>
           </div>
         </div>
       )}

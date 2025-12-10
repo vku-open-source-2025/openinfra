@@ -29,7 +29,7 @@ function IncidentStatusPage() {
     }, [incidentId]);
 
     if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
-    if (!incident) return <div className="p-8 text-center text-red-500">Incident not found</div>;
+    if (!incident) return <div className="p-8 text-center text-red-500">Không tìm thấy báo cáo</div>;
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -41,34 +41,48 @@ function IncidentStatusPage() {
         }
     };
 
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'reported':
+                return 'Đã báo';
+            case 'resolved':
+                return 'Đã xử lý';
+            case 'in_progress':
+            case 'investigating':
+                return 'Đang xử lý';
+            default:
+                return status.replace('_', ' ');
+        }
+    };
+
     return (
         <div className="max-w-md mx-auto p-4 space-y-8 text-center">
             <div className="flex flex-col items-center space-y-4">
                 {getStatusIcon(incident.status)}
                 <div>
-                    <h1 className="text-2xl font-bold capitalize">{incident.status.replace('_', ' ')}</h1>
-                    <p className="text-slate-500">Ticket #{incident.incident_code || incident.id.substring(0, 8)}</p>
+                    <h1 className="text-2xl font-bold">{getStatusLabel(incident.status)}</h1>
+                    <p className="text-slate-500">Mã báo cáo #{incident.incident_code || incident.id.substring(0, 8)}</p>
                 </div>
             </div>
 
             <div className="bg-slate-50 p-6 rounded-lg text-left space-y-4">
                 <div>
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase">Issue</h3>
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase">Sự cố</h3>
                     <p className="font-medium">{incident.title}</p>
                 </div>
                 {incident.location?.address && (
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-500 uppercase">Location</h3>
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase">Vị trí</h3>
                         <p>{incident.location.address}</p>
                     </div>
                 )}
                 <div>
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase">Reported At</h3>
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase">Thời gian báo cáo</h3>
                     <p>{new Date(incident.created_at).toLocaleString()}</p>
                 </div>
                 {incident.resolution_notes && (
                     <div className="bg-green-100 p-3 rounded">
-                        <h3 className="text-sm font-semibold text-green-800 uppercase">Resolution</h3>
+                        <h3 className="text-sm font-semibold text-green-800 uppercase">Kết luận</h3>
                         <p className="text-green-900">{incident.resolution_notes}</p>
                     </div>
                 )}
@@ -76,7 +90,7 @@ function IncidentStatusPage() {
 
             {incident.photos && incident.photos.length > 0 && (
                 <div className="space-y-2">
-                    <h3 className="text-left font-semibold">Photos</h3>
+                    <h3 className="text-left font-semibold">Ảnh</h3>
                     <div className="grid grid-cols-2 gap-2">
                         {incident.photos.map((url, i) => (
                             <img key={i} src={url} alt="Incident" className="rounded-lg object-cover h-32 w-full" />

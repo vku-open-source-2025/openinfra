@@ -48,23 +48,42 @@ const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
 const geometryToLatLngs = (geometry: Asset["geometry"]): [number, number][] => {
     if (!geometry || !geometry.coordinates) return [];
 
+    const coords = geometry.coordinates as unknown;
     switch (geometry.type) {
         case "Point":
-            return [toLatLng(geometry.coordinates as number[])];
+            if (Array.isArray(coords) && typeof coords[0] === "number") {
+                return [toLatLng(coords as number[])];
+            }
+            return [];
         case "LineString":
-            return (geometry.coordinates as number[][]).map(toLatLng);
+            if (Array.isArray(coords) && Array.isArray(coords[0]) && typeof coords[0][0] === "number") {
+                return (coords as number[][]).map(toLatLng);
+            }
+            return [];
         case "MultiLineString":
-            return (geometry.coordinates as number[][][]).flatMap((line) =>
-                line.map(toLatLng)
-            );
+            if (Array.isArray(coords)) {
+                return (coords as number[][][]).flatMap((line) =>
+                    (line as number[][]).map(toLatLng)
+                );
+            }
+            return [];
         case "Polygon":
-            return (geometry.coordinates as number[][][])[0].map(toLatLng); // outer ring is enough for bounds
+            if (Array.isArray(coords) && Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+                return (coords as number[][][])[0].map(toLatLng);
+            }
+            return [];
         case "MultiPolygon":
-            return (geometry.coordinates as number[][][][]).flatMap((poly) =>
-                poly[0].map(toLatLng)
-            );
+            if (Array.isArray(coords)) {
+                return (coords as number[][][][]).flatMap((poly) =>
+                    (poly[0] as number[][]).map(toLatLng)
+                );
+            }
+            return [];
         case "MultiPoint":
-            return (geometry.coordinates as number[][]).map(toLatLng);
+            if (Array.isArray(coords) && Array.isArray(coords[0]) && typeof coords[0][0] === "number") {
+                return (coords as number[][]).map(toLatLng);
+            }
+            return [];
         default:
             return [];
     }
@@ -139,11 +158,10 @@ const BoundsWatcher: React.FC<{
 const MapComponent: React.FC<MapProps> = ({
     assets,
     onAssetSelect,
-    onFilterByShape,
     routePoints,
     selectedAsset,
     className,
-    enableGeoSearches,
+    // Not using onFilterByShape/enableGeoSearches yet - keep props for future features
 }) => {
     const [mapMode, setMapMode] = useState<"markers" | "heatmap">("markers");
     const center: [number, number] = [16.047079, 108.20623];
@@ -214,7 +232,7 @@ const MapComponent: React.FC<MapProps> = ({
             />
 
             {/* Map Controls Overlay */}
-            <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-md border border-slate-200 p-1 flex flex-col gap-1">
+            <div className="absolute top-4 right-4 z-51 bg-white rounded-lg shadow-md border border-slate-200 p-1 flex flex-col gap-1">
                 <button
                     onClick={() => setMapMode("markers")}
                     className={`p - 2 rounded hover: bg - slate - 100 ${
@@ -222,7 +240,7 @@ const MapComponent: React.FC<MapProps> = ({
                             ? "bg-blue-50 text-blue-600"
                             : "text-slate-600"
                     } `}
-                    title="Marker View"
+                    title="Chế độ điểm"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -246,7 +264,7 @@ const MapComponent: React.FC<MapProps> = ({
                             ? "bg-blue-50 text-blue-600"
                             : "text-slate-600"
                     } `}
-                    title="Heatmap View"
+                    title="Bản đồ nhiệt"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -303,14 +321,11 @@ const MapComponent: React.FC<MapProps> = ({
                 {mapMode === "markers" && (
                     <>
                         {visibleAssets.map((asset) => {
-                            if (asset.geometry.type === "Point") {
-                                const position: [number, number] = [
-                                    asset.geometry.coordinates[1],
-                                    asset.geometry.coordinates[0],
-                                ];
+                                if (asset.geometry.type === "Point") {
+                                const coords = asset.geometry.coordinates as number[];
+                                const position: [number, number] = [coords[1], coords[0]];
                                 const assetId = getAssetId(asset);
-                                const isSelected =
-                                    selectedAsset && getAssetId(selectedAsset) === assetId;
+                                const isSelected = selectedAsset ? getAssetId(selectedAsset) === assetId : undefined;
                                 return (
                                     <Marker
                                         key={assetId}
@@ -337,17 +352,16 @@ const MapComponent: React.FC<MapProps> = ({
                                                 {asset.feature_code}
                                             </div>
                                             <div className="mt-2 text-xs">
-                                                <span
-                                                    className={`px-2 py-0.5 rounded-full ${
-                                                        Math.random() > 0.1
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-red-100 text-red-700"
-                                                    }`}
-                                                >
-                                                    {Math.random() > 0.1
-                                                        ? "Online"
-                                                        : "Offline"}
-                                                </span>
+                                                {(() => {
+                                                    // Deterministic 'online' state based on asset id
+                                                    const hash = Array.from(assetId).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
+                                                    const isOnline = Math.abs(hash) % 100 > 10; // ~90% online
+                                                    return (
+                                                        <span className={`px-2 py-0.5 rounded-full ${isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                                            {isOnline ? "Trực tuyến" : "Ngoại tuyến"}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
                                         </Popup>
                                     </Marker>
@@ -357,13 +371,9 @@ const MapComponent: React.FC<MapProps> = ({
                         })}
                         {visibleAssets.map((asset) => {
                             if (asset.geometry.type === "LineString") {
-                                const positions =
-                                    asset.geometry.coordinates.map(
-                                        (coord: any) =>
-                                            [coord[1], coord[0]] as [
-                                                number,
-                                                number
-                                            ]
+                                    const positions =
+                                    (asset.geometry.coordinates as number[][]).map(
+                                        (coord: number[]) => [coord[1], coord[0]] as [number, number]
                                     );
                                 const color = getColorForFeatureCode(
                                     asset.feature_code
@@ -413,12 +423,14 @@ const MapComponent: React.FC<MapProps> = ({
                     <HeatmapLayer points={heatmapPoints} />
                 )}
 
-                {routePoints && routePoints.length > 1 && (
+                    {routePoints && routePoints.length > 1 && (
                     <Polyline
-                        positions={routePoints.map((a) => [
-                            a.geometry.coordinates[1],
-                            a.geometry.coordinates[0],
-                        ])}
+                            positions={routePoints
+                                .filter((a) => a.geometry.type === "Point")
+                                .map((a) => {
+                                    const coords = a.geometry.coordinates as number[];
+                                    return [coords[1], coords[0]] as [number, number];
+                                })}
                         color="blue"
                         weight={4}
                         opacity={0.7}

@@ -144,13 +144,13 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
         // Validate image is uploaded
         if (!image) {
-            setImageError("Please upload an image of the issue");
+            setImageError("Vui lòng tải lên ảnh của sự cố");
             return;
         }
 
         // Validate captcha
         if (TURNSTILE_SITE_KEY && !turnstileToken) {
-            setCaptchaError("Please complete the captcha verification");
+            setCaptchaError("Vui lòng hoàn thành xác minh captcha");
             return;
         }
 
@@ -195,7 +195,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             }, 2000);
         } catch (err) {
             console.error("Failed to submit report:", err);
-            setError("Failed to submit report. Please try again.");
+            setError("Gửi báo cáo thất bại. Vui lòng thử lại.");
         } finally {
             setIsSubmitting(false);
         }
@@ -209,11 +209,10 @@ const ReportModal: React.FC<ReportModalProps> = ({
                         <Send size={32} />
                     </div>
                     <h3 className="text-xl font-bold text-slate-800 mb-2">
-                        Report Submitted
+                        Báo cáo đã được gửi
                     </h3>
                     <p className="text-slate-500">
-                        Thank you for your report. We will investigate the
-                        issue.
+                        Cảm ơn bạn đã gửi báo cáo. Chúng tôi sẽ kiểm tra và xử lý tình huống.
                     </p>
                 </div>
             </div>
@@ -227,7 +226,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="text-amber-500" size={20} />
                         <h3 className="font-bold text-lg text-slate-800">
-                            Report Issue
+                            Báo cáo sự cố
                         </h3>
                     </div>
                     <button
@@ -241,7 +240,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                 <div className="p-6 overflow-y-auto">
                     <div className="mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm">
                         <p className="font-medium text-slate-700">
-                            Reporting for: {asset.feature_type}
+                            Báo cáo cho: {asset.feature_type}
                         </p>
                         <p className="text-slate-500 font-mono text-xs mt-1">
                             ID: {asset._id}
@@ -251,7 +250,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Issue Title
+                                Tiêu đề sự cố
                             </label>
                             <input
                                 type="text"
@@ -265,7 +264,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Category
+                                Loại sự cố
                             </label>
                             <select
                                 value={category}
@@ -287,7 +286,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Severity
+                                Mức độ
                             </label>
                             <select
                                 value={severity}
@@ -309,7 +308,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">
-                                Description
+                                Mô tả
                             </label>
                             <textarea
                                 value={description}
@@ -359,7 +358,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                                 >
                                     <Upload size={24} />
                                     <span className="text-sm">
-                                        Click to upload image (required)
+                                        Nhấp để tải ảnh lên (bắt buộc)
                                     </span>
                                 </button>
                             )}
@@ -563,7 +562,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                                 ) : (
                                     <>
                                         <Send size={18} />
-                                        Submit Report
+                                        Gửi báo cáo
                                     </>
                                 )}
                             </button>

@@ -101,12 +101,12 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
               onValueChange={setStatusFilter}
             >
               <option value="">Tất cả trạng thái</option>
-              <option value="reported">Reported</option>
-              <option value="acknowledged">Acknowledged</option>
-              <option value="assigned">Assigned</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <option value="reported">Đã báo cáo</option>
+              <option value="acknowledged">Đã xác nhận</option>
+              <option value="assigned">Đã phân công</option>
+              <option value="in_progress">Đang tiến hành</option>
+              <option value="resolved">Đã xử lý</option>
+              <option value="closed">Đã đóng</option>
             </Select>
           </div>
           <div>
@@ -116,10 +116,10 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
               onValueChange={setSeverityFilter}
             >
               <option value="">Tất cả mức độ</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+              <option value="low">Thấp</option>
+              <option value="medium">Trung bình</option>
+              <option value="high">Cao</option>
+              <option value="critical">Nguy kịch</option>
             </Select>
           </div>
           <div>

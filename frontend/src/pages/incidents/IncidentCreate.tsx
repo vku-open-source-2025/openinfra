@@ -67,15 +67,15 @@ const IncidentCreate: React.FC = () => {
     setErrors({})
 
     if (!formData.title?.trim()) {
-      setErrors({ title: "Title is required" })
+      setErrors({ title: "Tiêu đề là bắt buộc" })
       return
     }
     if (!formData.description?.trim()) {
-      setErrors({ description: "Description is required" })
+      setErrors({ description: "Mô tả là bắt buộc" })
       return
     }
     if (!formData.location?.address?.trim()) {
-      setErrors({ address: "Address is required" })
+      setErrors({ address: "Địa chỉ là bắt buộc" })
       return
     }
 

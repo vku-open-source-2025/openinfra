@@ -61,7 +61,7 @@ export const AlertActions: React.FC<AlertActionsProps> = ({
       {alert.status === "active" && canAcknowledge && (
         <Button onClick={handleAcknowledge} disabled={isProcessing} className="w-full" size="sm">
           <CheckCircle className="h-4 w-4 mr-2" />
-          Acknowledge
+          Xác nhận
         </Button>
       )}
 
@@ -74,22 +74,22 @@ export const AlertActions: React.FC<AlertActionsProps> = ({
           variant="outline"
         >
           <Check className="h-4 w-4 mr-2" />
-          Resolve
+          Xử lý
         </Button>
       )}
 
       {showResolveForm && (
         <div className="space-y-2">
-          <Textarea
+            <Textarea
             value={resolutionNotes}
             onChange={(e) => setResolutionNotes(e.target.value)}
-            placeholder="Resolution notes (optional)..."
+            placeholder="Ghi chú xử lý (tùy chọn)..."
             rows={2}
             className="text-sm"
           />
           <div className="flex gap-2">
             <Button onClick={handleResolve} disabled={isProcessing} size="sm" className="flex-1">
-              Confirm Resolve
+              Xác nhận xử lý
             </Button>
             <Button
               onClick={() => {
@@ -99,7 +99,7 @@ export const AlertActions: React.FC<AlertActionsProps> = ({
               variant="outline"
               size="sm"
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </div>
@@ -108,7 +108,7 @@ export const AlertActions: React.FC<AlertActionsProps> = ({
       {alert.status === "active" && canDismiss && (
         <Button onClick={handleDismiss} disabled={isProcessing} className="w-full" size="sm" variant="outline">
           <X className="h-4 w-4 mr-2" />
-          Dismiss
+          Bỏ qua
         </Button>
       )}
     </div>

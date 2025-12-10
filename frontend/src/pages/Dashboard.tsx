@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
             .slice(0, 5)
             .sort((a, b) => b.geometry.coordinates[1] - a.geometry.coordinates[1]);
         setRoutePoints(points);
-        alert(`Route optimized for ${points.length} stops!`);
+        alert(`Tối ưu tuyến cho ${points.length} điểm dừng!`);
     };
 
     const fakeCalendarLogs = useMemo(() => {
@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
         : "0.0";
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
+        <div className="flex flex-col h-full bg-slate-50 font-sans text-slate-900">
             <main className="flex-1 flex flex-col overflow-hidden relative">
                 {/* Alert Feed Overlay */}
                 {alerts.length > 0 && (
