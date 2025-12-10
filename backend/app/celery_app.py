@@ -40,6 +40,10 @@ app.conf.beat_schedule = {
         "task": "aggregate_sensor_data_hourly",
         "schedule": crontab(minute=0),  # Run every hour
     },
+    "ai-automated-risk-detection": {
+        "task": "ai_automated_risk_detection",
+        "schedule": crontab(minute="*/30"),  # Run every 30 minutes
+    },
     "generate-scheduled-reports": {
         "task": "generate_scheduled_reports",
         "schedule": crontab(hour=0, minute=0),  # Run daily at midnight
