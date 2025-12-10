@@ -12,6 +12,12 @@
 
 OpenInfra is a comprehensive, production-grade urban infrastructure asset management system designed to digitize and optimize the lifecycle management of public infrastructure and telecommunications assets. Built with **Clean Architecture** principles and **Domain-Driven Design** patterns, OpenInfra empowers government agencies and utilities to track, maintain, and optimize infrastructure assets while improving service quality, extending asset lifespan, reducing operational costs, and enhancing community safety through data-driven decision making.
 
+### 🌐 Quick Links
+
+- **🚀 [Production System](https://openinfra.space/)**: Experience the full cloud-hosted platform with real-time GIS mapping, asset tracking, and IoT monitoring
+
+- **📚 [API Documentation](https://openinfra.space/docs)**: Learn how to integrate with our NGSI-LD compliant REST API for semantic interoperability and IoT data access
+
 ---
 
 ## 📋 Table of Contents
@@ -104,7 +110,6 @@ For detailed architecture information, see [Architecture Documentation](backend/
 
 ![GIS Map](images/Gismap.png)
 
-- **Multi-layer Visualization**: Display BTS stations, signal strength (RSRP, SINR), and coverage anomalies
 - **Geospatial Queries**: Find assets by location, radius, or custom polygons
 - **Real-time Updates**: View live asset status and sensor readings
 - **Coverage Analysis**: Automatically detect and alert on signal coverage issues
