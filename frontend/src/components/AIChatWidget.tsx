@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2, Bot, User, Code, Database, AlertCircle, Copy, Check, Play, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Bot, User, Code, Database, AlertCircle, Copy, Check, Play, ChevronDown, ChevronUp, ExternalLink, MapPin, Plus } from 'lucide-react';
+import { type Asset, getAssetId } from '../api';
 
 interface Message {
   id: string;
@@ -296,13 +297,18 @@ function ApiCard({ apiData, onClose, initialResult }: {
   );
 }
 
-export default function AIChatWidget() {
+interface AIChatWidgetProps {
+  selectedAsset?: Asset | null;
+}
+
+export default function AIChatWidget({ selectedAsset }: AIChatWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
+  const [assetInContext, setAssetInContext] = useState<Asset | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Hello! I\'m OpenInfra AI Assistant. I can help you with:\n\n• Query infrastructure data (assets, sensors, incidents)\n• Guide API usage with JSON-LD format\n• Provide code examples\n• **Test APIs directly** - type "test api" to try!\n\nHow can I help you?',
+      content: 'Hello! I\'m OpenInfra AI Assistant. I can help you with:\n\n• Query infrastructure data (assets, sensors, incidents)\n• Guide API usage with JSON-LD format\n• Provide code examples\n• **Test APIs directly** - type "test api" to try!\n• **Select an asset on the map** to ask questions about it!\n\nHow can I help you?',
       timestamp: new Date(),
     }
   ]);
@@ -324,6 +330,27 @@ export default function AIChatWidget() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Reset asset in context when selected asset changes (user needs to re-add it)
+  useEffect(() => {
+    if (selectedAsset && assetInContext && getAssetId(selectedAsset) !== getAssetId(assetInContext)) {
+      setAssetInContext(null);
+    }
+  }, [selectedAsset, assetInContext]);
+
+  const addAssetToContext = () => {
+    if (selectedAsset) {
+      setAssetInContext(selectedAsset);
+      // Add a system message to inform the user
+      const assetInfo = `Asset added to context:\n• Type: ${selectedAsset.feature_type}\n• Code: ${selectedAsset.feature_code}\n• ID: ${getAssetId(selectedAsset).slice(-6)}`;
+      setMessages(prev => [...prev, {
+        id: `asset-${Date.now()}`,
+        role: 'system',
+        content: `✅ ${assetInfo}\n\nYou can now ask questions about this asset!`,
+        timestamp: new Date(),
+      }]);
+    }
+  };
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -457,21 +484,39 @@ export default function AIChatWidget() {
       .slice(-10)
       .map(m => ({ role: m.role, content: m.content }));
 
+    // Include asset context if available
+    const assetContext = assetInContext ? {
+      asset_id: getAssetId(assetInContext),
+      feature_type: assetInContext.feature_type,
+      feature_code: assetInContext.feature_code,
+      geometry: assetInContext.geometry,
+    } : null;
+
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'chat',
         message: userMessage.content,
         history,
+        asset_context: assetContext,
       }));
     } else {
       // Fallback to REST API
       try {
+        // Include asset context if available
+        const assetContext = assetInContext ? {
+          asset_id: getAssetId(assetInContext),
+          feature_type: assetInContext.feature_type,
+          feature_code: assetInContext.feature_code,
+          geometry: assetInContext.geometry,
+        } : null;
+
         const response = await fetch(`${import.meta.env.VITE_BASE_API_URL}/ai/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: userMessage.content,
             history,
+            asset_context: assetContext,
           }),
         });
 
@@ -640,6 +685,50 @@ export default function AIChatWidget() {
               <X size={20} />
             </button>
           </div>
+
+          {/* Asset Context Banner */}
+          {selectedAsset && !assetInContext && (
+            <div className="px-4 py-3 border-b border-blue-100 bg-gradient-to-r from-green-50 to-emerald-50">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <MapPin size={16} className="text-green-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-green-800 truncate">
+                      {selectedAsset.feature_type}
+                    </p>
+                    <p className="text-xs text-green-600 truncate">
+                      {selectedAsset.feature_code} • ID: {getAssetId(selectedAsset).slice(-6)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={addAssetToContext}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition shadow-sm shrink-0"
+                >
+                  <Plus size={14} />
+                  Add to Chat
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Asset in Context Indicator */}
+          {assetInContext && (
+            <div className="px-4 py-2 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <p className="text-xs text-blue-700">
+                  <span className="font-semibold">Context:</span> {assetInContext.feature_type} ({assetInContext.feature_code})
+                </p>
+                <button
+                  onClick={() => setAssetInContext(null)}
+                  className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Quick API Buttons */}
           <div className="px-3 py-2 border-b border-blue-100 bg-blue-50/50 flex gap-2 overflow-x-auto">

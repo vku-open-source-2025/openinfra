@@ -25,6 +25,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatMessage]] = None
+    asset_context: Optional[Dict[str, Any]] = None
 
 
 class ConnectionManager:
@@ -94,6 +95,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             
             message = data.get("message", "")
             history = data.get("history", [])
+            asset_context = data.get("asset_context")
             
             if not message.strip():
                 await websocket.send_json({
@@ -104,7 +106,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             
             # Stream response
             try:
-                async for chunk in agent.stream_response(message, history):
+                async for chunk in agent.stream_response(message, history, asset_context):
                     await websocket.send_json(chunk)
             except Exception as e:
                 logger.error(f"Error streaming response: {e}")
@@ -137,7 +139,7 @@ async def chat_endpoint(request: ChatRequest):
         history = [{"role": msg.role, "content": msg.content} for msg in request.history]
     
     try:
-        response = await agent.query(request.message, history)
+        response = await agent.query(request.message, history, request.asset_context)
         return {"response": response}
     except Exception as e:
         logger.error(f"Chat error: {e}")

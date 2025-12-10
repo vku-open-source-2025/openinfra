@@ -480,7 +480,8 @@ console.log(data);'''
     async def stream_response(
         self, 
         query: str, 
-        chat_history: Optional[List[Dict[str, str]]] = None
+        chat_history: Optional[List[Dict[str, str]]] = None,
+        asset_context: Optional[Dict[str, Any]] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """Stream response from the agent"""
         
@@ -578,6 +579,17 @@ console.log(data);'''
             # Build context message
             context_parts = []
             
+            # Add asset context if provided (user selected an asset)
+            if asset_context:
+                asset_info = f"""🎯 **Asset Context (User Selected Asset):**
+- Asset ID: {asset_context.get('asset_id', 'N/A')}
+- Feature Type: {asset_context.get('feature_type', 'N/A')}
+- Feature Code: {asset_context.get('feature_code', 'N/A')}
+- Geometry Type: {asset_context.get('geometry', {}).get('type', 'N/A') if asset_context.get('geometry') else 'N/A'}
+
+**Important:** The user is asking about THIS SPECIFIC ASSET. When answering questions, focus on this asset. You can use the asset_id to query detailed information about this asset using the call_api tool with asset_id parameter."""
+                context_parts.append(asset_info)
+            
             if "stats" in context_data:
                 context_parts.append(f"📊 Thống kê hệ thống:\n{json.dumps(context_data['stats'], indent=2, ensure_ascii=False)}")
             
@@ -631,7 +643,7 @@ Hãy trả lời dựa trên dữ liệu trên. Nếu người dùng hỏi về 
             yield {"type": "error", "content": f"Lỗi: {str(e)}"}
             yield {"type": "done"}
     
-    async def query(self, query: str, chat_history: Optional[List[Dict[str, str]]] = None) -> str:
+    async def query(self, query: str, chat_history: Optional[List[Dict[str, str]]] = None, asset_context: Optional[Dict[str, Any]] = None) -> str:
         """Non-streaming query"""
         
         if not self.llm:
@@ -640,7 +652,7 @@ Hãy trả lời dựa trên dữ liệu trên. Nếu người dùng hỏi về 
         try:
             # Collect all chunks
             full_response = ""
-            async for chunk in self.stream_response(query, chat_history):
+            async for chunk in self.stream_response(query, chat_history, asset_context):
                 if chunk["type"] == "token":
                     full_response += chunk["content"]
                 elif chunk["type"] == "final":
