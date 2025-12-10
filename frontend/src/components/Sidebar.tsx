@@ -39,7 +39,30 @@ const Sidebar: React.FC<SidebarProps> = () => {
     );
     const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
-    const menuItems: MenuItem[] = [
+    // Technician menu items (limited access)
+    const technicianMenuItems: MenuItem[] = [
+        {
+            id: "dashboard",
+            label: "Dashboard",
+            icon: LayoutDashboard,
+            path: "/technician",
+        },
+        {
+            id: "assets",
+            label: "Assets",
+            icon: Building2,
+            path: "/admin/assets",
+        },
+        {
+            id: "tasks",
+            label: "My Tasks",
+            icon: AlertTriangle,
+            path: "/technician",
+        },
+    ];
+
+    // Admin menu items (full access)
+    const adminMenuItems: MenuItem[] = [
         {
             id: "dashboard",
             label: "Dashboard",
@@ -72,19 +95,6 @@ const Sidebar: React.FC<SidebarProps> = () => {
             path: "/admin/alerts",
             badge: 0, // Could be dynamic from state
         },
-        // Note: Maintenance and Assets routes can be added when pages are created
-        // {
-        //     id: 'maintenance',
-        //     label: 'Maintenance',
-        //     icon: Wrench,
-        //     path: '/admin/maintenance',
-        // },
-        // {
-        //     id: 'assets',
-        //     label: 'Assets',
-        //     icon: Map,
-        //     path: '/admin/assets',
-        // },
         {
             id: "iot",
             label: "IoT Sensors",
@@ -103,17 +113,10 @@ const Sidebar: React.FC<SidebarProps> = () => {
             icon: FileText,
             path: "/admin/reports",
         },
-        // Note: Analytics route can be added when page is created
-        // {
-        //     id: 'analytics',
-        //     label: 'Analytics',
-        //     icon: BarChart3,
-        //     path: '/admin/analytics',
-        // },
     ];
 
     // Admin-only items
-    const adminItems: MenuItem[] = [
+    const adminOnlyItems: MenuItem[] = [
         {
             id: "users",
             label: "User Management",
@@ -122,8 +125,17 @@ const Sidebar: React.FC<SidebarProps> = () => {
         },
     ];
 
-    const allItems =
-        user?.role === "admin" ? [...menuItems, ...adminItems] : menuItems;
+    // Determine menu items based on user role
+    const getMenuItems = (): MenuItem[] => {
+        if (user?.role === "technician") {
+            return technicianMenuItems;
+        } else if (user?.role === "admin" || user?.role === "manager") {
+            return [...adminMenuItems, ...adminOnlyItems];
+        }
+        return adminMenuItems; // Default to admin menu
+    };
+
+    const allItems = getMenuItems();
 
     const toggleExpanded = (id: string) => {
         setExpandedItems((prev) => {
@@ -138,9 +150,24 @@ const Sidebar: React.FC<SidebarProps> = () => {
     };
 
     const isActive = (path: string) => {
+        // Handle technician dashboard route
+        if (path === "/technician") {
+            return (
+                location.pathname === "/technician" ||
+                (location.pathname.startsWith("/technician/") &&
+                    !location.pathname.startsWith("/technician/settings"))
+            );
+        }
+        // Handle technician settings route
+        if (path === "/technician/settings") {
+            return location.pathname.startsWith("/technician/settings");
+        }
         // Exact match for /admin (Dashboard), prefix match for other routes
         if (path === "/admin") {
-            return location.pathname === "/admin";
+            return (
+                location.pathname === "/admin" &&
+                !location.pathname.startsWith("/admin/")
+            );
         }
         return (
             location.pathname === path ||
@@ -171,7 +198,11 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 {/* Logo Section */}
                 <div className="p-6 border-b border-slate-800">
                     <Link
-                        to="/admin"
+                        to={
+                            user?.role === "technician"
+                                ? "/technician"
+                                : "/admin"
+                        }
                         className="flex items-center gap-3 hover:opacity-80 transition-opacity"
                     >
                         <div className="bg-blue-500 p-2 rounded-lg">
@@ -181,7 +212,11 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             <h1 className="text-xl font-bold tracking-tight">
                                 InfraManager
                             </h1>
-                            <p className="text-xs text-slate-400">v1.0.0</p>
+                            <p className="text-xs text-slate-400">
+                                {user?.role === "technician"
+                                    ? "Technician"
+                                    : "v1.0.0"}
+                            </p>
                         </div>
                     </Link>
                 </div>
@@ -298,7 +333,11 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             </div>
                         </div>
                         <Link
-                            to="/admin/settings"
+                            to={
+                                user?.role === "technician"
+                                    ? "/technician/settings"
+                                    : "/admin/settings"
+                            }
                             onClick={() => setIsMobileOpen(false)}
                             className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
                         >

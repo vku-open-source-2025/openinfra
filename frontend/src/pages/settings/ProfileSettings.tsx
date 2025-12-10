@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { usersApi } from "@/api/users";
 import { authApi } from "@/api/auth";
 import {
@@ -16,7 +17,8 @@ import type { ProfileUpdateRequest } from "../../types/user";
 
 const ProfileSettings: React.FC = () => {
     const queryClient = useQueryClient();
-    const { user, setUser } = useAuthStore();
+    const navigate = useNavigate();
+    const { user, setUser, logout } = useAuthStore();
     const [formData, setFormData] = useState<Partial<ProfileUpdateRequest>>({});
     const [passwordData, setPasswordData] = useState({
         current_password: "",
@@ -63,10 +65,11 @@ const ProfileSettings: React.FC = () => {
         }: {
             current: string;
             new: string;
-        }) => authApi.changePassword({
-            current_password: current,
-            new_password: newPass,
-        }),
+        }) =>
+            authApi.changePassword({
+                current_password: current,
+                new_password: newPass,
+            }),
         onSuccess: () => {
             setPasswordData({
                 current_password: "",
@@ -120,6 +123,12 @@ const ProfileSettings: React.FC = () => {
             current: passwordData.current_password,
             new: passwordData.new_password,
         });
+    };
+
+    const handleLogout = () => {
+        logout();
+        queryClient.clear();
+        navigate({ to: "/" });
     };
 
     if (isLoading) {
@@ -281,6 +290,19 @@ const ProfileSettings: React.FC = () => {
                         </Button>
                     </div>
                 </Form>
+            </div>
+
+            <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h2 className="text-lg font-semibold mb-4">Account Actions</h2>
+                <div className="flex gap-4">
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={handleLogout}
+                    >
+                        Logout
+                    </Button>
+                </div>
             </div>
         </div>
     );

@@ -234,19 +234,23 @@ const AboutUs: React.FC = () => {
             <section className="py-6 px-6 border-t border-slate-100">
                 <div className="container mx-auto max-w-4xl text-center">
                     <p className="text-slate-400 text-xs">
-                        Licensed under{" "}
+                        Code licensed under{" "}
                         <a
                             href="https://www.apache.org/licenses/LICENSE-2.0"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-sky-500 hover:underline"
                         >
                             Apache 2.0
                         </a>{" "}
-                        · Data under{" "}
+                        · Data licensed under{" "}
                         <a
-                            href="https://opendatacommons.org/licenses/by/1-0/"
+                            href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-sky-500 hover:underline"
                         >
-                            ODC-BY
+                            Open Government Licence v3.0 (OGL)
                         </a>
                     </p>
                 </div>

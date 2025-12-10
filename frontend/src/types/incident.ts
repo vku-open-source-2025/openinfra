@@ -1,36 +1,44 @@
-export type IncidentStatus = 'reported' | 'acknowledged' | 'assigned' | 'investigating' | 'in_progress' | 'waiting_approval' | 'resolved' | 'closed';
-export type IncidentSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ReporterType = 'citizen' | 'technician' | 'admin' | 'manager';
+export type IncidentStatus =
+    | "reported"
+    | "acknowledged"
+    | "assigned"
+    | "investigating"
+    | "in_progress"
+    | "waiting_approval"
+    | "resolved"
+    | "closed";
+export type IncidentSeverity = "low" | "medium" | "high" | "critical";
+export type ReporterType = "citizen" | "technician" | "admin" | "manager";
 
 export interface IncidentLocation {
-  address?: string;
-  geometry?: {
-    type: string;
-    coordinates: number[] | number[][] | number[][][];
-  };
-  coordinates?: {
-    longitude: number;
-    latitude: number;
-  };
+    address?: string;
+    geometry?: {
+        type: string;
+        coordinates: number[] | number[][] | number[][][];
+    };
+    coordinates?: {
+        longitude: number;
+        latitude: number;
+    };
 }
 
 export interface AssetSummary {
-  id: string;
-  asset_code?: string;
-  name?: string;
-  feature_type: string;
-  category?: string;
-  status?: string;
+    id: string;
+    asset_code?: string;
+    name?: string;
+    feature_type: string;
+    category?: string;
+    status?: string;
 }
 
 export interface IncidentComment {
-  id: string;
-  comment: string;
-  user_id?: string;
-  user_name?: string;
-  is_internal: boolean;
-  posted_at: string;
-  created_at?: string; // For backwards compatibility
+    id: string;
+    comment: string;
+    user_id?: string;
+    user_name?: string;
+    is_internal: boolean;
+    posted_at: string;
+    created_at?: string; // For backwards compatibility
 }
 
 export interface Incident {
@@ -67,22 +75,22 @@ export interface Incident {
 }
 
 export interface IncidentCreateRequest {
-  title: string;
-  description: string;
-  severity: IncidentSeverity;
-  asset_id?: string;
-  location: IncidentLocation;
+    title: string;
+    description: string;
+    severity: IncidentSeverity;
+    asset_id?: string;
+    location: IncidentLocation;
 }
 
 export interface IncidentUpdateRequest {
-  title?: string;
-  description?: string;
-  severity?: IncidentSeverity;
-  status?: IncidentStatus;
-  assigned_to?: string;
+    title?: string;
+    description?: string;
+    severity?: IncidentSeverity;
+    status?: IncidentStatus;
+    assigned_to?: string;
 }
 
 export interface IncidentCommentRequest {
-  comment: string;
-  is_internal?: boolean;
+    comment: string;
+    is_internal?: boolean;
 }
