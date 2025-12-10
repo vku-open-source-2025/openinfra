@@ -294,7 +294,7 @@ async def detect_ai_risks(grouped_readings: dict, db=None) -> dict:
                         "sensor_type": sensor_type,
                         "risk_level": "high",
                         "risk_type": "elevated_reading",
-                        "description": f"Water level readings show elevated values (max: {max_value:.2f})",
+                        "description": f"Giá trị đo mực nước cho thấy mức độ cao (tối đa: {max_value:.2f})",
                         "confidence": 0.7,
                         "detected_at": datetime.utcnow(),
                         "statistics": {
@@ -481,16 +481,120 @@ async def _ai_automated_risk_detection_async():
                     else:
                         incident_category = IncidentCategory.OTHER
 
-                    # Create incident
+                    # Map risk level to Vietnamese
+                    risk_level_vn = {
+                        "critical": "Nghiêm Trọng",
+                        "high": "Cao",
+                        "medium": "Trung Bình",
+                        "low": "Thấp",
+                    }.get(risk_level, risk_level.upper())
+
+                    # Map risk type to Vietnamese
+                    risk_type = risk.get("risk_type", "Unknown")
+                    risk_type_vn = {
+                        "abnormal_rain_accumulation": "Tích Tụ Mưa Bất Thường",
+                        "elevated_reading": "Giá Trị Đo Cao",
+                        "flood_risk": "Nguy Cơ Lũ Lụt",
+                        "water_level_high": "Mực Nước Cao",
+                    }.get(risk_type.lower(), risk_type)
+
+                    # Create incident with Vietnamese description
+                    sensor_code = sensor_info.get("sensor_code", sensor_id)
+                    confidence_pct = risk.get("confidence", 0) * 100
+
+                    # Translate description to Vietnamese or generate Vietnamese description
+                    original_description = risk.get("description", "")
+                    if original_description:
+                        # Translate common English patterns to Vietnamese
+                        description_vn = original_description
+                        # Translate common phrases
+                        description_vn = description_vn.replace(
+                            "Abnormal rain accumulation detected",
+                            "Phát hiện tích tụ mưa bất thường",
+                        )
+                        description_vn = description_vn.replace(
+                            "Current rate", "Tốc độ hiện tại"
+                        )
+                        description_vn = description_vn.replace(
+                            "exceeds forecast", "vượt quá dự báo"
+                        )
+                        description_vn = description_vn.replace("mm/h", "mm/giờ")
+                        description_vn = description_vn.replace("Threshold", "Ngưỡng")
+                        description_vn = description_vn.replace(
+                            "High rain accumulation rate detected",
+                            "Phát hiện tốc độ tích tụ mưa cao",
+                        )
+                        description_vn = description_vn.replace("threshold", "ngưỡng")
+                        description_vn = description_vn.replace(
+                            "Water level readings show elevated values",
+                            "Giá trị đo mực nước cho thấy mức độ cao",
+                        )
+                        description_vn = description_vn.replace("max", "tối đa")
+
+                        # If still mostly English, generate Vietnamese description from risk data
+                        if any(
+                            word in description_vn.lower()
+                            for word in [
+                                "detected",
+                                "exceeds",
+                                "threshold",
+                                "readings show",
+                            ]
+                        ):
+                            # Generate Vietnamese description from risk metadata
+                            forecast_data = risk.get("forecast_data", {})
+                            statistics = risk.get("statistics", {})
+
+                            if forecast_data:
+                                current_rate = forecast_data.get("current_rate", 0)
+                                forecast_rate = forecast_data.get("forecast_rate", 0)
+                                description_vn = (
+                                    f"Phát hiện tích tụ mưa bất thường: "
+                                    f"Tốc độ hiện tại {current_rate:.2f} mm/giờ vượt quá dự báo "
+                                    f"{forecast_rate:.2f} mm/giờ."
+                                )
+                            elif statistics:
+                                max_value = statistics.get("max", 0)
+                                description_vn = (
+                                    f"Giá trị đo mực nước cho thấy mức độ cao "
+                                    f"(tối đa: {max_value:.2f} {sensor_info.get('measurement_unit', '')})."
+                                )
+                            else:
+                                description_vn = (
+                                    f"Hệ thống phát hiện rủi ro AI đã xác định một rủi ro mức {risk_level_vn.lower()} cho cảm biến {sensor_code}. "
+                                    f"Loại rủi ro: {risk_type_vn}. "
+                                    f"Độ tin cậy: {confidence_pct:.1f}%."
+                                )
+                    else:
+                        # Generate Vietnamese description from risk data
+                        forecast_data = risk.get("forecast_data", {})
+                        statistics = risk.get("statistics", {})
+
+                        if forecast_data:
+                            current_rate = forecast_data.get("current_rate", 0)
+                            forecast_rate = forecast_data.get("forecast_rate", 0)
+                            description_vn = (
+                                f"Phát hiện tích tụ mưa bất thường: "
+                                f"Tốc độ hiện tại {current_rate:.2f} mm/giờ vượt quá dự báo "
+                                f"{forecast_rate:.2f} mm/giờ."
+                            )
+                        elif statistics:
+                            max_value = statistics.get("max", 0)
+                            description_vn = (
+                                f"Giá trị đo mực nước cho thấy mức độ cao "
+                                f"(tối đa: {max_value:.2f} {sensor_info.get('measurement_unit', '')})."
+                            )
+                        else:
+                            description_vn = (
+                                f"Hệ thống phát hiện rủi ro AI đã xác định một rủi ro mức {risk_level_vn.lower()} cho cảm biến {sensor_code}. "
+                                f"Loại rủi ro: {risk_type_vn}. "
+                                f"Độ tin cậy: {confidence_pct:.1f}%."
+                            )
+
                     incident_data = IncidentCreate(
                         asset_id=asset_id,
-                        title=f"AI Detected {risk_level.upper()} Risk: {risk.get('risk_type', 'Unknown')}",
-                        description=risk.get(
-                            "description",
-                            f"AI risk detection system identified a {risk_level} level risk for sensor {sensor_info.get('sensor_code', sensor_id)}. "
-                            f"Risk type: {risk.get('risk_type', 'Unknown')}. "
-                            f"Confidence: {risk.get('confidence', 0):.1%}.",
-                        ),
+                        title=f"AI Phát Hiện Rủi Ro {risk_level_vn}: {risk_type_vn}",
+                        description=description_vn,
                         category=incident_category,
                         severity=incident_severity,
                         reported_via="system",
