@@ -87,6 +87,12 @@ For detailed architecture information, see [Architecture Documentation](backend/
 ### QR/NFC Field Access
 ![NFC](images/NFC.jpg)
 
+### NFC/QR Reporting Workflow
+![NFC Reporting Workflow](images/nfc-workflow.png)
+
+### AI-Powered IoT Reporting Workflow
+![AI Reporting Workflow](images/ai-reporting-workflow.png)
+
 ### OpenAPI Documentation
 ![OpenAPI](images/OpenAPI.png)
 
@@ -118,22 +124,32 @@ For detailed architecture information, see [Architecture Documentation](backend/
 ### 3. 📱 Field Access via QR/NFC
 
 ![NFC](images/NFC.jpg)
+![NFC Reporting Workflow](images/nfc-workflow.png)
 
 - **Quick Scanning**: Access asset information instantly in the field
 - **Public Information**: Citizens can view basic asset details
 - **Citizen Reporting**: Report issues with photos directly from scanned assets
+- **Complete Workflow**: From citizen report → automated ticket → technician assignment → field repair → citizen notification
 - **Technician Access**: Field workers get full maintenance information
 - **Offline Support**: Basic information available without connectivity
+
+See [NFC/QR Code Reporting Workflow](#nfcqr-code-reporting-workflow) section in Architecture for detailed workflow diagram.
 
 ### 4. 🔔 Real-time IoT Monitoring & Alerts
 
 ![Dashboard](images/Dashboard.png)
+![AI Reporting Workflow](images/ai-reporting-workflow.png)
 
 - **Multi-sensor Support**: Temperature, tilt, door sensors, voltage, UPS, A/C monitoring
 - **Threshold-based Alerts**: Automatic warnings when readings exceed limits
+- **AI-Powered Analysis**: Machine learning models analyze sensor patterns and predict issues
 - **24/7 Monitoring Dashboard**: Real-time overview of all sensors and alerts
 - **Automatic Ticket Generation**: Create maintenance tasks from critical alerts
+- **Intelligent Data Linking**: AI automatically links related assets and historical incidents
+- **Continuous Learning**: Post-incident analytics improve AI detection models
 - **Historical Analytics**: Trend analysis and predictive maintenance
+
+See [AI-Powered IoT Reporting Workflow](#ai-powered-iot-reporting-workflow) section in Architecture for detailed workflow diagram.
 
 ### 5. 📡 Intelligent Coverage Monitoring
 
@@ -207,46 +223,357 @@ For detailed technology stack information, see:
 
 ## 🏗️ Architecture
 
-OpenInfra follows **Clean Architecture** principles with clear separation of concerns:
+OpenInfra follows **Clean Architecture** principles with **Domain-Driven Design** patterns, ensuring scalability, maintainability, and production readiness.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Client Layer (React)                     │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│              API Layer (FastAPI Routers)                    │
-│  • Authentication & Authorization (JWT + RBAC)              │
-│  • Request Validation (Pydantic)                            │
-│  • Rate Limiting & CORS                                     │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Domain Layer (Business Logic)                 │
-│  • Services: Asset, Maintenance, IoT, Alert                 │
-│  • Models: Domain entities with business rules              │
-│  • Repositories: Abstract data access interfaces            │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│           Infrastructure Layer (Implementations)            │
-│  • MongoDB (with Motor async driver)                        │
-│  • Redis (caching & pub/sub)                                │
-│  • Celery (background tasks)                                │
-│  • MQTT (IoT data ingestion)                                │
-│  • MinIO (object storage)                                   │
-│  • External APIs (OSM, email, SMS)                          │
-└─────────────────────────────────────────────────────────────┘
+### System Architecture Overview
+
+```mermaid
+graph TD
+    %% --- STYLING ---
+    classDef clientLayer fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,rx:10,ry:10;
+    classDef gatewayLayer fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,rx:5,ry:5;
+    classDef appLayer fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,rx:5,ry:5;
+    classDef domainLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,rx:5,ry:5;
+    classDef infraLayer fill:#eceff1,stroke:#37474f,stroke-width:2px,rx:5,ry:5;
+    classDef external fill:#ffebee,stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef monitoring fill:#fbfbe4,stroke:#827717,stroke-width:2px;
+
+    %% --- 1. EXTERNAL DEVICES & USERS ---
+    subgraph External_Sources [External Sources & IoT]
+        IOT_SENSORS(fa:fa-microchip IoT Sensors<br/>Temp, Tilt, Voltage):::external
+        PUBLIC_USER(fa:fa-users Citizens<br/>Public Web/QR):::external
+        IOT_GATEWAY(fa:fa-network-wired IoT Gateway<br/>Protocol Bridge):::external
+    end
+
+    %% --- 2. CLIENT LAYER ---
+    subgraph Client_Layer [Client Layer Presentation]
+        direction LR
+        WEB(fa:fa-desktop Web App<br/>React):::clientLayer
+        MOBILE(fa:fa-mobile Mobile App<br/>Future):::clientLayer
+        SCANNER(fa:fa-qrcode QR/NFC<br/>Scanner):::clientLayer
+        AGENT(fa:fa-robot AI Agent<br/>MCP Client):::clientLayer
+    end
+
+    %% --- 3. API GATEWAY ---
+    subgraph Gateway_Layer [API Gateway & Security]
+        APIGW(fa:fa-shield-alt API Gateway<br/>Auth JWT/OAuth, Rate Limit<br/>Pydantic Validation):::gatewayLayer
+    end
+
+    %% --- 4. APPLICATION LAYER ---
+    subgraph App_Layer [Application Layer - FastAPI Routers]
+        direction TB
+        ROUTER_CORE(fa:fa-server Core Routers<br/>Assets, Maintenance, IoT)
+        ROUTER_OPS(fa:fa-bell Ops Routers<br/>Incidents, Alerts, Notifs)
+        ROUTER_BIZ(fa:fa-chart-pie Biz Routers<br/>Budget, User, Reports)
+    end
+    class ROUTER_CORE,ROUTER_OPS,ROUTER_BIZ appLayer
+
+    %% --- 5. DOMAIN LAYER ---
+    subgraph Domain_Layer [Domain Layer - Business Logic]
+        SERVICES(fa:fa-cogs Domain Services<br/>AssetService, IncidentService, etc.):::domainLayer
+        ENTITIES(fa:fa-cube Domain Models/Entities<br/>Asset, Alert, Budget, User):::domainLayer
+    end
+
+    %% --- 6. INFRASTRUCTURE LAYER ---
+    subgraph Infra_Layer [Infrastructure Layer]
+        direction TB
+
+        subgraph Persistence [Data Persistence]
+            MONGO[(fa:fa-database MongoDB<br/>Primary Data)]:::infraLayer
+            REDIS[(fa:fa-memory Redis<br/>Cache & PubSub)]:::infraLayer
+            MINIO[(fa:fa-hdd MinIO<br/>Object Storage)]:::infraLayer
+        end
+
+        subgraph Background [Background Processing]
+            CELERY(fa:fa-tasks Celery Workers):::infraLayer
+            BEAT(fa:fa-clock Celery Beat<br/>Scheduler):::infraLayer
+        end
+
+        subgraph Messaging [Messaging & Integration]
+            MQTT(fa:fa-project-diagram MQTT Broker<br/>Mosquitto):::infraLayer
+            EMAIL_SMS(fa:fa-envelope SendGrid / Twilio):::infraLayer
+            MCP_SERVER(fa:fa-robot MCP Server<br/>AI Integration):::infraLayer
+        end
+    end
+
+    %% --- 7. OBSERVABILITY ---
+    subgraph Monitoring [Observability Stack]
+        PROMETHEUS(fa:fa-tachometer-alt Prometheus):::monitoring
+        GRAFANA(fa:fa-chart-area Grafana):::monitoring
+        ELK(fa:fa-list-alt ELK Stack):::monitoring
+    end
+
+    %% --- CONNECTIONS ---
+
+    %% IoT Flow
+    IOT_SENSORS -->|Telemetry| IOT_GATEWAY
+    IOT_GATEWAY -->|MQTT| MQTT
+    MQTT -->|Sub| CELERY
+
+    %% Client Flow
+    WEB & MOBILE & SCANNER & AGENT -->|HTTPS| APIGW
+    PUBLIC_USER --> WEB
+
+    %% App Flow
+    APIGW --> ROUTER_CORE & ROUTER_OPS & ROUTER_BIZ
+    ROUTER_CORE & ROUTER_OPS & ROUTER_BIZ --> SERVICES
+    SERVICES --> ENTITIES
+
+    %% Infra Implementation
+    SERVICES -.->|Uses Repository Interfaces| Persistence
+    SERVICES -->|Publishes Events| REDIS
+    SERVICES -->|Triggers Tasks| CELERY
+
+    %% Background Tasks
+    CELERY -->|Read/Write| MONGO
+    CELERY -->|Send| EMAIL_SMS
+    BEAT -->|Schedule| CELERY
+
+    %% Monitoring Connections
+    PROMETHEUS -.->|Scrape Metrics| APIGW & CELERY & MONGO
 ```
 
-**Key Architecture Benefits**:
-- ✅ **Testable**: Business logic independent of frameworks
-- ✅ **Maintainable**: Clear boundaries between layers
-- ✅ **Scalable**: Horizontal scaling of all components
-- ✅ **Flexible**: Easy to swap infrastructure components
+### Architecture Layers
+
+OpenInfra implements **Clean Architecture** with **Domain-Driven Design**, organized into seven distinct layers:
+
+#### 1. **External Sources & IoT**
+- **IoT Sensors**: Temperature, tilt, voltage, door sensors, UPS, A/C monitoring
+- **IoT Gateway**: Protocol bridge converting sensor data to MQTT messages
+- **Citizens**: Public users accessing via web portal or QR/NFC scanning
+
+#### 2. **Client Layer (Presentation)**
+Multiple client interfaces for different user types:
+- **Web App** (React): Full-featured web interface for administrators and technicians
+- **Mobile App**: Field-optimized mobile interface (future)
+- **QR/NFC Scanner**: Quick access to asset information in the field
+- **AI Agent** (MCP Client): AI-powered interactions via Model Context Protocol
+
+#### 3. **API Gateway & Security**
+Centralized security and request handling:
+- **Authentication**: JWT/OAuth token validation
+- **Authorization**: Role-based access control (RBAC)
+- **Rate Limiting**: Protection against abuse and DDoS
+- **Request Validation**: Pydantic schema validation
+- **CORS & Security Headers**: Cross-origin and security policy enforcement
+
+#### 4. **Application Layer (FastAPI Routers)**
+Organized into three router groups:
+- **Core Routers**: Assets, Maintenance, IoT management
+- **Operations Routers**: Incidents, Alerts, Notifications
+- **Business Routers**: Budget, User management, Reports
+
+#### 5. **Domain Layer (Business Logic)**
+Core business logic independent of infrastructure:
+- **Domain Services**: 9 business services implementing use cases
+- **Domain Models/Entities**: Core business entities (Asset, Alert, Budget, User, etc.)
+- **Repository Interfaces**: Abstract data access contracts
+
+#### 6. **Infrastructure Layer**
+Three sub-layers providing technical capabilities:
+
+**Data Persistence**:
+- **MongoDB**: Primary database for structured and geospatial data
+- **Redis**: High-performance caching and pub/sub messaging
+- **MinIO**: S3-compatible object storage for files and documents
+
+**Background Processing**:
+- **Celery Workers**: Distributed task processing for async operations
+- **Celery Beat**: Scheduled task execution (reports, maintenance checks)
+
+**Messaging & Integration**:
+- **MQTT Broker** (Mosquitto): Real-time IoT data ingestion
+- **Email/SMS Services**: SendGrid and Twilio for notifications
+- **MCP Server**: AI agent integration for semantic API access
+
+#### 7. **Observability Stack**
+Comprehensive monitoring and observability:
+- **Prometheus**: Metrics collection and time-series storage
+- **Grafana**: Visualization dashboards and alerting
+- **ELK Stack**: Centralized logging (Elasticsearch, Logstash, Kibana)
+
+### Data Flow Patterns
+
+**Client Request Flow**:
+```
+Client → API Gateway → FastAPI Router → Domain Service → Repository → MongoDB/Redis
+```
+
+**IoT Data Ingestion Flow**:
+```
+IoT Sensors → IoT Gateway → MQTT Broker → Celery Worker → IoT Service → Alert Service → MongoDB
+```
+
+**Background Processing Flow**:
+```
+Domain Service → Celery Task Queue → Celery Worker → MongoDB/MinIO/External APIs
+```
+
+**Real-time Updates Flow**:
+```
+Domain Service → Redis Pub/Sub → WebSocket → Client Dashboard
+```
+
+### Workflow Diagrams
+
+#### NFC/QR Code Reporting Workflow
+
+Citizens can report infrastructure issues by scanning QR codes or NFC tags on assets. This workflow demonstrates the complete incident lifecycle from citizen report to resolution:
+
+```mermaid
+sequenceDiagram
+    participant Citizen
+    participant MobileApp as Mobile App
+    participant API as API Gateway
+    participant IncidentService as Incident Service
+    participant AlertService as Alert Service
+    participant Admin as Admin Dashboard
+    participant Technician as Field Technician
+    participant NotificationService as Notification Service
+
+    Citizen->>MobileApp: Scan QR/NFC on Asset
+    MobileApp->>API: GET /api/v1/public/assets/{code}
+    API->>MobileApp: Asset Information
+    MobileApp->>Citizen: Display Asset Details & Report Form
+
+    Citizen->>MobileApp: Fill Incident Report<br/>(Title, Type, Severity, Description, Photos)
+    MobileApp->>API: POST /api/v1/public/incidents
+    API->>IncidentService: Create Incident
+    IncidentService->>IncidentService: Generate Incident Number<br/>(INC-2025-00035)
+    IncidentService->>AlertService: Create Alert
+    AlertService->>Admin: Push Notification<br/>"New Incident Reported"
+
+    Admin->>API: GET /api/v1/incidents/{id}
+    API->>Admin: Incident Details with Map Location
+    Admin->>API: POST /api/v1/incidents/{id}/assign<br/>(Assign to Technician)
+    API->>IncidentService: Update Assignment
+    IncidentService->>NotificationService: Notify Technician
+
+    Technician->>API: GET /api/v1/maintenance/{id}
+    API->>Technician: Work Order with Location & Route
+    Technician->>Technician: Perform Field Repair
+    Technician->>API: POST /api/v1/maintenance/{id}/complete<br/>(Upload Photos, Notes)
+    API->>IncidentService: Link Maintenance Record
+
+    Admin->>API: POST /api/v1/incidents/{id}/resolve<br/>(Review & Approve)
+    API->>IncidentService: Mark Incident Resolved
+    IncidentService->>NotificationService: Notify Citizen
+    NotificationService->>MobileApp: Push Notification<br/>"Issue Resolved"
+    MobileApp->>Citizen: Show Before/After Comparison
+```
+
+**Key Features**:
+- ✅ **QR/NFC Scanning**: Instant asset identification and information access
+- ✅ **Automated Ticket Generation**: System automatically creates incident tickets
+- ✅ **Real-time Alerts**: Administrators receive immediate notifications
+- ✅ **Field Workflow**: Technicians access work orders via mobile devices
+- ✅ **Transparent Updates**: Citizens receive status updates throughout the process
+- ✅ **Photo Documentation**: Before/after photos for verification
+
+#### AI-Powered IoT Reporting Workflow
+
+IoT sensors automatically detect infrastructure issues and trigger an intelligent incident management workflow with AI-enhanced data analysis:
+
+```mermaid
+graph TB
+    subgraph "1. Real-time Detection"
+        Sensors[IoT Sensors<br/>Water Level, Temperature<br/>Pressure, Tilt]
+        Gateway[IoT Gateway<br/>Protocol Bridge]
+    end
+
+    subgraph "2. Automated Processing"
+        MQTT[MQTT Broker]
+        IoTService[IoT Service<br/>Data Ingestion]
+        AlertService[Alert Service<br/>Threshold Analysis]
+    end
+
+    subgraph "3. AI Enhancement"
+        AIService[AI Service<br/>Data Analysis & Enrichment]
+        DataLinking[Data Linking<br/>Historical Context<br/>Asset Relationships]
+    end
+
+    subgraph "4. Incident Management"
+        IncidentService[Incident Service<br/>Ticket Generation]
+        AdminDashboard[Admin Dashboard<br/>Central Monitoring]
+    end
+
+    subgraph "5. Field Response"
+        FieldTeam[Field Team<br/>Onsite Response]
+        MobileApp[Mobile App<br/>Task Management]
+    end
+
+    subgraph "6. Resolution & Analytics"
+        UpdateStatus[Update Resolution Status]
+        Analytics[Post-Incident Analytics<br/>AI Insights]
+    end
+
+    subgraph "7. Continuous Improvement"
+        Feedback[Feedback Loop<br/>ML Model Training]
+    end
+
+    Sensors -->|Telemetry Data| Gateway
+    Gateway -->|MQTT Protocol| MQTT
+    MQTT -->|Sensor Readings| IoTService
+    IoTService -->|Check Thresholds| AlertService
+
+    AlertService -->|Trigger Alert| IncidentService
+    IncidentService -->|Generate Ticket| AIService
+    AIService -->|Enrich Data| DataLinking
+    DataLinking -->|Link Related Assets| IncidentService
+
+    IncidentService -->|Display on Map| AdminDashboard
+    AdminDashboard -->|Assign Task| FieldTeam
+    FieldTeam -->|Access via| MobileApp
+    MobileApp -->|Update Progress| UpdateStatus
+
+    UpdateStatus -->|Resolution Data| Analytics
+    Analytics -->|Generate Insights| Feedback
+    Feedback -->|Improve Detection| Sensors
+    Feedback -->|Enhance AI Models| AIService
+
+    style Sensors fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style AIService fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+    style Analytics fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style Feedback fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+```
+
+**Key Features**:
+- ✅ **Automated Detection**: IoT sensors continuously monitor infrastructure health
+- ✅ **AI-Powered Analysis**: Machine learning models analyze sensor data patterns
+- ✅ **Intelligent Data Linking**: System automatically links related assets and historical incidents
+- ✅ **Predictive Insights**: AI identifies potential issues before they become critical
+- ✅ **Centralized Monitoring**: Real-time dashboard with geospatial visualization
+- ✅ **Mobile Field Access**: Technicians receive tasks and update status via mobile devices
+- ✅ **Continuous Learning**: Post-incident analytics feed back into AI models for improvement
+- ✅ **Automated Ticket Generation**: System creates detailed incident tickets with context
+
+**Workflow Steps**:
+
+1. **Real-time Detection**: IoT sensors (water level, temperature, pressure, tilt) continuously monitor infrastructure
+2. **Automated Processing**: Sensor data flows through MQTT to IoT Service, which checks thresholds and triggers alerts
+3. **AI Enhancement**: AI Service analyzes data patterns, enriches incident context, and links related assets
+4. **Incident Management**: System generates detailed tickets and displays them on admin dashboard with map visualization
+5. **Field Response**: Field teams receive assignments via mobile app and perform onsite repairs
+6. **Resolution & Analytics**: Completed incidents feed into analytics engine for insights and reporting
+7. **Continuous Improvement**: Analytics data trains ML models to improve future detection accuracy
+
+### Domain Services
+
+The system includes **9 core domain services** implementing business logic:
+
+| Service | Responsibility |
+|---------|---------------|
+| **Asset Service** | Infrastructure asset lifecycle management, geospatial queries |
+| **Maintenance Service** | Work order management, scheduling, technician assignment |
+| **Incident Service** | Citizen reporting, issue tracking, resolution workflow |
+| **IoT Service** | Sensor data collection, real-time monitoring, threshold checking |
+| **Budget Service** | Financial planning, allocation, expense tracking |
+| **Notification Service** | Multi-channel notifications (email, SMS, push, in-app) |
+| **Alert Service** | Alert generation, prioritization, routing to users |
+| **Report Service** | Analytics, report generation, dashboard data aggregation |
+| **User & Identity Service** | Authentication, authorization, user management |
+
+### Architecture Documentation
 
 For comprehensive architecture documentation, see:
 - [System Architecture](backend/docs/architecture.md)

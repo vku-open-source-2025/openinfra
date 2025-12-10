@@ -37,7 +37,10 @@ const featureCards = [
 ];
 
 const benefitHighlights = [
-    { title: "Rút ngắn thời gian phản ứng", desc: "Phát hiện sự cố nhanh hơn." },
+    {
+        title: "Rút ngắn thời gian phản ứng",
+        desc: "Phát hiện sự cố nhanh hơn.",
+    },
     { title: "Tiết kiệm chi phí", desc: "Tối ưu vận hành hiệu quả." },
     { title: "Độ tin cậy", desc: "Hệ thống giám sát liên tục." },
 ];
@@ -97,12 +100,12 @@ const HomePage = () => {
     const assetCountLabel =
         assetCount !== null
             ? `${new Intl.NumberFormat("vi-VN", {
-                notation: "compact",
-                maximumFractionDigits: 1,
-            }).format(assetCount)} điểm giám sát đang hoạt động`
+                  notation: "compact",
+                  maximumFractionDigits: 1,
+              }).format(assetCount)} điểm giám sát đang hoạt động`
             : loadingAssets
-                ? "Đang tải số điểm giám sát..."
-                : "200+ điểm giám sát đang hoạt động";
+            ? "Đang tải số điểm giám sát..."
+            : "200+ điểm giám sát đang hoạt động";
 
     const statCards = [
         {
@@ -111,9 +114,9 @@ const HomePage = () => {
             value:
                 assetCount !== null
                     ? new Intl.NumberFormat("vi-VN", {
-                        notation: "compact",
-                        maximumFractionDigits: 1,
-                    }).format(assetCount)
+                          notation: "compact",
+                          maximumFractionDigits: 1,
+                      }).format(assetCount)
                     : "—",
             hint: loadingAssets ? "Đang tải..." : "Cập nhật dữ liệu mới nhất",
             color: "from-cyan-500 to-blue-500",
@@ -140,13 +143,11 @@ const HomePage = () => {
             value:
                 totalContributions !== null
                     ? new Intl.NumberFormat("vi-VN", {
-                        notation: "compact",
-                        maximumFractionDigits: 1,
-                    }).format(totalContributions)
+                          notation: "compact",
+                          maximumFractionDigits: 1,
+                      }).format(totalContributions)
                     : "—",
-            hint: loadingLeaderboard
-                ? "Đang tải..."
-                : "Tổng lượt gửi dữ liệu",
+            hint: loadingLeaderboard ? "Đang tải..." : "Tổng lượt gửi dữ liệu",
             color: "from-emerald-500 to-teal-500",
             bgColor: "from-emerald-50 to-teal-50",
             iconColor: "text-emerald-500",
@@ -183,8 +184,9 @@ const HomePage = () => {
                                 </span>
                             </h1>
                             <p className="text-lg text-slate-600 leading-relaxed">
-                                Bản đồ hạ tầng số giúp bạn giám sát, quản lý và tối ưu
-                                toàn bộ hệ thống từ một bảng điều khiển trực quan.
+                                Bản đồ hạ tầng số giúp bạn giám sát, quản lý và
+                                tối ưu toàn bộ hệ thống từ một bảng điều khiển
+                                trực quan.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 pt-2">
                                 <Link
@@ -216,7 +218,7 @@ const HomePage = () => {
                                 <div className="relative overflow-hidden rounded-xl group">
                                     <img
                                         src={mapImage}
-                                    alt="Bản đồ hạ tầng"
+                                        alt="Bản đồ hạ tầng"
                                         className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
@@ -237,60 +239,6 @@ const HomePage = () => {
                                     </span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Stats Section */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                            <div>
-                                <div className="text-sm uppercase tracking-wide text-blue-600 font-semibold">
-                                    Các chỉ số chính
-                                </div>
-                                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-1">
-                                    Hiệu quả đã được kiểm chứng
-                                </h2>
-                                <p className="text-slate-600 mt-2">
-                                    Dữ liệu thu thập, người đóng góp và hệ thống
-                                    vận hành theo thời gian thực.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                            {statCards.map((item) => (
-                                <div
-                                    key={item.label}
-                                    className={`rounded-xl border border-slate-200 bg-gradient-to-br ${item.bgColor} px-5 py-6 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2 relative overflow-hidden`}
-                                >
-                                    {/* Decorative gradient bar */}
-                                    <div
-                                        className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${item.color}`}
-                                    ></div>
-
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className={`p-2 rounded-lg bg-white/80 shadow-sm`}
-                                        >
-                                            <item.icon
-                                                className={`w-5 h-5 ${item.iconColor}`}
-                                            />
-                                        </div>
-                                        <span className="text-sm font-medium text-slate-600">
-                                            {item.label}
-                                        </span>
-                                    </div>
-                                    <div
-                                        className={`text-3xl font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}
-                                    >
-                                        {item.value}
-                                    </div>
-                                    <div className="text-xs text-slate-500">
-                                        {item.hint}
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </section>
@@ -370,8 +318,8 @@ const HomePage = () => {
                             Dùng thử ngay
                         </h2>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            Khám phá bản đồ hạ tầng trực quan hoặc tích hợp dữ liệu mở
-                            vào ứng dụng của bạn qua API
+                            Khám phá bản đồ hạ tầng trực quan hoặc tích hợp dữ
+                            liệu mở vào ứng dụng của bạn qua API
                         </p>
                         <div className="flex flex-col sm:flex-row gap-6 justify-center pt-6">
                             <Link
@@ -400,8 +348,9 @@ const HomePage = () => {
                             Cùng đóng góp với chúng tôi
                         </h2>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            OpenInfra là dự án mã nguồn mở. Bạn có thể đóng góp mã,
-                            báo lỗi hoặc bổ sung dữ liệu hạ tầng để xây dựng cộng đồng.
+                            OpenInfra là dự án mã nguồn mở. Bạn có thể đóng góp
+                            mã, báo lỗi hoặc bổ sung dữ liệu hạ tầng để xây dựng
+                            cộng đồng.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-6 justify-center pt-6">
                             <a
