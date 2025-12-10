@@ -17,12 +17,11 @@ const AlertList: React.FC = () => {
   const limit = 20
 
   const { data: alerts, isLoading } = useQuery({
-    queryKey: ["alerts", "list", page, status, severity],
+    queryKey: ["alerts", "list", page, severity],
     queryFn: () =>
       alertsApi.list({
         skip: (page - 1) * limit,
         limit,
-        status: status || undefined,
         severity: severity || undefined,
       }),
   })

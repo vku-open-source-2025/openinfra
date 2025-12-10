@@ -14,7 +14,6 @@ type MainTab = "all" | "spam_risk" | "useful" | "duplicates";
 const IncidentList: React.FC = () => {
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
-    const [status, setStatus] = useState<string>("");
     const [severity, setSeverity] = useState<string>("");
     const [search, setSearch] = useState<string>("");
     const [day, setDay] = useState<string>("");
@@ -31,7 +30,6 @@ const IncidentList: React.FC = () => {
         const params: any = {
             skip: 0,
             limit: fetchLimit,
-            status: status || undefined,
             severity: severity || undefined,
         };
 
@@ -48,7 +46,6 @@ const IncidentList: React.FC = () => {
         queryKey: [
             "incidents",
             mainTab,
-            status,
             severity,
             day,
         ],
@@ -82,11 +79,6 @@ const IncidentList: React.FC = () => {
             filtered = filtered.filter(
                 (inc) => inc.resolution_type === "duplicate"
             );
-        }
-
-        // Filter by status (if not already filtered by API)
-        if (status) {
-            filtered = filtered.filter((inc) => inc.status === status);
         }
 
         // Filter by specific day (local time)
@@ -186,18 +178,12 @@ const IncidentList: React.FC = () => {
             </div>
 
             <IncidentFilters
-                status={status}
+                status=""
                 severity={severity}
                 search={search}
                 day={day}
-                onStatusChange={(value) => {
-                    setStatus(value);
-                    setPage(1);
-                }}
-                onSeverityChange={(value) => {
-                    setSeverity(value);
-                    setPage(1);
-                }}
+                onStatusChange={() => {}}
+                onSeverityChange={setSeverity}
                 onSearchChange={setSearch}
                 onDayChange={(value) => {
                     setDay(value);

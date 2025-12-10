@@ -5,7 +5,7 @@ import sys
 import os
 import random
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -18,7 +18,15 @@ from app.core.config import settings
 from app.core.security import get_password_hash
 from app.core.logging import setup_logging
 from app.domain.models.user import UserRole, UserStatus
+from app.domain.models.incident import (
+    IncidentCategory,
+    IncidentSeverity,
+    IncidentStatus,
+    ReporterType,
+    ResolutionType,
+)
 from app.db.mongodb import db
+from bson import ObjectId
 
 logger = setup_logging()
 
@@ -107,6 +115,32 @@ TECHNICIAN_PERMISSIONS = [
     "work_orders:write",
 ]
 
+# Sample locations for incidents
+SAMPLE_LOCATIONS = [
+    # Hai Chau District
+    {"lat": 16.0544, "lng": 108.2022, "district": "Hai Chau", "ward": "Thach Thang"},
+    {"lat": 16.0678, "lng": 108.2208, "district": "Hai Chau", "ward": "Hoa Cuong Bac"},
+    {"lat": 16.0712, "lng": 108.2145, "district": "Hai Chau", "ward": "Binh Hien"},
+    # Thanh Khe District
+    {"lat": 16.0479, "lng": 108.2068, "district": "Thanh Khe", "ward": "Tam Thuan"},
+    {"lat": 16.0634, "lng": 108.2015, "district": "Thanh Khe", "ward": "Thanh Khe Tay"},
+    {"lat": 16.0723, "lng": 108.1956, "district": "Thanh Khe", "ward": "An Khe"},
+    # Son Tra District
+    {"lat": 16.0600, "lng": 108.2300, "district": "Son Tra", "ward": "Tho Quang"},
+    {"lat": 16.0890, "lng": 108.2490, "district": "Son Tra", "ward": "Man Thai"},
+    {"lat": 16.1050, "lng": 108.2656, "district": "Son Tra", "ward": "Bac My An"},
+    # Ngu Hanh Son District
+    {"lat": 16.0400, "lng": 108.1900, "district": "Ngu Hanh Son", "ward": "My An"},
+    {"lat": 15.9956, "lng": 108.2634, "district": "Ngu Hanh Son", "ward": "Hoa Hai"},
+    {"lat": 16.0234, "lng": 108.2456, "district": "Ngu Hanh Son", "ward": "Hoa Quy"},
+    # Cam Le District
+    {"lat": 16.0267, "lng": 108.1823, "district": "Cam Le", "ward": "Hoa Phat"},
+    {"lat": 16.0156, "lng": 108.1678, "district": "Cam Le", "ward": "Hoa An"},
+    # Lien Chieu District
+    {"lat": 16.0812, "lng": 108.1456, "district": "Lien Chieu", "ward": "Hoa Minh"},
+    {"lat": 16.0645, "lng": 108.1534, "district": "Lien Chieu", "ward": "Hoa Khanh Bac"},
+]
+
 
 def generate_phone() -> str:
     """Generate a Vietnamese phone number."""
@@ -122,6 +156,12 @@ def generate_vietnamese_name() -> str:
         middle_name = random.choice(VIETNAMESE_FIRST_NAMES)
         return f"{last_name} {middle_name} {first_name}"
     return f"{last_name} {first_name}"
+
+
+def generate_incident_number(index: int) -> str:
+    """Generate incident number."""
+    year = datetime.now().year
+    return f"INC-{year}-{index:05d}"
 
 
 async def seed_technicians(
@@ -245,6 +285,286 @@ async def seed_technicians(
         return []
 
 
+async def seed_vietnamese_duplicate_incidents(
+    db,
+    asset_ids: Optional[List[str]] = None,
+    user_ids: Optional[List[str]] = None,
+) -> List[str]:
+    """
+    Seed Vietnamese duplicate incidents for testing duplicate display in incident reports.
+    
+    Args:
+        db: MongoDB database instance
+        asset_ids: Optional list of asset IDs to use
+        user_ids: Optional list of user IDs to use as reporters/resolvers
+        
+    Returns:
+        List of created incident IDs
+    """
+    logger.info("Seeding Vietnamese duplicate incidents...")
+    
+    if not asset_ids:
+        asset_ids = [
+            str(asset["_id"]) for asset in await db.assets.find({}).to_list(length=100)
+        ]
+    if not user_ids:
+        user_ids = [
+            str(user["_id"]) for user in await db.users.find({}).to_list(length=100)
+        ]
+    
+    # Vietnamese duplicate incident scenarios
+    duplicate_groups = [
+        {
+            "primary": {
+                "title": "Đèn đường không hoạt động tại ngã tư",
+                "description": "Đèn đường tại ngã tư đường Bạch Đằng và Trần Phú không sáng vào ban đêm, gây nguy hiểm cho người đi đường.",
+                "category": IncidentCategory.MALFUNCTION,
+                "severity": IncidentSeverity.HIGH,
+            },
+            "duplicates": [
+                {
+                    "title": "Đèn đường bị hỏng ở ngã tư Bạch Đằng",
+                    "description": "Đèn đường không hoạt động tại ngã tư đường Bạch Đằng, khu vực tối vào ban đêm.",
+                    "category": IncidentCategory.MALFUNCTION,
+                    "severity": IncidentSeverity.MEDIUM,
+                },
+                {
+                    "title": "Đèn chiếu sáng không sáng",
+                    "description": "Đèn chiếu sáng tại khu vực ngã tư không hoạt động, cần kiểm tra và sửa chữa.",
+                    "category": IncidentCategory.MALFUNCTION,
+                    "severity": IncidentSeverity.MEDIUM,
+                },
+            ],
+        },
+        {
+            "primary": {
+                "title": "Ống cống bị tắc nghẽn gây ngập lụt",
+                "description": "Hệ thống thoát nước bị tắc nghẽn do rác thải và bùn đất, gây ngập lụt trên đường sau khi mưa lớn.",
+                "category": IncidentCategory.DAMAGE,
+                "severity": IncidentSeverity.HIGH,
+            },
+            "duplicates": [
+                {
+                    "title": "Cống thoát nước bị nghẹt",
+                    "description": "Cống thoát nước bị tắc do rác thải, nước không thể thoát được.",
+                    "category": IncidentCategory.DAMAGE,
+                    "severity": IncidentSeverity.MEDIUM,
+                },
+                {
+                    "title": "Đường bị ngập do cống tắc",
+                    "description": "Sau cơn mưa, đường bị ngập nước do hệ thống thoát nước không hoạt động.",
+                    "category": IncidentCategory.SAFETY_HAZARD,
+                    "severity": IncidentSeverity.HIGH,
+                },
+            ],
+        },
+        {
+            "primary": {
+                "title": "Biển báo giao thông bị hư hỏng",
+                "description": "Biển báo giao thông bị cong vênh và không còn rõ ràng, ảnh hưởng đến an toàn giao thông.",
+                "category": IncidentCategory.DAMAGE,
+                "severity": IncidentSeverity.MEDIUM,
+            },
+            "duplicates": [
+                {
+                    "title": "Biển hiệu bị hỏng",
+                    "description": "Biển báo giao thông bị hư hỏng, cần thay thế.",
+                    "category": IncidentCategory.DAMAGE,
+                    "severity": IncidentSeverity.LOW,
+                },
+            ],
+        },
+        {
+            "primary": {
+                "title": "Vỉa hè bị nứt vỡ gây nguy hiểm",
+                "description": "Vỉa hè có nhiều chỗ nứt vỡ và lồi lõm, tạo nguy cơ vấp ngã cho người đi bộ, đặc biệt là người già và trẻ em.",
+                "category": IncidentCategory.DAMAGE,
+                "severity": IncidentSeverity.MEDIUM,
+            },
+            "duplicates": [
+                {
+                    "title": "Lề đường bị hỏng",
+                    "description": "Vỉa hè bị nứt và không bằng phẳng, cần sửa chữa.",
+                    "category": IncidentCategory.DAMAGE,
+                    "severity": IncidentSeverity.MEDIUM,
+                },
+                {
+                    "title": "Đường đi bộ bị hư hỏng",
+                    "description": "Vỉa hè có nhiều chỗ nứt, gây khó khăn cho người đi bộ.",
+                    "category": IncidentCategory.SAFETY_HAZARD,
+                    "severity": IncidentSeverity.MEDIUM,
+                },
+            ],
+        },
+        {
+            "primary": {
+                "title": "Đèn giao thông không hoạt động",
+                "description": "Đèn tín hiệu giao thông tại ngã tư không hoạt động, đèn đỏ sáng liên tục không chuyển sang xanh.",
+                "category": IncidentCategory.MALFUNCTION,
+                "severity": IncidentSeverity.CRITICAL,
+            },
+            "duplicates": [
+                {
+                    "title": "Đèn xanh đỏ không chạy",
+                    "description": "Đèn giao thông bị hỏng, không chuyển đổi tín hiệu.",
+                    "category": IncidentCategory.MALFUNCTION,
+                    "severity": IncidentSeverity.HIGH,
+                },
+            ],
+        },
+        {
+            "primary": {
+                "title": "Cây xanh bị đổ sau cơn bão",
+                "description": "Cây xanh lớn bị đổ do gió mạnh, chặn một phần đường và có nguy cơ gây tai nạn.",
+                "category": IncidentCategory.DAMAGE,
+                "severity": IncidentSeverity.HIGH,
+            },
+            "duplicates": [
+                {
+                    "title": "Cây đổ chặn đường",
+                    "description": "Cây lớn bị đổ xuống đường, cần dọn dẹp ngay.",
+                    "category": IncidentCategory.SAFETY_HAZARD,
+                    "severity": IncidentSeverity.HIGH,
+                },
+                {
+                    "title": "Cây xanh bị gãy đổ",
+                    "description": "Cây xanh bị đổ sau cơn bão, ảnh hưởng giao thông.",
+                    "category": IncidentCategory.DAMAGE,
+                    "severity": IncidentSeverity.MEDIUM,
+                },
+            ],
+        },
+        {
+            "primary": {
+                "title": "Hố ga bị mất nắp",
+                "description": "Nắp hố ga bị mất hoặc bị hỏng, tạo nguy cơ tai nạn cho người đi đường và phương tiện.",
+                "category": IncidentCategory.SAFETY_HAZARD,
+                "severity": IncidentSeverity.HIGH,
+            },
+            "duplicates": [
+                {
+                    "title": "Nắp cống bị mất",
+                    "description": "Nắp hố ga bị mất, rất nguy hiểm cho người đi đường.",
+                    "category": IncidentCategory.SAFETY_HAZARD,
+                    "severity": IncidentSeverity.HIGH,
+                },
+            ],
+        },
+    ]
+    
+    location = random.choice(SAMPLE_LOCATIONS)
+    incident_ids = []
+    incident_index = len(await db.incidents.find({}).to_list(length=1000)) + 1
+    
+    for group in duplicate_groups:
+        # Create primary incident
+        primary_asset_id = random.choice(asset_ids) if asset_ids else None
+        geometry = {
+            "type": "Point",
+            "coordinates": [
+                location["lng"] + random.uniform(-0.001, 0.001),
+                location["lat"] + random.uniform(-0.001, 0.001),
+            ],
+        }
+        
+        primary_incident = {
+            "incident_number": generate_incident_number(incident_index),
+            "asset_id": primary_asset_id,
+            "title": group["primary"]["title"],
+            "description": group["primary"]["description"],
+            "category": group["primary"]["category"].value,
+            "severity": group["primary"]["severity"].value,
+            "status": IncidentStatus.INVESTIGATING.value,
+            "location": {
+                "geometry": geometry,
+                "address": f"{random.randint(1, 500)} {random.choice(['Bạch Đằng', 'Trần Phú', 'Nguyễn Văn Linh'])}",
+                "description": f"Gần ngã tư {random.choice(['Bạch Đằng', 'Trần Phú'])}",
+                "district": location["district"],
+                "ward": location["ward"],
+            },
+            "reported_by": random.choice(user_ids) if user_ids else None,
+            "reporter_type": ReporterType.CITIZEN.value,
+            "reported_via": "web",
+            "reported_at": datetime.utcnow() - timedelta(days=random.randint(1, 7)),
+            "assigned_to": random.choice(user_ids) if user_ids else None,
+            "acknowledged_at": datetime.utcnow() - timedelta(days=random.randint(1, 6)),
+            "acknowledged_by": random.choice(user_ids) if user_ids else None,
+            "public_visible": True,
+            "created_at": datetime.utcnow() - timedelta(days=random.randint(1, 7)),
+            "updated_at": datetime.utcnow() - timedelta(days=random.randint(0, 6)),
+            "related_incidents": [],  # Will be populated after creating duplicates
+        }
+        incident_index += 1
+        
+        # Create duplicate incidents
+        duplicate_incident_ids = []
+        for dup_scenario in group["duplicates"]:
+            dup_geometry = {
+                "type": "Point",
+                "coordinates": [
+                    geometry["coordinates"][0] + random.uniform(-0.0005, 0.0005),
+                    geometry["coordinates"][1] + random.uniform(-0.0005, 0.0005),
+                ],
+            }
+            
+            dup_incident = {
+                "incident_number": generate_incident_number(incident_index),
+                "asset_id": primary_asset_id,  # Same asset
+                "title": dup_scenario["title"],
+                "description": dup_scenario["description"],
+                "category": dup_scenario["category"].value,
+                "severity": dup_scenario["severity"].value,
+                "status": IncidentStatus.RESOLVED.value,
+                "resolution_type": ResolutionType.DUPLICATE.value,
+                "resolution_notes": f"Trùng lặp với sự cố {primary_incident['incident_number']}",
+                "resolved_at": datetime.utcnow() - timedelta(days=random.randint(1, 5)),
+                "resolved_by": random.choice(user_ids) if user_ids else None,
+                "location": {
+                    "geometry": dup_geometry,
+                    "address": primary_incident["location"]["address"],
+                    "description": primary_incident["location"]["description"],
+                    "district": location["district"],
+                    "ward": location["ward"],
+                },
+                "reported_by": random.choice(user_ids) if user_ids else None,
+                "reporter_type": ReporterType.CITIZEN.value,
+                "reported_via": random.choice(["web", "mobile"]),
+                "reported_at": datetime.utcnow() - timedelta(days=random.randint(1, 6)),
+                "public_visible": True,
+                "created_at": datetime.utcnow() - timedelta(days=random.randint(1, 6)),
+                "updated_at": datetime.utcnow() - timedelta(days=random.randint(0, 5)),
+                "related_incidents": [],  # Will link to primary
+            }
+            duplicate_incident_ids.append(dup_incident)
+            incident_index += 1
+        
+        # Insert all incidents
+        all_incidents = [primary_incident] + duplicate_incident_ids
+        result = await db.incidents.insert_many(all_incidents)
+        inserted_ids = [str(id) for id in result.inserted_ids]
+        incident_ids.extend(inserted_ids)
+        
+        # Update relationships
+        primary_id = inserted_ids[0]
+        duplicate_ids = inserted_ids[1:]
+        
+        # Link duplicates to primary
+        await db.incidents.update_one(
+            {"_id": ObjectId(primary_id)},
+            {"$set": {"related_incidents": duplicate_ids}}
+        )
+        
+        # Link primary to duplicates
+        for dup_id in duplicate_ids:
+            await db.incidents.update_one(
+                {"_id": ObjectId(dup_id)},
+                {"$set": {"related_incidents": [primary_id]}}
+            )
+    
+    logger.info(f"Created {len(incident_ids)} Vietnamese duplicate incidents")
+    return incident_ids
+
+
 async def main():
     """Main entry point for the script."""
     import argparse
@@ -266,6 +586,11 @@ async def main():
         type=str,
         default="tech123",
         help="Default password for technicians (default: tech123)",
+    )
+    parser.add_argument(
+        "--seed-duplicates",
+        action="store_true",
+        help="Also seed Vietnamese duplicate incidents",
     )
 
     args = parser.parse_args()
@@ -312,6 +637,28 @@ async def main():
             default_password=args.password,
         )
 
+        # Seed duplicate incidents if requested
+        duplicate_incident_ids = []
+        if args.seed_duplicates:
+            logger.info("=" * 60)
+            logger.info("SEEDING VIETNAMESE DUPLICATE INCIDENTS")
+            logger.info("=" * 60)
+            # Get user IDs (including newly created technicians)
+            user_ids = [
+                str(user["_id"]) for user in await database.users.find({}).to_list(length=1000)
+            ]
+            # Get asset IDs
+            asset_ids = [
+                str(asset["_id"]) for asset in await database.assets.find({}).to_list(length=100)
+            ]
+            duplicate_incident_ids = await seed_vietnamese_duplicate_incidents(
+                database,
+                asset_ids=asset_ids if asset_ids else None,
+                user_ids=user_ids if user_ids else None,
+            )
+            logger.info(f"Created {len(duplicate_incident_ids)} duplicate incidents")
+            logger.info("=" * 60)
+
         # Final summary
         total_count = await database.users.count_documents(
             {"role": UserRole.TECHNICIAN.value}
@@ -321,6 +668,8 @@ async def main():
         logger.info("=" * 60)
         logger.info(f"Total technicians in database: {total_count}")
         logger.info(f"Created in this run: {len(technician_ids)}")
+        if args.seed_duplicates:
+            logger.info(f"Duplicate incidents created: {len(duplicate_incident_ids)}")
         logger.info("=" * 60)
         logger.info(f"Default password for all technicians: {args.password}")
         logger.info("=" * 60)
