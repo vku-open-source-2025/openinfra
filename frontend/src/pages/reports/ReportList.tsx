@@ -51,32 +51,32 @@ const ReportList: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
-        <p className="text-slate-500 mt-1">View and download generated reports</p>
+        <h1 className="text-2xl font-bold text-slate-900">Báo cáo</h1>
+        <p className="text-slate-500 mt-1">Xem và tải xuống các báo cáo đã tạo</p>
       </div>
 
       <div className="flex gap-4">
         <Select
           value={type}
           onChange={(e) => setType(e.target.value)}
-          placeholder="All Types"
+          placeholder="Tất cả loại"
         >
           <option value="">All Types</option>
-          <option value="maintenance">Maintenance</option>
-          <option value="budget">Budget</option>
-          <option value="incident">Incident</option>
-          <option value="asset">Asset</option>
+          <option value="maintenance">Bảo trì</option>
+          <option value="budget">Ngân sách</option>
+          <option value="incident">Sự cố</option>
+          <option value="asset">Tài sản</option>
         </Select>
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          placeholder="All Statuses"
+          placeholder="Tất cả trạng thái"
         >
           <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="generating">Generating</option>
-          <option value="completed">Completed</option>
-          <option value="failed">Failed</option>
+          <option value="pending">Đang chờ</option>
+          <option value="generating">Đang tạo</option>
+          <option value="completed">Hoàn thành</option>
+          <option value="failed">Thất bại</option>
         </Select>
       </div>
 
@@ -103,7 +103,7 @@ const ReportList: React.FC = () => {
         </>
       ) : (
         <div className="text-center py-12 text-slate-500">
-          <p>No reports found.</p>
+          <p>Không tìm thấy báo cáo.</p>
         </div>
       )}
     </div>

@@ -7,10 +7,10 @@ interface ReportStatusBadgeProps {
 
 export const ReportStatusBadge: React.FC<ReportStatusBadgeProps> = ({ status }) => {
   const config: Record<ReportStatus, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "outline" | "warning" }> = {
-    pending: { label: "Pending", variant: "secondary" },
-    generating: { label: "Generating", variant: "warning" },
-    completed: { label: "Completed", variant: "success" },
-    failed: { label: "Failed", variant: "destructive" },
+    pending: { label: "Đang chờ", variant: "secondary" },
+    generating: { label: "Đang tạo", variant: "warning" },
+    completed: { label: "Hoàn thành", variant: "success" },
+    failed: { label: "Thất bại", variant: "destructive" },
   }
 
   const { label, variant } = config[status]

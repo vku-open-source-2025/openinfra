@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
             <div className="flex h-screen items-center justify-center bg-slate-50">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-slate-500 font-medium">Loading system resources...</p>
+                    <p className="text-slate-500 font-medium">Đang tải dữ liệu hệ thống...</p>
                 </div>
             </div>
         );
@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
 
     if (error) {
         return (
-            <div className="p-8 text-center text-red-500">Error loading assets</div>
+            <div className="p-8 text-center text-red-500">Lỗi khi tải dữ liệu tài sản</div>
         );
     }
 
@@ -118,8 +118,8 @@ const Dashboard: React.FC = () => {
                 {/* Header */}
                 <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
-                        <p className="text-sm text-slate-500">System overview and asset performance</p>
+                        <h2 className="text-2xl font-bold text-slate-800">Bảng điều khiển</h2>
+                        <p className="text-sm text-slate-500">Tổng quan hệ thống và hiệu suất tài sản</p>
                     </div>
                     <div className="flex gap-3 items-center">
                         <NotificationCenter />
@@ -129,11 +129,11 @@ const Dashboard: React.FC = () => {
                             className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                         >
                             <MapPin size={16} />
-                            Open Map View
+                            Mở bản đồ
                         </Link>
                         <button className="px-4 py-2 bg-blue-600 rounded-lg text-sm font-medium text-white hover:bg-blue-700 shadow-sm flex items-center gap-2">
                             <Zap size={16} />
-                            Add Asset
+                            Thêm tài sản
                         </button>
                     </div>
                 </header>
@@ -150,7 +150,7 @@ const Dashboard: React.FC = () => {
                             }`}
                         >
                             <LayoutDashboard size={16} />
-                            Overview
+                            Tổng quan
                         </button>
                         <button
                             onClick={() => setActiveTab("calendar")}
@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
                             }`}
                         >
                             <Calendar size={16} />
-                            Maintenance Schedule
+                            Lịch bảo trì
                         </button>
                     </nav>
                 </div>
@@ -175,7 +175,7 @@ const Dashboard: React.FC = () => {
                             {/* Stats Row */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                                 <StatsCard
-                                    title="Total Assets"
+                                    title="Tổng tài sản"
                                     value={assetCount}
                                     icon={Zap}
                                     color="bg-blue-500"
@@ -183,7 +183,7 @@ const Dashboard: React.FC = () => {
                                     trendUp={true}
                                 />
                                 <StatsCard
-                                    title="Active Alerts"
+                                    title="Cảnh báo đang hoạt động"
                                     value={activeAlerts}
                                     icon={AlertTriangle}
                                     color="bg-red-500"
@@ -191,7 +191,7 @@ const Dashboard: React.FC = () => {
                                     trendUp={false}
                                 />
                                 <StatsCard
-                                    title="Maintenance Due"
+                                    title="Bảo trì sắp tới"
                                     value={maintenanceDue}
                                     icon={Activity}
                                     color="bg-amber-500"
@@ -199,7 +199,7 @@ const Dashboard: React.FC = () => {
                                     trendUp={false}
                                 />
                                 <StatsCard
-                                    title="Operational Rate"
+                                    title="Tỷ lệ hoạt động"
                                     value={`${operationalRate}%`}
                                     icon={CheckCircle}
                                     color="bg-green-500"
@@ -226,14 +226,14 @@ const Dashboard: React.FC = () => {
                                             className="absolute bottom-4 right-4 px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 shadow-sm"
                                         >
                                             <Activity size={14} />
-                                            Optimize Route
+                                            Tối ưu lộ trình
                                         </button>
                                     </div>
 
                                     {/* Asset Table */}
                                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col min-h-0">
                                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                                            <h3 className="font-bold text-lg">Recent Assets</h3>
+                                            <h3 className="font-bold text-lg">Tài sản gần đây</h3>
                                         </div>
                                         <div className="flex-1 overflow-y-auto">
                                             <AssetTable
@@ -279,7 +279,7 @@ const Dashboard: React.FC = () => {
                                                     {/* Location Info */}
                                                     <div>
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                            Location
+                                                            Vị trí
                                                         </h4>
                                                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                                             {selectedAsset.geometry.type === "Point" &&
@@ -287,13 +287,13 @@ const Dashboard: React.FC = () => {
                                                             typeof selectedAsset.geometry.coordinates[0] === "number" ? (
                                                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                                                     <div>
-                                                                        <p className="text-slate-500 text-xs">Latitude</p>
+                                                                        <p className="text-slate-500 text-xs">Vĩ độ</p>
                                                                         <p className="font-mono font-medium">
                                                                             {(selectedAsset.geometry.coordinates as number[])[1].toFixed(6)}
                                                                         </p>
                                                                     </div>
                                                                     <div>
-                                                                        <p className="text-slate-500 text-xs">Longitude</p>
+                                                                        <p className="text-slate-500 text-xs">Kinh độ</p>
                                                                         <p className="font-mono font-medium">
                                                                             {(selectedAsset.geometry.coordinates as number[])[0].toFixed(6)}
                                                                         </p>
@@ -301,11 +301,11 @@ const Dashboard: React.FC = () => {
                                                                 </div>
                                                             ) : (
                                                                 <div className="text-sm">
-                                                                    <p className="text-slate-500 text-xs mb-1">Geometry Type</p>
+                                                                    <p className="text-slate-500 text-xs mb-1">Loại hình học</p>
                                                                     <p className="font-mono font-medium mb-2">
                                                                         {selectedAsset.geometry.type}
                                                                     </p>
-                                                                    <p className="text-slate-500 text-xs mb-1">Details</p>
+                                                                    <p className="text-slate-500 text-xs mb-1">Chi tiết</p>
                                                                     <p className="font-mono font-medium">
                                                                         {selectedAsset.geometry.type === "LineString"
                                                                             ? `${selectedAsset.geometry.coordinates.length} points`
@@ -319,7 +319,7 @@ const Dashboard: React.FC = () => {
                                                     {/* Maintenance History */}
                                                     <div>
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                            Maintenance History
+                                                            Lịch sử bảo trì
                                                         </h4>
                                                         <MaintenanceLogList assetId={getAssetId(selectedAsset)} />
                                                     </div>
@@ -327,7 +327,7 @@ const Dashboard: React.FC = () => {
                                                     {/* IoT Sensor Data */}
                                                     <div>
                                                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                                                            IoT Sensor Data
+                                                            Dữ liệu cảm biến IoT
                                                         </h4>
                                                         <IoTSensorChart
                                                             assetId={getAssetId(selectedAsset)}
@@ -356,7 +356,7 @@ const Dashboard: React.FC = () => {
                                                     </button>
                                                 </div>
                                                 <button className="w-full py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 shadow-sm">
-                                                    Schedule Maintenance
+                                                    Lên lịch bảo trì
                                                 </button>
                                             </div>
                                         </>
@@ -365,9 +365,9 @@ const Dashboard: React.FC = () => {
                                             <div className="bg-slate-100 p-4 rounded-full mb-4">
                                                 <Activity size={32} className="text-slate-300" />
                                             </div>
-                                            <p className="font-medium text-slate-500">No Asset Selected</p>
+                                            <p className="font-medium text-slate-500">Chưa có tài sản được chọn</p>
                                             <p className="text-sm mt-2">
-                                                Select an asset from the map or list to view details and maintenance history.
+                                                Chọn một tài sản từ bản đồ hoặc danh sách để xem chi tiết và lịch sử bảo trì.
                                             </p>
                                         </div>
                                     )}

@@ -85,10 +85,10 @@ const AlertDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">
-                        Alerts Dashboard
+                        Bảng cảnh báo
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Monitor and manage system alerts
+                        Giám sát và quản lý cảnh báo hệ thống
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -111,7 +111,7 @@ const AlertDashboard: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle className="h-5 w-5 text-red-500" />
                         <span className="text-sm font-medium text-slate-600">
-                            Critical
+                            Nguy kịch
                         </span>
                     </div>
                     <div className="text-2xl font-bold text-red-600">
@@ -122,7 +122,7 @@ const AlertDashboard: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                         <Activity className="h-5 w-5 text-amber-500" />
                         <span className="text-sm font-medium text-slate-600">
-                            High
+                            Cao
                         </span>
                     </div>
                     <div className="text-2xl font-bold text-amber-600">
@@ -133,7 +133,7 @@ const AlertDashboard: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle className="h-5 w-5 text-blue-500" />
                         <span className="text-sm font-medium text-slate-600">
-                            Active
+                            Đang hoạt động
                         </span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600">
@@ -144,7 +144,7 @@ const AlertDashboard: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                         <CheckCircle className="h-5 w-5 text-green-500" />
                         <span className="text-sm font-medium text-slate-600">
-                            Resolved
+                            Đã giải quyết
                         </span>
                     </div>
                     <div className="text-2xl font-bold text-green-600">
@@ -154,11 +154,11 @@ const AlertDashboard: React.FC = () => {
             </div>
 
             <Tabs defaultValue="active" onValueChange={setSelectedStatus}>
-                <TabsList>
-                    <TabsTrigger value="active">Active</TabsTrigger>
-                    <TabsTrigger value="acknowledged">Acknowledged</TabsTrigger>
-                    <TabsTrigger value="resolved">Resolved</TabsTrigger>
-                    <TabsTrigger value="dismissed">Dismissed</TabsTrigger>
+                    <TabsList>
+                    <TabsTrigger value="active">Đang hoạt động</TabsTrigger>
+                    <TabsTrigger value="acknowledged">Đã xác nhận</TabsTrigger>
+                    <TabsTrigger value="resolved">Đã giải quyết</TabsTrigger>
+                    <TabsTrigger value="dismissed">Đã hủy</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="active" className="mt-4">
@@ -201,7 +201,7 @@ const AlertDashboard: React.FC = () => {
                         {alerts?.filter((a) => a.status === "active").length ===
                             0 && (
                             <div className="text-center py-12 text-slate-500">
-                                <p>No active alerts</p>
+                                <p>Không có cảnh báo đang hoạt động</p>
                             </div>
                         )}
                     </div>
@@ -217,7 +217,7 @@ const AlertDashboard: React.FC = () => {
                         {alerts?.filter((a) => a.status === "acknowledged")
                             .length === 0 && (
                             <div className="text-center py-12 text-slate-500">
-                                <p>No acknowledged alerts</p>
+                                <p>Không có cảnh báo đã xác nhận</p>
                             </div>
                         )}
                     </div>
@@ -233,7 +233,7 @@ const AlertDashboard: React.FC = () => {
                         {alerts?.filter((a) => a.status === "resolved")
                             .length === 0 && (
                             <div className="text-center py-12 text-slate-500">
-                                <p>No resolved alerts</p>
+                                <p>Không có cảnh báo đã giải quyết</p>
                             </div>
                         )}
                     </div>
@@ -249,7 +249,7 @@ const AlertDashboard: React.FC = () => {
                         {alerts?.filter((a) => a.status === "dismissed")
                             .length === 0 && (
                             <div className="text-center py-12 text-slate-500">
-                                <p>No dismissed alerts</p>
+                                <p>Không có cảnh báo đã hủy</p>
                             </div>
                         )}
                     </div>

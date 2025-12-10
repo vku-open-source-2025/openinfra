@@ -11,10 +11,10 @@ interface AlertCardProps {
 
 export const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
   const statusConfig: Record<typeof alert.status, { label: string; variant: "default" | "secondary" | "success" | "outline" }> = {
-    active: { label: "Active", variant: "default" },
-    acknowledged: { label: "Acknowledged", variant: "secondary" },
-    resolved: { label: "Resolved", variant: "success" },
-    dismissed: { label: "Dismissed", variant: "outline" },
+    active: { label: "Hoạt động", variant: "default" },
+    acknowledged: { label: "Đã nhận", variant: "secondary" },
+    resolved: { label: "Đã xử lý", variant: "success" },
+    dismissed: { label: "Bỏ qua", variant: "outline" },
   }
 
   const statusInfo = statusConfig[alert.status]
@@ -44,7 +44,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({ alert, onClick }) => {
         {alert.asset_id && (
           <div className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
-            <span>Asset #{alert.asset_id.slice(-6)}</span>
+            <span>Tài sản #{alert.asset_id.slice(-6)}</span>
           </div>
         )}
       </div>

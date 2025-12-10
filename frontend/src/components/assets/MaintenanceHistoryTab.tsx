@@ -87,7 +87,7 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
       <div className="bg-slate-50 rounded-lg p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Date From</label>
+            <label className="text-xs text-slate-500 mb-1 block">Từ ngày</label>
             <Input
               type="date"
               value={dateFrom}
@@ -96,7 +96,7 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Date To</label>
+            <label className="text-xs text-slate-500 mb-1 block">Đến ngày</label>
             <Input
               type="date"
               value={dateTo}
@@ -105,38 +105,38 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Technician</label>
-            <Input
+            <label className="text-xs text-slate-500 mb-1 block">Kỹ thuật viên</label>
+              <Input
               type="text"
               value={technicianFilter}
               onChange={(e) => setTechnicianFilter(e.target.value)}
-              placeholder="Filter by technician"
+                placeholder="Lọc theo kỹ thuật viên"
               className="w-full"
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Cost Range</label>
+            <label className="text-xs text-slate-500 mb-1 block">Khoảng chi phí</label>
             <div className="flex gap-2">
-              <Input
+                <Input
                 type="number"
                 value={costMin}
                 onChange={(e) => setCostMin(e.target.value)}
-                placeholder="Min"
+                  placeholder="Tối thiểu"
                 className="w-full"
               />
               <Input
                 type="number"
                 value={costMax}
                 onChange={(e) => setCostMax(e.target.value)}
-                placeholder="Max"
+                  placeholder="Tối đa"
                 className="w-full"
               />
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button onClick={applyFilters}>Search</Button>
-          <Button variant="outline" onClick={resetFilters}>Reset</Button>
+          <Button onClick={applyFilters}>Tìm kiếm</Button>
+          <Button variant="outline" onClick={resetFilters}>Đặt lại</Button>
         </div>
       </div>
 
@@ -165,7 +165,7 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColor} flex items-center gap-1`}>
                       <StatusIcon size={12} />
-                      {record.status}
+                        {record.status === 'completed' ? 'Hoàn thành' : record.status === 'in_progress' ? 'Đang thực hiện' : record.status === 'scheduled' ? 'Đã lên lịch' : record.status}
                     </span>
                     <span className="text-xs text-slate-400">
                       {format(new Date(record.scheduled_date), "dd/MM/yyyy")}
@@ -188,13 +188,13 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
                           : `~$${record.estimated_cost?.toLocaleString()}`}
                       </span>
                     )}
-                    {record.approval_status && (
+                        {record.approval_status && (
                       <span className={`px-2 py-0.5 rounded text-xs ${
                         record.approval_status === "approved" ? "bg-green-100 text-green-700" :
                         record.approval_status === "rejected" ? "bg-red-100 text-red-700" :
                         "bg-yellow-100 text-yellow-700"
                       }`}>
-                        {record.approval_status}
+                                        {record.approval_status === 'approved' ? 'Đã duyệt' : record.approval_status === 'rejected' ? 'Từ chối' : 'Đang duyệt'}
                       </span>
                     )}
                   </div>
@@ -205,7 +205,7 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
         </div>
       ) : (
         <div className="text-center py-12 text-slate-500">
-          <p>No maintenance history found.</p>
+          <p>Không tìm thấy lịch sử bảo trì.</p>
         </div>
       )}
 

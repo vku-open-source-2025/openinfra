@@ -23,31 +23,31 @@ export const IncidentStatusBadge: React.FC<IncidentStatusBadgeProps> = ({
                 | "warning";
         }
     > = {
-        reported: { label: "Reported", variant: "secondary" },
-        acknowledged: { label: "Acknowledged", variant: "default" },
-        assigned: { label: "Assigned", variant: "default" },
-        investigating: { label: "Investigating", variant: "warning" },
-        in_progress: { label: "In Progress", variant: "warning" },
-        waiting_approval: { label: "Waiting Approval", variant: "warning" },
-        resolved: { label: "Resolved", variant: "success" },
-        closed: { label: "Closed", variant: "outline" },
+        reported: { label: "Đã báo cáo", variant: "secondary" },
+        acknowledged: { label: "Đã nhận", variant: "default" },
+        assigned: { label: "Đã phân công", variant: "default" },
+        investigating: { label: "Đang điều tra", variant: "warning" },
+        in_progress: { label: "Đang thực hiện", variant: "warning" },
+        waiting_approval: { label: "Đang chờ phê duyệt", variant: "warning" },
+        resolved: { label: "Đã xử lý", variant: "success" },
+        closed: { label: "Đã đóng", variant: "outline" },
     };
 
     const severityConfig: Record<
         IncidentSeverity,
         { label: string; variant: "default" | "destructive" | "warning" }
     > = {
-        low: { label: "Low", variant: "default" },
-        medium: { label: "Medium", variant: "warning" },
-        high: { label: "High", variant: "warning" },
-        critical: { label: "Critical", variant: "destructive" },
+        low: { label: "Thấp", variant: "default" },
+        medium: { label: "Trung bình", variant: "warning" },
+        high: { label: "Cao", variant: "warning" },
+        critical: { label: "Nghiêm trọng", variant: "destructive" },
     };
 
     // Safely get status info with fallback for invalid/undefined status
     const statusInfo =
         status && statusConfig[status as IncidentStatus]
             ? statusConfig[status as IncidentStatus]
-            : { label: "Unknown", variant: "outline" as const };
+            : { label: "Không xác định", variant: "outline" as const };
 
     // Safely get severity info with fallback for invalid/undefined severity
     const severityInfo =

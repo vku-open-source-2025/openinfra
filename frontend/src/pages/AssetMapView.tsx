@@ -318,10 +318,10 @@ const AssetMapView: React.FC = () => {
             <div className="flex h-full items-center justify-center bg-slate-50">
                 <div className="text-center">
                     <p className="text-red-500 font-medium mb-2">
-                        Error loading assets
+                        Lỗi khi tải danh sách tài sản
                     </p>
                     <p className="text-sm text-slate-500">
-                        Please try refreshing the page
+                        Vui lòng thử làm mới trang
                     </p>
                 </div>
             </div>

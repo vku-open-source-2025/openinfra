@@ -12,7 +12,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions }
   if (transactions.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500">
-        <p>No transactions found</p>
+        <p>Không tìm thấy giao dịch</p>
       </div>
     )
   }
@@ -21,11 +21,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions }
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Ngày</TableHead>
+          <TableHead>Mô tả</TableHead>
+          <TableHead>Loại</TableHead>
+          <TableHead className="text-right">Số tiền</TableHead>
+          <TableHead>Trạng thái</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -39,12 +39,12 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions }
               {transaction.transaction_type === "expense" ? (
                 <Badge variant="destructive" className="flex items-center gap-1 w-fit">
                   <ArrowDown className="h-3 w-3" />
-                  Expense
+                  Chi tiêu
                 </Badge>
               ) : (
                 <Badge variant="success" className="flex items-center gap-1 w-fit">
                   <ArrowUp className="h-3 w-3" />
-                  Allocation
+                  Phân bổ
                 </Badge>
               )}
             </TableCell>
@@ -53,9 +53,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions }
             </TableCell>
             <TableCell>
               {transaction.approved_at ? (
-                <Badge variant="success">Approved</Badge>
+                <Badge variant="success">Đã duyệt</Badge>
               ) : (
-                <Badge variant="outline">Pending</Badge>
+                <Badge variant="outline">Đang chờ</Badge>
               )}
             </TableCell>
           </TableRow>

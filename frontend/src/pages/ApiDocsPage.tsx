@@ -38,38 +38,38 @@ const openDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/opendata/",
-        title: "API Information",
-        description: "Information about the API and data usage license",
+        title: "Thông tin API",
+        description: "Thông tin về API và giấy phép sử dụng dữ liệu",
         testPath: "/api/opendata/",
     },
     {
         method: "GET",
         path: "/api/opendata/assets",
-        title: "Infrastructure Assets List",
+        title: "Danh sách tài sản hạ tầng",
         description:
-            "Get all infrastructure assets as GeoJSON FeatureCollection",
+            "Lấy tất cả tài sản hạ tầng dưới dạng GeoJSON FeatureCollection",
         params: [
             {
                 name: "skip",
                 type: "integer",
-                desc: "Number of records to skip (default: 0)",
+                desc: "Số bản ghi bỏ qua (mặc định: 0)",
                 default: "0",
             },
             {
                 name: "limit",
                 type: "integer",
-                desc: "Maximum number of records (default: 100, max: 1000)",
+                desc: "Số bản ghi tối đa (mặc định: 100, tối đa: 1000)",
                 default: "5",
             },
             {
                 name: "feature_type",
                 type: "string",
-                desc: "Filter by infrastructure type",
+                desc: "Lọc theo loại tài sản",
             },
             {
                 name: "feature_code",
                 type: "string",
-                desc: "Filter by infrastructure code",
+                desc: "Lọc theo mã tài sản",
             },
         ],
         testPath: "/api/opendata/assets?limit=5",
@@ -77,28 +77,28 @@ const openDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/opendata/assets/{asset_id}",
-        title: "Asset Details",
-        description: "Get detailed information of an asset by ID",
+        title: "Chi tiết tài sản",
+        description: "Lấy thông tin chi tiết của tài sản theo ID",
         params: [
             {
                 name: "asset_id",
                 type: "string",
-                desc: "Asset ID (MongoDB ObjectId)",
+                desc: "ID tài sản (MongoDB ObjectId)",
             },
         ],
     },
     {
         method: "GET",
         path: "/api/opendata/feature-types",
-        title: "Infrastructure Types List",
-        description: "Get all available infrastructure types and their counts",
+        title: "Danh sách loại hạ tầng",
+        description: "Lấy danh sách các loại hạ tầng có sẵn và số lượng của mỗi loại",
         testPath: "/api/opendata/feature-types",
     },
     {
         method: "GET",
         path: "/api/opendata/license",
-        title: "License Information",
-        description: "Details about Open Government Licence v3.0 (OGL)",
+        title: "Thông tin giấy phép",
+        description: "Thông tin về Open Government Licence v3.0 (OGL)",
         testPath: "/api/opendata/license",
     },
 ];
@@ -108,40 +108,40 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/context",
-        title: "NGSI-LD Context",
+        title: "Context NGSI-LD",
         description:
-            "Get the NGSI-LD context document (ETSI standard for context information management)",
+            "Lấy tài liệu context NGSI-LD (chuẩn ETSI cho quản lý thông tin ngữ cảnh)",
         testPath: "/api/v1/ld/context",
     },
     {
         method: "GET",
         path: "/api/v1/ld/sensors",
-        title: "IoT Sensors (NGSI-LD)",
+        title: "Cảm biến IoT (NGSI-LD)",
         description:
-            "List all IoT sensors in NGSI-LD format with Properties and Relationships",
+            "Liệt kê toàn bộ cảm biến IoT ở định dạng NGSI-LD, kèm thuộc tính và quan hệ",
         params: [
             {
                 name: "skip",
                 type: "integer",
-                desc: "Number of records to skip",
+                desc: "Số bản ghi bỏ qua",
                 default: "0",
             },
             {
                 name: "limit",
                 type: "integer",
-                desc: "Maximum number of records (max: 500)",
+                desc: "Số bản ghi tối đa (tối đa: 500)",
                 default: "100",
             },
-            { name: "asset_id", type: "string", desc: "Filter by asset ID" },
+            { name: "asset_id", type: "string", desc: "Lọc theo ID tài sản" },
             {
                 name: "sensor_type",
                 type: "string",
-                desc: "Filter by type: temperature, humidity, pressure, vibration",
+                desc: "Lọc theo loại: temperature, humidity, pressure, vibration",
             },
             {
                 name: "status",
                 type: "string",
-                desc: "Filter by status: online, offline, maintenance",
+                desc: "Lọc theo trạng thái: online, offline, maintenance",
             },
         ],
         testPath: "/api/v1/ld/sensors?limit=5",
@@ -149,14 +149,14 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/sensors/{sensor_id}",
-        title: "Single Sensor (NGSI-LD)",
+        title: "Cảm biến đơn (NGSI-LD)",
         description:
-            "Get a single sensor in NGSI-LD format with Properties and Relationships. Sample ID: 6931b938c2f7cb7eba01df64",
+            "Lấy một cảm biến đơn ở định dạng NGSI-LD, kèm thuộc tính và quan hệ. Ví dụ ID: 6931b938c2f7cb7eba01df64",
         params: [
             {
                 name: "sensor_id",
                 type: "string",
-                desc: "Sensor ID (MongoDB ObjectId). Sample: 6931b938c2f7cb7eba01df64",
+                desc: "ID cảm biến (MongoDB ObjectId). Ví dụ: 6931b938c2f7cb7eba01df64",
             },
         ],
         testPath: "/api/v1/ld/sensors/6931b938c2f7cb7eba01df64",
@@ -164,9 +164,9 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/sensors/{sensor_id}/observations",
-        title: "Sensor Observations (NGSI-LD)",
+        title: "Quan trắc cảm biến (NGSI-LD)",
         description:
-            "Get sensor readings in NGSI-LD format with time range filtering. Sample sensor: 6931b938c2f7cb7eba01df64",
+            "Lấy dữ liệu quan trắc theo cảm biến ở định dạng NGSI-LD với lọc theo khoảng thời gian. Ví dụ cảm biến: 6931b938c2f7cb7eba01df64",
         params: [
             {
                 name: "sensor_id",
@@ -176,13 +176,13 @@ const iotLinkedDataEndpoints: Endpoint[] = [
             {
                 name: "from_time",
                 type: "string",
-                desc: "Start time (ISO 8601, e.g., 2024-01-01T00:00:00Z)",
+                desc: "Thời gian bắt đầu (ISO 8601, ví dụ: 2024-01-01T00:00:00Z)",
             },
             { name: "to_time", type: "string", desc: "End time (ISO 8601)" },
             {
                 name: "limit",
                 type: "integer",
-                desc: "Max observations (max: 10000)",
+                desc: "Số quan trắc tối đa (tối đa: 10000)",
                 default: "1000",
             },
         ],
@@ -192,9 +192,9 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/assets/{asset_id}",
-        title: "Asset with IoT Data (NGSI-LD)",
+        title: "Tài sản kèm dữ liệu IoT (NGSI-LD)",
         description:
-            "Get an infrastructure asset with all associated sensors and recent observations in NGSI-LD format. Sample: 6925b9001b74e89f7dab169a",
+            "Lấy tài sản hạ tầng kèm toàn bộ cảm biến liên quan và quan trắc gần đây ở định dạng NGSI-LD. Ví dụ: 6925b9001b74e89f7dab169a",
         params: [
             {
                 name: "asset_id",
@@ -204,7 +204,7 @@ const iotLinkedDataEndpoints: Endpoint[] = [
             {
                 name: "hours",
                 type: "integer",
-                desc: "Hours of historical data (max: 168)",
+                desc: "Số giờ dữ liệu lịch sử (tối đa: 168)",
                 default: "24",
             },
         ],
@@ -213,14 +213,14 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     {
         method: "GET",
         path: "/api/v1/ld/observations",
-        title: "All Observations (NGSI-LD)",
+        title: "Tất cả quan trắc (NGSI-LD)",
         description:
-            "Get recent observations from all sensors in NGSI-LD format for smart city platforms",
+            "Lấy các quan trắc gần đây từ tất cả cảm biến ở định dạng NGSI-LD cho nền tảng đô thị thông minh",
         params: [
             {
                 name: "hours",
                 type: "integer",
-                desc: "Hours of data to retrieve (max: 24)",
+                desc: "Số giờ dữ liệu cần lấy (tối đa: 24)",
                 default: "1",
             },
             { name: "asset_id", type: "string", desc: "Filter by asset ID" },
@@ -232,7 +232,7 @@ const iotLinkedDataEndpoints: Endpoint[] = [
             {
                 name: "limit",
                 type: "integer",
-                desc: "Max observations (max: 5000)",
+                desc: "Số quan trắc tối đa (tối đa: 5000)",
                 default: "500",
             },
         ],
@@ -333,7 +333,7 @@ function CopyButton({ text }: { text: string }) {
         <button
             onClick={handleCopy}
             className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors"
-            title="Copy to clipboard"
+            title="Sao chép vào clipboard"
         >
             {copied ? (
                 <Check size={16} className="text-green-400" />
@@ -363,8 +363,8 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                 testUrl += endpoint.testPath;
             } else if (endpoint.path.includes("{asset_id}") && assetId) {
                 testUrl += endpoint.path.replace("{asset_id}", assetId);
-            } else {
-                setError("Please enter asset_id to test");
+                } else {
+                setError("Vui lòng nhập asset_id để thử");
                 setIsLoading(false);
                 return;
             }
@@ -372,8 +372,8 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
             const res = await fetch(testUrl);
             const data = await res.json();
             setResponse(JSON.stringify(data, null, 2));
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "An error occurred");
+                } catch (err) {
+            setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
         } finally {
             setIsLoading(false);
         }
@@ -414,15 +414,15 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                 {endpoint.params && (
                     <div className="mt-4">
                         <h4 className="text-sm font-semibold text-slate-700 mb-2">
-                            Parameters:
+                            Tham số:
                         </h4>
                         <div className="bg-slate-50 rounded-lg p-4 overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-left text-slate-500">
-                                        <th className="pb-2 pr-4">Name</th>
-                                        <th className="pb-2 pr-4">Type</th>
-                                        <th className="pb-2">Description</th>
+                                        <th className="pb-2 pr-4">Tên</th>
+                                        <th className="pb-2 pr-4">Loại</th>
+                                        <th className="pb-2">Mô tả</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-slate-700">
@@ -449,16 +449,16 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                 {endpoint.path.includes("{asset_id}") && (
                     <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Enter asset_id to test:
+                            Nhập asset_id để thử:
                         </label>
                         <p className="text-xs text-slate-500 mb-2">
-                            Sample:{" "}
+                            Ví dụ:{" "}
                             <code
                                 className="bg-slate-100 px-2 py-1 rounded cursor-pointer hover:bg-slate-200 transition-colors"
                                 onClick={() =>
                                     setAssetId("6927235efbcca60d69c3bf97")
                                 }
-                                title="Click to use sample ID"
+                                title="Nhấn để dùng ID mẫu"
                             >
                                 6927235efbcca60d69c3bf97
                             </code>
@@ -484,7 +484,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                                 ) : (
                                     <Play size={16} />
                                 )}
-                                Test
+                                Thử
                             </button>
                         </div>
                     </div>
@@ -507,7 +507,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                         <div className="bg-slate-900 rounded-lg overflow-hidden">
                             <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
                                 <span className="text-xs text-slate-400">
-                                    {error ? "Error" : "application/json"}
+                                    {error ? "Lỗi" : "application/json"}
                                 </span>
                                 {response && <CopyButton text={response} />}
                             </div>
@@ -545,10 +545,10 @@ export default function ApiDocsPage() {
     >("javascript");
 
     const sidebarItems = [
-        { id: "opendata", label: "Open Data API", icon: "📦" },
-        { id: "iot", label: "IoT Linked Data", icon: "📡" },
-        { id: "examples", label: "Code Examples", icon: "💻" },
-        { id: "mcp", label: "MCP Server", icon: "🤖" },
+        { id: "opendata", label: "API Dữ liệu Mở", icon: "📦" },
+        { id: "iot", label: "Dữ liệu IoT (NGSI-LD)", icon: "📡" },
+        { id: "examples", label: "Ví dụ mã", icon: "💻" },
+        { id: "mcp", label: "Máy chủ MCP", icon: "🤖" },
     ];
 
     const scrollToSection = (id: string) => {
@@ -566,7 +566,7 @@ export default function ApiDocsPage() {
             <aside className="hidden lg:block fixed left-0 top-20 w-56 h-[calc(100vh-5rem)] bg-white border-r border-slate-200 p-4 overflow-y-auto z-40">
                 <nav className="space-y-1">
                     <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">
-                        Navigation
+                        Điều hướng
                     </h3>
                     {sidebarItems.map((item) => (
                         <button
@@ -601,14 +601,14 @@ export default function ApiDocsPage() {
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
                             <Database size={16} />
-                            Open Data API
+                                API Dữ liệu Mở
                         </div>
                         <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-                            API Documentation
+                            Tài liệu API
                         </h1>
                         <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                            Access open GIS infrastructure data and IoT sensors in NGSI-LD format.
-                            Free to use under Open Government Licence v3.0 (OGL).
+                            Truy cập dữ liệu hạ tầng GIS mở và cảm biến IoT theo định dạng NGSI-LD.
+                            Miễn phí sử dụng theo Open Government Licence v3.0 (OGL).
                         </p>
                     </div>
 
@@ -628,7 +628,7 @@ export default function ApiDocsPage() {
                                     Open Government Licence v3.0 (OGL)
                                 </h3>
                                 <p className="text-sm text-slate-500">
-                                    Terms of Use
+                                    Điều khoản sử dụng
                                 </p>
                             </div>
                             <ExternalLink
@@ -678,14 +678,14 @@ export default function ApiDocsPage() {
                 >
                     <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                         <Code size={28} className="text-blue-600" />
-                        Open Data Endpoints
+                        API dữ liệu mở
                     </h2>
                     <p className="text-slate-500 mb-8">
-                        Click the{" "}
+                        Nhấn nút {" "}
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#00F2FE] to-[#4FACFE] text-white text-xs font-medium rounded">
-                            <Play size={12} /> Test
+                            <Play size={12} /> Thử
                         </span>{" "}
-                        button to try it directly
+                        để thử ngay
                     </p>
 
                     <div className="space-y-4">
@@ -706,27 +706,27 @@ export default function ApiDocsPage() {
                     <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-8 mb-8">
                         <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                             <Database size={28} className="text-purple-600" />
-                            IoT Sensor Data - NGSI-LD
+                            Dữ liệu cảm biến IoT - NGSI-LD
                         </h2>
                         <p className="text-slate-700 mb-4">
-                            Access IoT sensor data in <strong>NGSI-LD</strong>{" "}
-                            format (ETSI standard for context information management):
+                            Truy cập dữ liệu cảm biến IoT theo định dạng <strong>NGSI-LD</strong>{" "}
+                            (chuẩn ETSI cho quản lý thông tin ngữ cảnh):
                         </p>
                         <div className="grid md:grid-cols-3 gap-4 mb-4">
                             <div className="bg-white/80 rounded-lg p-4">
                                 <h4 className="font-semibold text-purple-700 mb-1">
-                                    NGSI-LD Core
+                                    Cốt lõi NGSI-LD
                                 </h4>
                                 <p className="text-sm text-slate-600">
-                                    ETSI standard for smart cities
+                                    Chuẩn ETSI cho các nền tảng đô thị thông minh
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-4">
                                 <h4 className="font-semibold text-purple-700 mb-1">
-                                    Properties & Relationships
+                                    Thuộc tính & Mối quan hệ
                                 </h4>
                                 <p className="text-sm text-slate-600">
-                                    Structured entity attributes
+                                    Thuộc tính có cấu trúc của thực thể
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-4">
@@ -734,12 +734,12 @@ export default function ApiDocsPage() {
                                     Schema.org
                                 </h4>
                                 <p className="text-sm text-slate-600">
-                                    Additional vocabulary support
+                                    Hỗ trợ từ vựng mở rộng
                                 </p>
                             </div>
                         </div>
                         <p className="text-sm text-slate-600">
-                            Ideal for smart city platforms, context brokers, and IoT interoperability.
+                            Phù hợp cho nền tảng đô thị thông minh, context broker, và khả năng tương tác IoT.
                         </p>
                     </div>
 
@@ -759,8 +759,8 @@ export default function ApiDocsPage() {
                     className="max-w-6xl mx-auto px-4 mb-16 scroll-mt-24"
                 >
                     <h2 className="text-2xl font-bold text-slate-900 mb-8">
-                        Code Examples
-                    </h2>
+                            Ví dụ mã
+                        </h2>
 
                     <div className="bg-slate-900 rounded-2xl overflow-hidden">
                         <div className="flex border-b border-slate-700">
@@ -795,11 +795,10 @@ export default function ApiDocsPage() {
                 {/* NGSI-LD Code Examples */}
                 <section className="max-w-6xl mx-auto px-4 mb-16">
                     <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                        NGSI-LD / IoT Sensor Examples
+                        Ví dụ NGSI-LD / Cảm biến IoT
                     </h2>
                     <p className="text-slate-600 mb-8">
-                        Examples for working with IoT sensor data using NGSI-LD
-                        format for smart city integration.
+                        Ví dụ minh họa cách làm việc với dữ liệu cảm biến IoT theo định dạng NGSI-LD cho tích hợp đô thị thông minh.
                     </p>
 
                     <div className="bg-slate-900 rounded-2xl overflow-hidden">
@@ -850,19 +849,17 @@ export default function ApiDocsPage() {
                             >
                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                             </svg>
-                            MCP Server (Model Context Protocol)
+                            Máy chủ MCP (Model Context Protocol)
                         </h2>
                         <p className="text-slate-700 mb-4">
-                            Integrate OpenInfra data directly into AI assistants
-                            like <strong>Claude Desktop</strong>,{" "}
-                            <strong>Cursor</strong>, or any MCP-compatible
-                            client.
+                            Tích hợp dữ liệu OpenInfra trực tiếp vào trợ lý AI
+                            như <strong>Claude Desktop</strong>, <strong>Cursor</strong>, hoặc bất kỳ ứng dụng tương thích MCP.
                         </p>
 
                         <div className="grid md:grid-cols-2 gap-6 mb-6">
                             <div className="bg-white/80 rounded-lg p-4">
                                 <h4 className="font-semibold text-green-700 mb-3">
-                                    🔗 Connection URL
+                                    🔗 URL kết nối
                                 </h4>
                                 <code className="block bg-slate-100 px-4 py-3 rounded-lg text-sm font-mono text-slate-800 break-all">
                                     https://mcp.openinfra.space/sse
@@ -870,19 +867,19 @@ export default function ApiDocsPage() {
                             </div>
                             <div className="bg-white/80 rounded-lg p-4">
                                 <h4 className="font-semibold text-green-700 mb-3">
-                                    📦 Transport
+                                    📦 Phương thức truyền
                                 </h4>
                                 <p className="text-slate-600">
                                     SSE (Server-Sent Events)
                                 </p>
                                 <p className="text-sm text-slate-500 mt-1">
-                                    Compatible with all MCP 2.0+ clients
+                                    Tương thích với tất cả client MCP 2.0+
                                 </p>
                             </div>
                         </div>
 
                         <h4 className="font-semibold text-slate-800 mb-3">
-                            📚 Available Resources
+                            📚 Tài nguyên sẵn có
                         </h4>
                         <div className="grid md:grid-cols-2 gap-3 mb-6">
                             <div className="bg-white/80 rounded-lg p-3">
@@ -890,7 +887,7 @@ export default function ApiDocsPage() {
                                     openapi://spec
                                 </code>
                                 <p className="text-sm text-slate-600 mt-1">
-                                    Full OpenAPI specification
+                                    Toàn bộ đặc tả OpenAPI
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-3">
@@ -898,7 +895,7 @@ export default function ApiDocsPage() {
                                     docs://endpoints
                                 </code>
                                 <p className="text-sm text-slate-600 mt-1">
-                                    List of all endpoints
+                                    Danh sách tất cả endpoints
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-3">
@@ -906,7 +903,7 @@ export default function ApiDocsPage() {
                                     docs://opendata
                                 </code>
                                 <p className="text-sm text-slate-600 mt-1">
-                                    Open Data API docs
+                                    Tài liệu API Dữ liệu Mở
                                 </p>
                             </div>
                             <div className="bg-white/80 rounded-lg p-3">

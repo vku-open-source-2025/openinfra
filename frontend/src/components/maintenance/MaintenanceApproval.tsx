@@ -46,11 +46,11 @@ const MaintenanceApproval: React.FC<MaintenanceApprovalProps> = ({ maintenanceId
   if (showRejectForm) {
     return (
       <div className="border-t border-slate-200 pt-4 mt-4">
-        <h4 className="text-sm font-semibold text-slate-900 mb-2">Rejection Reason</h4>
-        <Textarea
+        <h4 className="text-sm font-semibold text-slate-900 mb-2">Lý do từ chối</h4>
+          <Textarea
           value={rejectionReason}
           onChange={(e) => setRejectionReason(e.target.value)}
-          placeholder="Enter reason for rejection..."
+          placeholder="Nhập lý do từ chối..."
           className="mb-3"
           rows={3}
         />
@@ -63,14 +63,14 @@ const MaintenanceApproval: React.FC<MaintenanceApprovalProps> = ({ maintenanceId
             }}
             disabled={approveMutation.isPending || rejectMutation.isPending}
           >
-            Cancel
+            Hủy
           </Button>
           <Button
             onClick={handleReject}
             disabled={!rejectionReason.trim() || rejectMutation.isPending}
             className="bg-red-600 hover:bg-red-700"
           >
-            {rejectMutation.isPending ? "Rejecting..." : "Confirm Rejection"}
+            {rejectMutation.isPending ? "Đang từ chối..." : "Xác nhận từ chối"}
           </Button>
         </div>
       </div>
@@ -79,7 +79,7 @@ const MaintenanceApproval: React.FC<MaintenanceApprovalProps> = ({ maintenanceId
 
   return (
     <div className="border-t border-slate-200 pt-4 mt-4">
-      <h4 className="text-sm font-semibold text-slate-900 mb-3">Approve / Reject Maintenance Record</h4>
+      <h4 className="text-sm font-semibold text-slate-900 mb-3">Phê duyệt / Từ chối bản ghi bảo trì</h4>
       <div className="flex gap-2">
         <Button
           onClick={handleApprove}
@@ -87,7 +87,7 @@ const MaintenanceApproval: React.FC<MaintenanceApprovalProps> = ({ maintenanceId
           className="bg-green-600 hover:bg-green-700"
         >
           <CheckCircle className="h-4 w-4 mr-2" />
-          {approveMutation.isPending ? "Approving..." : "Approve"}
+          {approveMutation.isPending ? "Đang phê duyệt..." : "Phê duyệt"}
         </Button>
         <Button
           variant="outline"
@@ -96,7 +96,7 @@ const MaintenanceApproval: React.FC<MaintenanceApprovalProps> = ({ maintenanceId
           className="border-red-300 text-red-600 hover:bg-red-50"
         >
           <XCircle className="h-4 w-4 mr-2" />
-          Reject
+          Từ chối
         </Button>
       </div>
     </div>

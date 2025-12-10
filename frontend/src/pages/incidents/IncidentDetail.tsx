@@ -125,7 +125,7 @@ const IncidentDetail: React.FC = () => {
     if (!incident) {
         return (
             <div className="p-6 text-center text-red-500">
-                Incident not found.
+                Không tìm thấy sự cố.
             </div>
         );
     }
@@ -168,7 +168,7 @@ const IncidentDetail: React.FC = () => {
                 onClick={() => navigate({ to: "/admin/incidents" })}
             >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Incidents
+                Quay lại danh sách sự cố
             </Button>
 
             {/* Header Section */}
@@ -209,13 +209,13 @@ const IncidentDetail: React.FC = () => {
                                                     : ""
                                             }`}
                                             className="text-blue-600 hover:text-blue-800 hover:underline"
-                                            title="View on map"
+                                            title="Xem trên bản đồ"
                                         >
                                             {lat.toFixed(6)}, {lng.toFixed(6)}
                                         </a>
                                     );
                                 }
-                                return <span>Location not specified</span>;
+                                return <span>Chưa xác định vị trí</span>;
                             })()
                         ) : (
                             <span>Location not specified</span>
@@ -259,7 +259,7 @@ const IncidentDetail: React.FC = () => {
 
                 {/* Description */}
                 <div className="mb-6">
-                    <h2 className="font-semibold mb-2">Description</h2>
+                    <h2 className="font-semibold mb-2">Mô tả</h2>
                     <p className="text-slate-700 whitespace-pre-wrap">
                         {incident.description}
                     </p>
@@ -270,7 +270,7 @@ const IncidentDetail: React.FC = () => {
                     <div className="mb-6">
                         <h2 className="font-semibold mb-3 flex items-center gap-2">
                             <Image className="h-4 w-4" />
-                            Photos ({incident.photos.length})
+                            Ảnh ({incident.photos.length})
                         </h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                             {incident.photos.map((photo, index) => (
@@ -295,9 +295,9 @@ const IncidentDetail: React.FC = () => {
                 {/* Related Asset Section */}
                 {incident.asset_id && (
                     <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h2 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                            <h2 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
                             <Wrench className="h-4 w-4" />
-                            Related Asset
+                            Tài sản liên quan
                         </h2>
                         {incident.asset ? (
                             <div className="space-y-1">
@@ -350,7 +350,7 @@ const IncidentDetail: React.FC = () => {
                     <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                         <h2 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
                             <CheckCircle className="h-4 w-4" />
-                            Resolution Details
+                            Chi tiết xử lý
                         </h2>
                         <div className="space-y-2">
                             <p className="text-green-800 whitespace-pre-wrap">
@@ -385,7 +385,7 @@ const IncidentDetail: React.FC = () => {
 
             {/* Actions Section */}
             <div className="bg-white rounded-lg border border-slate-200 p-6">
-                <h2 className="font-semibold mb-4">Actions</h2>
+                <h2 className="font-semibold mb-4">Hành động</h2>
                 <IncidentActions
                         incident={incident}
                         onAcknowledge={async () => {
@@ -420,8 +420,8 @@ const IncidentDetail: React.FC = () => {
                             <div className="mt-4 pt-4 border-t">
                                 <div className="mb-2">
                                     <p className="text-sm text-slate-600 mb-2">
-                                        Create a maintenance work order linked
-                                        to this incident.
+                                        Tạo phiếu công việc bảo trì liên kết
+                                                    với sự cố này.
                                         {incident.asset_id &&
                                             " This will automatically link to the related asset."}
                                     </p>
@@ -443,7 +443,7 @@ const IncidentDetail: React.FC = () => {
                                     ) : (
                                         <>
                                             <Wrench className="h-4 w-4 mr-2" />
-                                            Create Maintenance Work Order
+                                            Tạo phiếu bảo trì
                                         </>
                                     )}
                                 </Button>
@@ -484,7 +484,7 @@ const IncidentDetail: React.FC = () => {
                         <div className="mt-4 pt-4 border-t">
                             <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-4">
                                 <h3 className="font-semibold text-yellow-800">
-                                    Cost Approval Required
+                                    Cần phê duyệt chi phí
                                 </h3>
                                 <p className="text-sm text-yellow-700">
                                     This incident has pending maintenance costs
@@ -502,12 +502,12 @@ const IncidentDetail: React.FC = () => {
                                 ) : (
                                     <CheckCircle className="mr-2 h-4 w-4" />
                                 )}
-                                Approve Cost & Resolve
+                                Phê duyệt chi phí & Kết thúc
                             </Button>
                         </div>
                     )}
 
-                {/* Comments Section */}
+                {/* Phần bình luận */}
                 <div className="border-t pt-6 mt-6">
                     <IncidentComments
                         comments={incident.comments}

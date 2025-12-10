@@ -67,8 +67,8 @@ const AlertList: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">All Alerts</h1>
-          <p className="text-slate-500 mt-1">Complete list of system alerts</p>
+          <h1 className="text-2xl font-bold text-slate-900">Tất cả cảnh báo</h1>
+          <p className="text-slate-500 mt-1">Danh sách đầy đủ các cảnh báo hệ thống</p>
         </div>
       </div>
 
@@ -76,24 +76,24 @@ const AlertList: React.FC = () => {
         <Select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          placeholder="All Statuses"
+          placeholder="Tất cả trạng thái"
         >
           <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="acknowledged">Acknowledged</option>
-          <option value="resolved">Resolved</option>
-          <option value="dismissed">Dismissed</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="acknowledged">Đã xác nhận</option>
+          <option value="resolved">Đã giải quyết</option>
+          <option value="dismissed">Đã hủy</option>
         </Select>
         <Select
           value={severity}
           onChange={(e) => setSeverity(e.target.value)}
-          placeholder="All Severities"
+          placeholder="Tất cả mức độ"
         >
           <option value="">All Severities</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+          <option value="critical">Nguy kịch</option>
+          <option value="high">Cao</option>
+          <option value="medium">Trung bình</option>
+          <option value="low">Thấp</option>
         </Select>
       </div>
 
@@ -124,8 +124,8 @@ const AlertList: React.FC = () => {
             </div>
           ))
         ) : (
-          <div className="text-center py-12 text-slate-500">
-            <p>No alerts found</p>
+            <div className="text-center py-12 text-slate-500">
+            <p>Không tìm thấy cảnh báo</p>
           </div>
         )}
       </div>

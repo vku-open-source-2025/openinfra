@@ -68,48 +68,48 @@ const PublicIncidentReport: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Report an Incident</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Báo sự cố</h1>
         <p className="text-slate-600 mb-8">
-          Help us improve our infrastructure by reporting issues you encounter.
+          Hãy giúp chúng tôi cải thiện hạ tầng bằng cách báo các vấn đề bạn gặp phải.
         </p>
 
         <Form onSubmit={handleSubmit}>
           <FormField>
-            <FormLabel required>What happened?</FormLabel>
+            <FormLabel required>Bạn gặp sự cố gì?</FormLabel>
             <Input
               value={formData.title || ""}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Brief description (e.g., Pothole on Main Street)"
+              placeholder="Mô tả ngắn (ví dụ: ổ gà trên đường chính)"
             />
             {errors.title && <FormError>{errors.title}</FormError>}
           </FormField>
 
           <FormField>
-            <FormLabel required>Details</FormLabel>
+            <FormLabel required>Chi tiết</FormLabel>
             <Textarea
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Provide more details about the incident..."
+              placeholder="Mô tả chi tiết về sự cố..."
               rows={5}
             />
             {errors.description && <FormError>{errors.description}</FormError>}
           </FormField>
 
           <FormField>
-            <FormLabel required>Severity</FormLabel>
+            <FormLabel required>Mức độ nghiêm trọng</FormLabel>
             <Select
               value={formData.severity || "medium"}
               onChange={(e) => setFormData({ ...formData, severity: e.target.value as IncidentSeverity })}
             >
-              <option value="low">Low - Minor issue</option>
-              <option value="medium">Medium - Moderate issue</option>
-              <option value="high">High - Significant issue</option>
-              <option value="critical">Critical - Urgent attention needed</option>
+              <option value="low">Thấp - Vấn đề nhỏ</option>
+              <option value="medium">Trung bình - Vấn đề vừa</option>
+              <option value="high">Cao - Vấn đề nghiêm trọng</option>
+              <option value="critical">Nguy kịch - Cần xử lý khẩn</option>
             </Select>
           </FormField>
 
           <FormField>
-            <FormLabel required>Location</FormLabel>
+            <FormLabel required>Địa điểm</FormLabel>
             <Input
               value={formData.location?.address || ""}
               onChange={(e) =>
@@ -121,14 +121,14 @@ const PublicIncidentReport: React.FC = () => {
                   },
                 })
               }
-              placeholder="Street address or location description"
+              placeholder="Địa chỉ hoặc mô tả vị trí"
             />
             {errors.address && <FormError>{errors.address}</FormError>}
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">
             <FormField>
-              <FormLabel>Latitude (optional)</FormLabel>
+              <FormLabel>Vĩ độ (không bắt buộc)</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -150,7 +150,7 @@ const PublicIncidentReport: React.FC = () => {
             </FormField>
 
             <FormField>
-              <FormLabel>Longitude (optional)</FormLabel>
+              <FormLabel>Kinh độ (không bắt buộc)</FormLabel>
               <Input
                 type="number"
                 step="any"
@@ -177,12 +177,12 @@ const PublicIncidentReport: React.FC = () => {
           {/* Cloudflare Turnstile Captcha */}
           {TURNSTILE_SITE_KEY && (
             <FormField>
-              <FormLabel required>Verify you're human</FormLabel>
+              <FormLabel required>Xác minh bạn là người thật</FormLabel>
               <Turnstile
                 siteKey={TURNSTILE_SITE_KEY}
                 onVerify={(token) => setTurnstileToken(token)}
                 onExpire={() => setTurnstileToken("")}
-                onError={() => setErrors({ captcha: "Captcha verification failed. Please try again." })}
+                onError={() => setErrors({ captcha: "Xác thực captcha không thành công. Vui lòng thử lại." })}
                 theme="auto"
                 className="mt-2"
               />
@@ -192,7 +192,7 @@ const PublicIncidentReport: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending} className="flex-1">
-              {createMutation.isPending ? "Submitting..." : "Submit Report"}
+              {createMutation.isPending ? "Đang gửi..." : "Gửi báo cáo"}
             </Button>
           </div>
         </Form>

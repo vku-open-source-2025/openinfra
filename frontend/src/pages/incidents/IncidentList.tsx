@@ -9,50 +9,32 @@ import { Skeleton } from "../../components/ui/skeleton";
 import { Button } from "../../components/ui/button";
 import { Plus, AlertTriangle } from "lucide-react";
 
-type MainTab = "open" | "to_verify" | "closed" | "all";
-type VerifySubTab = "all" | "spam_risk" | "safe";
-type ClosedSubTab = "all" | "rejected" | "resolved";
+type MainTab = "all" | "spam_risk" | "useful" | "duplicates";
 
 const IncidentList: React.FC = () => {
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const [severity, setSeverity] = useState<string>("");
     const [search, setSearch] = useState<string>("");
+    const [day, setDay] = useState<string>("");
 
-    // Main tabs
-    const [mainTab, setMainTab] = useState<MainTab>("open");
-    // Sub-tabs for "To Verify"
-    const [verifySubTab, setVerifySubTab] = useState<VerifySubTab>("all");
-    // Sub-tabs for "Closed"
-    const [closedSubTab, setClosedSubTab] = useState<ClosedSubTab>("all");
+    // Simplified main tabs focused on triage
+    const [mainTab, setMainTab] = useState<MainTab>("all");
 
-    const limit = 99;
+    // Fetch a larger batch (API cap 100), paginate client-side with smaller pageSize
+    const fetchLimit = 100;
+    const pageSize = 5;
 
     // Build query params based on selected tabs
     const getQueryParams = () => {
         const params: any = {
-            skip: (page - 1) * limit,
-            limit,
+            skip: 0,
+            limit: fetchLimit,
             severity: severity || undefined,
         };
 
-        switch (mainTab) {
-            case "open":
-                // Open tickets: not closed, not resolved
-                // We'll filter on frontend since backend may not support complex status filtering
-                params.status = undefined; // Get all and filter
-                break;
-            case "to_verify":
-                params.verification_status = "to_be_verified";
-                break;
-            case "closed":
-                params.status = "closed";
-                break;
-            case "all":
-                // No filter
-                break;
-        }
-
+        // We fetch broadly and filter on the client so we can slice by AI
+        // confidence and duplicate tagging without extra backend calls.
         return params;
     };
 
@@ -63,65 +45,59 @@ const IncidentList: React.FC = () => {
     } = useQuery({
         queryKey: [
             "incidents",
-            page,
             mainTab,
-            verifySubTab,
-            closedSubTab,
             severity,
+            day,
         ],
         queryFn: () => incidentsApi.list(getQueryParams()),
     });
 
-    // Filter incidents based on tabs
+    // Filter incidents based on simplified tabs
     const filterIncidents = (data: typeof incidents) => {
         if (!data) return [];
 
         let filtered = data;
 
-        // Apply main tab filter
-        if (mainTab === "open") {
-            // Open = not closed and not resolved
+        if (mainTab === "spam_risk") {
+            // Low AI trust score (<50%) = potential spam/abuse
             filtered = filtered.filter(
-                (inc) => inc.status !== "closed" && inc.status !== "resolved"
+                (inc) =>
+                    inc.ai_confidence_score !== null &&
+                    inc.ai_confidence_score !== undefined &&
+                    inc.ai_confidence_score < 0.5
+            );
+        } else if (mainTab === "useful") {
+            // Useful = good AI score or unscored but not marked as spam
+            filtered = filtered.filter(
+                (inc) =>
+                    inc.ai_confidence_score === null ||
+                    inc.ai_confidence_score === undefined ||
+                    inc.ai_confidence_score >= 0.5
+            );
+        } else if (mainTab === "duplicates") {
+            // Duplicates = explicitly tagged as duplicate in resolution_type
+            filtered = filtered.filter(
+                (inc) => inc.resolution_type === "duplicate"
             );
         }
 
-        // Apply sub-tab filters
-        if (mainTab === "to_verify") {
-            // Filter by AI verification confidence (trustworthiness score)
-            if (verifySubTab === "spam_risk") {
-                // Low trust score = potential spam/fake (< 0.5 = <50% confidence it's legitimate)
-                filtered = filtered.filter(
-                    (inc) =>
-                        inc.ai_confidence_score !== null &&
-                        inc.ai_confidence_score !== undefined &&
-                        inc.ai_confidence_score < 0.5
-                );
-            } else if (verifySubTab === "safe") {
-                // Higher trust score = probably legitimate (>= 0.5 = ≥50% confidence it's legitimate)
-                filtered = filtered.filter(
-                    (inc) =>
-                        inc.ai_confidence_score === null ||
-                        inc.ai_confidence_score === undefined ||
-                        inc.ai_confidence_score >= 0.5
-                );
-            }
-        }
+        // Filter by specific day (local time)
+        if (day) {
+            const start = new Date(day);
+            const end = new Date(day);
+            end.setDate(end.getDate() + 1);
 
-        if (mainTab === "closed") {
-            if (closedSubTab === "rejected") {
-                // Rejected = resolution_type is not_an_issue
-                filtered = filtered.filter(
-                    (inc) => inc.resolution_type === "not_an_issue"
+            filtered = filtered.filter((inc) => {
+                const created = inc.created_at
+                    ? new Date(inc.created_at)
+                    : null;
+                return (
+                    created &&
+                    !Number.isNaN(created.getTime()) &&
+                    created >= start &&
+                    created < end
                 );
-            } else if (closedSubTab === "resolved") {
-                // Resolved = resolution_type is fixed, duplicate, etc.
-                filtered = filtered.filter(
-                    (inc) =>
-                        inc.resolution_type &&
-                        inc.resolution_type !== "not_an_issue"
-                );
-            }
+            });
         }
 
         // Apply search filter
@@ -147,8 +123,13 @@ const IncidentList: React.FC = () => {
 
     const filteredIncidents = filterIncidents(incidents);
     const totalPages = filteredIncidents
-        ? Math.ceil(filteredIncidents.length / limit)
+        ? Math.max(1, Math.ceil(filteredIncidents.length / pageSize))
         : 1;
+    const safePage = Math.min(page, totalPages || 1);
+    const pagedIncidents = filteredIncidents?.slice(
+        (safePage - 1) * pageSize,
+        safePage * pageSize
+    );
 
     if (error) {
         return (
@@ -158,11 +139,23 @@ const IncidentList: React.FC = () => {
         );
     }
 
-    const mainTabs: { value: MainTab; label: string; count?: number }[] = [
-        { value: "open", label: "Open" },
-        { value: "to_verify", label: "To Verify" },
-        { value: "closed", label: "Closed" },
-        { value: "all", label: "All" },
+    const mainTabs: { value: MainTab; label: string; helper?: string }[] = [
+        { value: "all", label: "Tất cả" },
+        {
+            value: "spam_risk",
+            label: "Rủi ro spam",
+            helper: "Điểm AI < 50%",
+        },
+        {
+            value: "useful",
+            label: "Báo cáo hữu ích",
+            helper: "Có khả năng hợp lệ",
+        },
+        {
+            value: "duplicates",
+            label: "Trùng lặp",
+            helper: "Được đánh dấu trùng lặp",
+        },
     ];
 
     return (
@@ -170,17 +163,17 @@ const IncidentList: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">
-                        Incidents
+                        Sự cố
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Manage and track reported incidents
+                        Quản lý và theo dõi các sự cố đã báo
                     </p>
                 </div>
                 <Button
                     onClick={() => navigate({ to: "/admin/incidents/create" })}
                 >
                     <Plus className="h-4 w-4 mr-2" />
-                    Report Incident
+                    Báo sự cố
                 </Button>
             </div>
 
@@ -188,9 +181,14 @@ const IncidentList: React.FC = () => {
                 status=""
                 severity={severity}
                 search={search}
+                day={day}
                 onStatusChange={() => {}}
                 onSeverityChange={setSeverity}
                 onSearchChange={setSearch}
+                onDayChange={(value) => {
+                    setDay(value);
+                    setPage(1);
+                }}
             />
 
             {/* Main Category Tabs */}
@@ -215,84 +213,17 @@ const IncidentList: React.FC = () => {
                 </div>
             </div>
 
-            {/* Sub-tabs for "To Verify" with AI warning */}
-            {mainTab === "to_verify" && (
-                <div className="space-y-3">
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                        <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-amber-800">
-                            <strong>AI Verification Results</strong>
-                            <p className="mt-1">
-                                These results are generated by AI and may
-                                contain errors. Please review each incident
-                                carefully before taking action.
-                            </p>
-                        </div>
+            {/* AI guidance for spam/quality buckets */}
+            {mainTab !== "all" && (
+                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-amber-800">
+                        <strong>Chỉ mang tính hướng dẫn bởi AI</strong>
+                        <p className="mt-1">
+                            Những danh mục này dựa trên điểm và nhãn của AI. Vui
+                            lòng xem xét sự cố trước khi thực hiện hành động.
+                        </p>
                     </div>
-                    <div className="flex gap-2">
-                        {[
-                            { value: "all" as VerifySubTab, label: "All" },
-                            {
-                                value: "spam_risk" as VerifySubTab,
-                                label: "🚨 Low Trust (<50%)",
-                                className: "text-red-600",
-                            },
-                            {
-                                value: "safe" as VerifySubTab,
-                                label: "✅ Higher Trust (≥50%)",
-                                className: "text-green-600",
-                            },
-                        ].map((tab) => (
-                            <button
-                                key={tab.value}
-                                onClick={() => {
-                                    setVerifySubTab(tab.value);
-                                    setPage(1);
-                                }}
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                    verifySubTab === tab.value
-                                        ? "bg-slate-800 text-white"
-                                        : `bg-slate-100 hover:bg-slate-200 ${
-                                              tab.className || "text-slate-600"
-                                          }`
-                                }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Sub-tabs for "Closed" */}
-            {mainTab === "closed" && (
-                <div className="flex gap-2">
-                    {[
-                        { value: "all" as ClosedSubTab, label: "All Closed" },
-                        {
-                            value: "rejected" as ClosedSubTab,
-                            label: "❌ Rejected",
-                        },
-                        {
-                            value: "resolved" as ClosedSubTab,
-                            label: "✓ Resolved",
-                        },
-                    ].map((tab) => (
-                        <button
-                            key={tab.value}
-                            onClick={() => {
-                                setClosedSubTab(tab.value);
-                                setPage(1);
-                            }}
-                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                closedSubTab === tab.value
-                                    ? "bg-slate-800 text-white"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
                 </div>
             )}
 
@@ -305,7 +236,7 @@ const IncidentList: React.FC = () => {
             ) : filteredIncidents && filteredIncidents.length > 0 ? (
                 <>
                     <div className="space-y-4">
-                        {filteredIncidents.map((incident) => (
+                        {pagedIncidents?.map((incident) => (
                             <IncidentCard
                                 key={incident.id}
                                 incident={incident}
@@ -317,17 +248,15 @@ const IncidentList: React.FC = () => {
                             />
                         ))}
                     </div>
-                    {totalPages > 1 && (
-                        <Pagination
-                            currentPage={page}
-                            totalPages={totalPages}
-                            onPageChange={setPage}
-                        />
-                    )}
+                    <Pagination
+                        currentPage={safePage}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                    />
                 </>
             ) : (
                 <div className="text-center py-12 text-slate-500">
-                    <p>No incidents found.</p>
+                    <p>Không tìm thấy sự cố.</p>
                 </div>
             )}
         </div>
