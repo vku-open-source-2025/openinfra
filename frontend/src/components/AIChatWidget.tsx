@@ -299,9 +299,17 @@ function ApiCard({ apiData, onClose, initialResult }: {
 
 interface AIChatWidgetProps {
   selectedAsset?: Asset | null;
+  onOpenChange?: (isOpen: boolean) => void;
+  openChat?: boolean;
+  addAssetToContext?: Asset | null;
 }
 
-export default function AIChatWidget({ selectedAsset }: AIChatWidgetProps = {}) {
+export default function AIChatWidget({ 
+  selectedAsset, 
+  onOpenChange,
+  openChat = false,
+  addAssetToContext: externalAddAsset
+}: AIChatWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [assetInContext, setAssetInContext] = useState<Asset | null>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -331,6 +339,39 @@ export default function AIChatWidget({ selectedAsset }: AIChatWidgetProps = {}) 
     scrollToBottom();
   }, [messages]);
 
+  const addAssetToContext = useCallback((asset: Asset) => {
+    setAssetInContext(asset);
+    // Add a system message to inform the user
+    const assetInfo = `Asset added to context:\n• Type: ${asset.feature_type}\n• Code: ${asset.feature_code}\n• ID: ${getAssetId(asset).slice(-6)}`;
+    setMessages(prev => [...prev, {
+      id: `asset-${Date.now()}`,
+      role: 'system',
+      content: `✅ ${assetInfo}\n\nYou can now ask questions about this asset!`,
+      timestamp: new Date(),
+    }]);
+  }, []);
+
+  // Handle external open control
+  useEffect(() => {
+    if (openChat && !isOpen) {
+      setIsOpen(true);
+      onOpenChange?.(true);
+    }
+  }, [openChat, isOpen, onOpenChange]);
+
+  // Handle external asset addition - use ref to track previous value
+  const prevAssetRef = useRef<Asset | null>(null);
+  useEffect(() => {
+    if (externalAddAsset && getAssetId(externalAddAsset) !== (prevAssetRef.current ? getAssetId(prevAssetRef.current) : null)) {
+      addAssetToContext(externalAddAsset);
+      prevAssetRef.current = externalAddAsset;
+    }
+    // Reset ref when external asset is cleared
+    if (!externalAddAsset) {
+      prevAssetRef.current = null;
+    }
+  }, [externalAddAsset, addAssetToContext]);
+
   // Reset asset in context when selected asset changes (user needs to re-add it)
   useEffect(() => {
     if (selectedAsset && assetInContext && getAssetId(selectedAsset) !== getAssetId(assetInContext)) {
@@ -338,18 +379,9 @@ export default function AIChatWidget({ selectedAsset }: AIChatWidgetProps = {}) 
     }
   }, [selectedAsset, assetInContext]);
 
-  const addAssetToContext = () => {
-    if (selectedAsset) {
-      setAssetInContext(selectedAsset);
-      // Add a system message to inform the user
-      const assetInfo = `Asset added to context:\n• Type: ${selectedAsset.feature_type}\n• Code: ${selectedAsset.feature_code}\n• ID: ${getAssetId(selectedAsset).slice(-6)}`;
-      setMessages(prev => [...prev, {
-        id: `asset-${Date.now()}`,
-        role: 'system',
-        content: `✅ ${assetInfo}\n\nYou can now ask questions about this asset!`,
-        timestamp: new Date(),
-      }]);
-    }
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    onOpenChange?.(open);
   };
 
   const connectWebSocket = useCallback(() => {
@@ -661,7 +693,7 @@ export default function AIChatWidget({ selectedAsset }: AIChatWidgetProps = {}) 
     <>
       {/* Chat button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => handleOpenChange(true)}
         className={`fixed bottom-6 right-6 p-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all z-50 ${isOpen ? 'hidden' : ''}`}
       >
         <MessageCircle size={24} />
@@ -681,36 +713,11 @@ export default function AIChatWidget({ selectedAsset }: AIChatWidgetProps = {}) 
                 </span>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-1 rounded">
+            <button onClick={() => handleOpenChange(false)} className="hover:bg-white/20 p-1 rounded">
               <X size={20} />
             </button>
           </div>
 
-          {/* Asset Context Banner */}
-          {selectedAsset && !assetInContext && (
-            <div className="px-4 py-3 border-b border-blue-100 bg-gradient-to-r from-green-50 to-emerald-50">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <MapPin size={16} className="text-green-600 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-green-800 truncate">
-                      {selectedAsset.feature_type}
-                    </p>
-                    <p className="text-xs text-green-600 truncate">
-                      {selectedAsset.feature_code} • ID: {getAssetId(selectedAsset).slice(-6)}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={addAssetToContext}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition shadow-sm shrink-0"
-                >
-                  <Plus size={14} />
-                  Add to Chat
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Asset in Context Indicator */}
           {assetInContext && (

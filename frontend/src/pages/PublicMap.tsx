@@ -5,7 +5,7 @@ import { getAssets, getAssetId, type Asset } from "../api";
 import MapComponent from "../components/Map";
 import MaintenanceLogList from "../components/MaintenanceLog";
 import { useIoT } from "../hooks/useIoT";
-import { AlertTriangle, X, ExternalLink } from "lucide-react";
+import { AlertTriangle, X, ExternalLink, MessageCircle } from "lucide-react";
 import Header from "../components/Header";
 import QRCodeModal from "../components/QRCodeModal";
 import NFCWriteModal from "../components/NFCWriteModal";
@@ -43,6 +43,8 @@ const PublicMap: React.FC = () => {
     const [showQRModal, setShowQRModal] = useState(false);
     const [showNFCModal, setShowNFCModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [openChatbot, setOpenChatbot] = useState(false);
+    const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(null);
 
     // Use filtered assets if available, otherwise use live IoT assets
     const displayAssets = useMemo(() => {
@@ -283,6 +285,17 @@ const PublicMap: React.FC = () => {
                                 <Button
                                     variant="outline"
                                     onClick={() => {
+                                        setAssetToAddToChat(selectedAsset);
+                                        setOpenChatbot(true);
+                                    }}
+                                    className="flex flex-row items-center gap-2"
+                                >
+                                    <MessageCircle size={16} />
+                                    Add to Chat
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
                                         const assetId =
                                             getAssetId(selectedAsset);
                                         navigate({
@@ -327,7 +340,17 @@ const PublicMap: React.FC = () => {
                 />
 
                 {/* AI Chatbot Widget */}
-                <AIChatWidget selectedAsset={selectedAsset} />
+                <AIChatWidget 
+                    openChat={openChatbot}
+                    onOpenChange={(isOpen) => {
+                        setOpenChatbot(isOpen);
+                        if (!isOpen) {
+                            // Reset asset to add when closing
+                            setAssetToAddToChat(null);
+                        }
+                    }}
+                    addAssetToContext={assetToAddToChat}
+                />
             </main>
         </div>
     );
