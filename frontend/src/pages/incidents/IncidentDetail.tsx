@@ -386,7 +386,7 @@ const IncidentDetail: React.FC = () => {
             {/* Actions Section */}
             <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h2 className="font-semibold mb-4">Actions</h2>
-                    <IncidentActions
+                <IncidentActions
                         incident={incident}
                         onAcknowledge={async () => {
                             await acknowledgeMutation.mutateAsync();
@@ -506,7 +506,6 @@ const IncidentDetail: React.FC = () => {
                             </Button>
                         </div>
                     )}
-                </div>
 
                 {/* Comments Section */}
                 <div className="border-t pt-6 mt-6">
