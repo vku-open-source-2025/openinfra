@@ -101,7 +101,7 @@ class MongoIncidentRepository(IncidentRepository):
         populate_asset: bool = False,
         verification_status: Optional[str] = None,
     ) -> List[Incident]:
-        """List incidents with filtering."""
+        """List incidents with filtering, sorted by severity (critical > high > medium > low)."""
         query = {}
         if status:
             query["status"] = status
@@ -114,15 +114,38 @@ class MongoIncidentRepository(IncidentRepository):
         if verification_status:
             query["ai_verification_status"] = verification_status
 
-        cursor = (
-            self.collection.find(query).sort("reported_at", -1).skip(skip).limit(limit)
-        )
+        # Use aggregation pipeline to sort by severity order
+        # Map severity to numeric value: critical=0, high=1, medium=2, low=3
+        pipeline = [
+            {"$match": query},
+            {
+                "$addFields": {
+                    "severity_order": {
+                        "$switch": {
+                            "branches": [
+                                {"case": {"$eq": ["$severity", "critical"]}, "then": 0},
+                                {"case": {"$eq": ["$severity", "high"]}, "then": 1},
+                                {"case": {"$eq": ["$severity", "medium"]}, "then": 2},
+                                {"case": {"$eq": ["$severity", "low"]}, "then": 3},
+                            ],
+                            "default": 99,
+                        }
+                    }
+                }
+            },
+            {"$sort": {"severity_order": 1, "reported_at": -1}},
+            {"$skip": skip},
+            {"$limit": limit},
+            {"$project": {"severity_order": 0}},  # Remove temporary field
+        ]
+
         incidents = []
-        async for incident_doc in cursor:
+        async for incident_doc in self.collection.aggregate(pipeline):
             if populate_asset:
                 incident_doc = await self._populate_asset(incident_doc)
             incident_doc = convert_objectid_to_str(incident_doc)
             incidents.append(Incident(**incident_doc))
+
         return incidents
 
     async def add_comment(self, incident_id: str, comment: dict) -> bool:
@@ -174,10 +197,10 @@ class MongoIncidentRepository(IncidentRepository):
         exclude_incident_ids: Optional[List[str]] = None,
         limit: int = 50,
         include_resolved: bool = True,
-        resolved_time_window_hours: int = 720  # 30 days for resolved incidents
+        resolved_time_window_hours: int = 720,  # 30 days for resolved incidents
     ) -> List[Incident]:
         """Find potential duplicate incidents based on filters.
-        
+
         Args:
             include_resolved: If True, also search resolved incidents (for recurrence detection)
             resolved_time_window_hours: Time window for resolved incidents (longer than active ones)
@@ -201,30 +224,36 @@ class MongoIncidentRepository(IncidentRepository):
             # Include all statuses except closed (closed means permanently resolved)
             # But exclude incidents resolved as duplicates
             # Use $or to handle different time windows for active vs resolved incidents
-            time_threshold_active = datetime.utcnow() - timedelta(hours=time_window_hours) if time_window_hours > 0 else None
-            time_threshold_resolved = datetime.utcnow() - timedelta(hours=resolved_time_window_hours)
-            
+            time_threshold_active = (
+                datetime.utcnow() - timedelta(hours=time_window_hours)
+                if time_window_hours > 0
+                else None
+            )
+            time_threshold_resolved = datetime.utcnow() - timedelta(
+                hours=resolved_time_window_hours
+            )
+
             or_conditions = []
-            
+
             # Active incidents (not resolved/closed) within time window
             if time_threshold_active:
-                or_conditions.append({
-                    "status": {"$nin": ["resolved", "closed"]},
-                    "reported_at": {"$gte": time_threshold_active}
-                })
+                or_conditions.append(
+                    {
+                        "status": {"$nin": ["resolved", "closed"]},
+                        "reported_at": {"$gte": time_threshold_active},
+                    }
+                )
             else:
-                or_conditions.append({
-                    "status": {"$nin": ["resolved", "closed"]}
-                })
-            
+                or_conditions.append({"status": {"$nin": ["resolved", "closed"]}})
+
             # Resolved incidents (not duplicates) within longer time window
             resolved_condition = {
                 "status": "resolved",
                 "resolution_type": {"$ne": "duplicate"},
-                "reported_at": {"$gte": time_threshold_resolved}
+                "reported_at": {"$gte": time_threshold_resolved},
             }
             or_conditions.append(resolved_condition)
-            
+
             query["$or"] = or_conditions
         else:
             # Original behavior: exclude resolved/closed incidents
@@ -249,7 +278,7 @@ class MongoIncidentRepository(IncidentRepository):
         # We'll use aggregation pipeline with $geoNear if $or is present, otherwise use $near
         use_geospatial = location and "geometry" in location
         geometry_coords = None
-        
+
         if use_geospatial:
             geometry = location["geometry"]
             if geometry.get("type") == "Point" and "coordinates" in geometry:
@@ -262,16 +291,16 @@ class MongoIncidentRepository(IncidentRepository):
                             "$geoNear": {
                                 "near": {
                                     "type": "Point",
-                                    "coordinates": geometry_coords
+                                    "coordinates": geometry_coords,
                                 },
                                 "distanceField": "distance",
                                 "maxDistance": location_radius_meters,
-                                "spherical": True
+                                "spherical": True,
                             }
                         },
                         {"$match": query},
                         {"$sort": {"reported_at": -1}},
-                        {"$limit": limit}
+                        {"$limit": limit},
                     ]
                     incidents = []
                     async for incident_doc in self.collection.aggregate(pipeline):
@@ -288,9 +317,9 @@ class MongoIncidentRepository(IncidentRepository):
                         "$near": {
                             "$geometry": {
                                 "type": "Point",
-                                "coordinates": geometry_coords
+                                "coordinates": geometry_coords,
                             },
-                            "$maxDistance": location_radius_meters
+                            "$maxDistance": location_radius_meters,
                         }
                     }
 
