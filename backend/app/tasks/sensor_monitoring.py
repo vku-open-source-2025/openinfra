@@ -13,6 +13,16 @@ from app.infrastructure.database.repositories.mongo_sensor_data_repository impor
 from app.infrastructure.database.repositories.mongo_alert_repository import (
     MongoAlertRepository,
 )
+from app.infrastructure.database.repositories.mongo_incident_repository import (
+    MongoIncidentRepository,
+)
+from app.domain.services.incident_service import IncidentService
+from app.domain.models.incident import (
+    IncidentCreate,
+    IncidentCategory,
+    IncidentSeverity as IncidentSeverityEnum,
+    ReporterType,
+)
 from app.services.rain_forecast_service import RainForecastService
 from datetime import datetime, timedelta
 import logging
@@ -400,13 +410,21 @@ async def _ai_automated_risk_detection_async():
     # Run AI risk detection on grouped data
     detection_results = await detect_ai_risks(grouped_readings, db=db)
 
-    # Process detected risks and create alerts if needed
+    # Process detected risks and create alerts and incidents if needed
     alert_repo = MongoAlertRepository(db)
     alert_service = AlertService(alert_repo)
+    incident_repo = MongoIncidentRepository(db)
+    incident_service = IncidentService(incident_repo)
     alerts_created = 0
+    incidents_created = 0
 
     for risk in detection_results.get("risks", []):
         try:
+            risk_level = risk.get("risk_level", "low")
+            sensor_id = risk["sensor_id"]
+            sensor_info = grouped_readings[sensor_id]["sensor_info"]
+            asset_id = sensor_info["asset_id"]
+
             # Map risk level to alert severity
             severity_mapping = {
                 "critical": AlertSeverity.CRITICAL,
@@ -415,16 +433,14 @@ async def _ai_automated_risk_detection_async():
                 "low": AlertSeverity.INFO,
             }
 
-            severity = severity_mapping.get(
-                risk.get("risk_level", "low"), AlertSeverity.INFO
-            )
+            severity = severity_mapping.get(risk_level, AlertSeverity.INFO)
 
             # Create alert for detected risk
             alert = Alert(
                 alert_code=f"AI-RISK-{uuid.uuid4().hex[:8].upper()}",
                 source_type=AlertSourceType.SENSOR,
-                sensor_id=risk["sensor_id"],
-                asset_id=grouped_readings[risk["sensor_id"]]["sensor_info"]["asset_id"],
+                sensor_id=sensor_id,
+                asset_id=asset_id,
                 type="ai_risk_detection",
                 severity=severity,
                 title=f"AI Detected Risk: {risk.get('risk_type', 'Unknown')}",
@@ -433,7 +449,7 @@ async def _ai_automated_risk_detection_async():
                 ),
                 triggered_at=risk.get("detected_at", datetime.utcnow()),
                 metadata={
-                    "risk_level": risk.get("risk_level"),
+                    "risk_level": risk_level,
                     "risk_type": risk.get("risk_type"),
                     "confidence": risk.get("confidence"),
                     "sensor_type": risk.get("sensor_type"),
@@ -441,8 +457,72 @@ async def _ai_automated_risk_detection_async():
                 },
             )
 
-            await alert_service.create_alert(alert)
+            created_alert = await alert_service.create_alert(alert)
             alerts_created += 1
+
+            # Create incident for critical/high risks
+            if risk_level in ["critical", "high"]:
+                try:
+                    # Map risk level to incident severity
+                    incident_severity_mapping = {
+                        "critical": IncidentSeverityEnum.CRITICAL,
+                        "high": IncidentSeverityEnum.HIGH,
+                    }
+                    incident_severity = incident_severity_mapping.get(
+                        risk_level, IncidentSeverityEnum.MEDIUM
+                    )
+
+                    # Map risk type to incident category
+                    risk_type = risk.get("risk_type", "").lower()
+                    if "rain" in risk_type or "flood" in risk_type:
+                        incident_category = IncidentCategory.SAFETY_HAZARD
+                    elif "water" in risk_type or "level" in risk_type:
+                        incident_category = IncidentCategory.MALFUNCTION
+                    else:
+                        incident_category = IncidentCategory.OTHER
+
+                    # Create incident
+                    incident_data = IncidentCreate(
+                        asset_id=asset_id,
+                        title=f"AI Detected {risk_level.upper()} Risk: {risk.get('risk_type', 'Unknown')}",
+                        description=risk.get(
+                            "description",
+                            f"AI risk detection system identified a {risk_level} level risk for sensor {sensor_info.get('sensor_code', sensor_id)}. "
+                            f"Risk type: {risk.get('risk_type', 'Unknown')}. "
+                            f"Confidence: {risk.get('confidence', 0):.1%}.",
+                        ),
+                        category=incident_category,
+                        severity=incident_severity,
+                        reported_via="system",
+                        public_visible=False,  # System-generated incidents are not public by default
+                    )
+
+                    created_incident = await incident_service.create_incident(
+                        incident_data,
+                        reported_by=None,
+                        reporter_type=ReporterType.SYSTEM.value,
+                    )
+
+                    # Link alert to incident
+                    await alert_repo.update(
+                        str(created_alert.id),
+                        {
+                            "incident_created": True,
+                            "incident_id": str(created_incident.id),
+                        },
+                    )
+
+                    incidents_created += 1
+                    logger.info(
+                        f"Created incident {created_incident.incident_number} for risk {risk.get('risk_type')}"
+                    )
+
+                except Exception as e:
+                    logger.error(
+                        f"Error creating incident for risk {sensor_id}: {e}",
+                        exc_info=True,
+                    )
+                    # Continue even if incident creation fails
 
         except Exception as e:
             logger.error(f"Error creating alert for risk {risk.get('sensor_id')}: {e}")
@@ -453,7 +533,8 @@ async def _ai_automated_risk_detection_async():
         f"AI risk detection completed: "
         f"Processed {len(grouped_readings)} sensors, "
         f"Detected {summary.get('total_risks', 0)} risks, "
-        f"Created {alerts_created} alerts"
+        f"Created {alerts_created} alerts, "
+        f"Created {incidents_created} incidents"
     )
 
     return {
@@ -464,6 +545,7 @@ async def _ai_automated_risk_detection_async():
         ),
         "risks_detected": summary.get("total_risks", 0),
         "alerts_created": alerts_created,
+        "incidents_created": incidents_created,
         "summary": summary,
         "time_window": {"from": from_time.isoformat(), "to": to_time.isoformat()},
     }

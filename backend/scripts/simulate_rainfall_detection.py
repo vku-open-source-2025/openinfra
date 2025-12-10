@@ -34,6 +34,22 @@ from app.core.config import settings
 from app.infrastructure.database.mongodb import db, get_database
 from app.services.rain_forecast_service import RainForecastService
 from app.tasks.sensor_monitoring import detect_ai_risks
+from app.domain.services.alert_service import AlertService
+from app.domain.models.alert import Alert, AlertSeverity, AlertSourceType
+from app.infrastructure.database.repositories.mongo_alert_repository import (
+    MongoAlertRepository,
+)
+from app.infrastructure.database.repositories.mongo_incident_repository import (
+    MongoIncidentRepository,
+)
+from app.domain.services.incident_service import IncidentService
+from app.domain.models.incident import (
+    IncidentCreate,
+    IncidentCategory,
+    IncidentSeverity as IncidentSeverityEnum,
+    ReporterType,
+)
+import uuid
 
 # Configuration
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
@@ -481,6 +497,126 @@ async def run_ai_detection(database, sensor_id: str) -> Dict:
 
     # Run detection
     result = await detect_ai_risks(grouped_readings, db=database)
+
+    # Create alerts and incidents for detected risks
+    alert_repo = MongoAlertRepository(database)
+    alert_service = AlertService(alert_repo)
+    incident_repo = MongoIncidentRepository(database)
+    incident_service = IncidentService(incident_repo)
+    alerts_created = 0
+    incidents_created = 0
+
+    for risk in result.get("risks", []):
+        try:
+            risk_level = risk.get("risk_level", "low")
+            sensor_id = risk["sensor_id"]
+            sensor_info = grouped_readings[sensor_id]["sensor_info"]
+            asset_id = sensor_info["asset_id"]
+
+            # Map risk level to alert severity
+            severity_mapping = {
+                "critical": AlertSeverity.CRITICAL,
+                "high": AlertSeverity.CRITICAL,
+                "medium": AlertSeverity.WARNING,
+                "low": AlertSeverity.INFO,
+            }
+
+            severity = severity_mapping.get(risk_level, AlertSeverity.INFO)
+
+            # Create alert for detected risk
+            alert = Alert(
+                alert_code=f"AI-RISK-{uuid.uuid4().hex[:8].upper()}",
+                source_type=AlertSourceType.SENSOR,
+                sensor_id=sensor_id,
+                asset_id=asset_id,
+                type="ai_risk_detection",
+                severity=severity,
+                title=f"AI Detected Risk: {risk.get('risk_type', 'Unknown')}",
+                message=risk.get(
+                    "description", "AI risk detection identified a potential issue"
+                ),
+                triggered_at=risk.get("detected_at", datetime.utcnow()),
+                metadata={
+                    "risk_level": risk_level,
+                    "risk_type": risk.get("risk_type"),
+                    "confidence": risk.get("confidence"),
+                    "sensor_type": risk.get("sensor_type"),
+                    "statistics": risk.get("statistics", {}),
+                },
+            )
+
+            created_alert = await alert_service.create_alert(alert)
+            alerts_created += 1
+
+            # Create incident for critical/high risks
+            if risk_level in ["critical", "high"]:
+                try:
+                    # Map risk level to incident severity
+                    incident_severity_mapping = {
+                        "critical": IncidentSeverityEnum.CRITICAL,
+                        "high": IncidentSeverityEnum.HIGH,
+                    }
+                    incident_severity = incident_severity_mapping.get(
+                        risk_level, IncidentSeverityEnum.MEDIUM
+                    )
+
+                    # Map risk type to incident category
+                    risk_type = risk.get("risk_type", "").lower()
+                    if "rain" in risk_type or "flood" in risk_type:
+                        incident_category = IncidentCategory.SAFETY_HAZARD
+                    elif "water" in risk_type or "level" in risk_type:
+                        incident_category = IncidentCategory.MALFUNCTION
+                    else:
+                        incident_category = IncidentCategory.OTHER
+
+                    # Create incident
+                    incident_data = IncidentCreate(
+                        asset_id=asset_id,
+                        title=f"AI Detected {risk_level.upper()} Risk: {risk.get('risk_type', 'Unknown')}",
+                        description=risk.get(
+                            "description",
+                            f"AI risk detection system identified a {risk_level} level risk for sensor {sensor_info.get('sensor_code', sensor_id)}. "
+                            f"Risk type: {risk.get('risk_type', 'Unknown')}. "
+                            f"Confidence: {risk.get('confidence', 0):.1%}.",
+                        ),
+                        category=incident_category,
+                        severity=incident_severity,
+                        reported_via="system",
+                        public_visible=False,
+                    )
+
+                    created_incident = await incident_service.create_incident(
+                        incident_data,
+                        reported_by=None,
+                        reporter_type=ReporterType.SYSTEM.value,
+                    )
+
+                    # Link alert to incident
+                    await alert_repo.update(
+                        str(created_alert.id),
+                        {
+                            "incident_created": True,
+                            "incident_id": str(created_incident.id),
+                        },
+                    )
+
+                    incidents_created += 1
+                    print(
+                        f"✓ Created incident {created_incident.incident_number} for risk {risk.get('risk_type')}"
+                    )
+
+                except Exception as e:
+                    print(f"⚠ Error creating incident for risk {sensor_id}: {e}")
+                    # Continue even if incident creation fails
+
+        except Exception as e:
+            print(f"⚠ Error creating alert for risk {risk.get('sensor_id')}: {e}")
+            continue
+
+    # Add creation counts to result
+    result["alerts_created"] = alerts_created
+    result["incidents_created"] = incidents_created
+
     return result
 
 
@@ -619,6 +755,10 @@ async def main():
             print(f"  Critical risks: {summary.get('critical_risks', 0)}")
             print(f"  Warning risks: {summary.get('warning_risks', 0)}")
             print(f"  Info risks: {summary.get('info_risks', 0)}")
+            print(f"  Alerts created: {detection_result.get('alerts_created', 0)}")
+            print(
+                f"  Incidents created: {detection_result.get('incidents_created', 0)}"
+            )
             print()
 
             if risks:
