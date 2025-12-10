@@ -42,7 +42,7 @@ app.conf.beat_schedule = {
     },
     "ai-automated-risk-detection": {
         "task": "ai_automated_risk_detection",
-        "schedule": crontab(minute="*/1"),  # Run every 30 minutes
+        "schedule": crontab(minute="*/15"),  # Run every 30 minutes
     },
     "generate-scheduled-reports": {
         "task": "generate_scheduled_reports",

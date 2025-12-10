@@ -1,6 +1,7 @@
 """Rain Forecast Service for detecting abnormal rain accumulation using ARIMA time series forecasting."""
 
 import logging
+import warnings
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import numpy as np
@@ -12,6 +13,14 @@ try:
     from statsmodels.tsa.stattools import adfuller
 
     STATSMODELS_AVAILABLE = True
+    # Suppress non-invertible MA parameter warnings during model fitting
+    # This is expected during parameter search and statsmodels handles it automatically
+    warnings.filterwarnings(
+        "ignore",
+        message="Non-invertible starting MA parameters found",
+        category=UserWarning,
+        module="statsmodels.tsa.statespace.sarimax",
+    )
 except ImportError:
     STATSMODELS_AVAILABLE = False
     logging.warning(

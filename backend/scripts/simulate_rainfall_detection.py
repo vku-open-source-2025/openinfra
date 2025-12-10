@@ -229,32 +229,105 @@ class RainfallSimulator:
     def _generate_spike_pattern(
         self, start_time: datetime, end_time: datetime, interval_minutes: int
     ) -> List[Dict]:
-        """Generate sudden spike pattern (anomaly scenario)."""
+        """
+        Generate sudden spike pattern (anomaly scenario).
+        Creates a dramatic spike that accumulates to 200-400 mm total.
+        This will definitely trigger AI risk detection due to the high rate of change.
+        """
         readings = []
         current_time = start_time
         spike_started = False
 
+        # Target accumulation: 200-400 mm total
+        target_accumulation = random.uniform(200.0, 400.0)
+
+        # Get starting baseline (from historical data or previous readings)
+        baseline_at_start = self.cumulative_rainfall
+
+        # Calculate spike duration (last hour of the period for dramatic effect)
+        total_duration_hours = (end_time - start_time).total_seconds() / 3600
+        spike_start_hour = max(
+            0.5, total_duration_hours - 1.0
+        )  # Start spike in last hour
+        spike_duration_hours = total_duration_hours - spike_start_hour
+
+        # Calculate how much we need to accumulate during current period
+        # If baseline is already high, we still want to add significant spike
+        if baseline_at_start >= target_accumulation:
+            # Already at or above target, add dramatic spike anyway (50-150 mm more)
+            spike_accumulation_needed = random.uniform(50.0, 150.0)
+            final_target = baseline_at_start + spike_accumulation_needed
+        else:
+            # Need to reach target from baseline
+            spike_accumulation_needed = target_accumulation - baseline_at_start
+            final_target = target_accumulation
+
+        # Calculate average rate needed during spike period
+        if spike_duration_hours > 0:
+            avg_spike_rate = spike_accumulation_needed / spike_duration_hours
+        else:
+            avg_spike_rate = spike_accumulation_needed
+
+        # Ensure spike rate is dramatic (minimum 50 mm/hour for detection)
+        # For a spike from baseline to 200-400 mm in 1 hour, rate will be 100-400 mm/hour
+        min_spike_rate = max(50.0, avg_spike_rate * 0.7)  # At least 70% of needed rate
+        max_spike_rate = max(100.0, avg_spike_rate * 1.5)  # Up to 150% for variation
+
+        spike_accumulated = 0.0
+        baseline_accumulation = baseline_at_start
+
         while current_time <= end_time:
-            hour = current_time.hour
             elapsed_hours = (current_time - start_time).total_seconds() / 3600
 
-            # Create a sudden spike in the last 30 minutes
-            if elapsed_hours >= 1.5 and not spike_started:
-                spike_started = True
-                # Very high rainfall rate
-                rate = random.uniform(15.0, 25.0)  # mm/hour - very high!
-            elif spike_started and elapsed_hours < 2.0:
-                # Continue spike
-                rate = random.uniform(10.0, 20.0)
-            else:
-                # Normal pattern before spike
-                rain_probability = 0.1
+            # Normal pattern before spike (minimal accumulation)
+            if elapsed_hours < spike_start_hour:
+                rain_probability = 0.05  # Very light rain before spike
                 if random.random() < rain_probability:
-                    rate = random.uniform(0.1, 1.0)
+                    rate = random.uniform(0.1, 0.5)  # Very light rain
                 else:
                     rate = 0.0
+                baseline_accumulation += rate * (interval_minutes / 60.0)
+                self.cumulative_rainfall = baseline_accumulation
+            else:
+                # Spike period: intense rainfall
+                if not spike_started:
+                    spike_started = True
+                    # Very high initial rate to start the spike dramatically
+                    rate = random.uniform(min_spike_rate, max_spike_rate)
+                else:
+                    # Continue spike with varying intensity
+                    # Ensure we reach target accumulation
+                    remaining_needed = spike_accumulation_needed - spike_accumulated
+                    remaining_time_hours = (
+                        end_time - current_time
+                    ).total_seconds() / 3600
 
-            self.cumulative_rainfall += rate * (interval_minutes / 60.0)
+                    if remaining_time_hours > 0.01:  # More than 36 seconds remaining
+                        # Calculate rate needed to reach target
+                        required_rate = remaining_needed / remaining_time_hours
+                        # Add variation but ensure we're on track to reach target
+                        rate = random.uniform(
+                            max(min_spike_rate, required_rate * 0.8),
+                            max(max_spike_rate, required_rate * 1.2),
+                        )
+                    else:
+                        # Last reading - ensure we hit target exactly
+                        if remaining_needed > 0:
+                            rate = remaining_needed / (interval_minutes / 60.0)
+                        else:
+                            rate = random.uniform(10.0, 30.0)  # Continue heavy rain
+
+                # Add spike accumulation
+                spike_increment = rate * (interval_minutes / 60.0)
+                spike_accumulated += spike_increment
+                self.cumulative_rainfall = baseline_accumulation + spike_accumulated
+
+                # Cap at reasonable maximum (slightly above target for realism)
+                if self.cumulative_rainfall >= final_target:
+                    self.cumulative_rainfall = min(
+                        final_target * 1.02,  # Allow 2% over target
+                        self.cumulative_rainfall,
+                    )
 
             reading = {
                 "sensor_id": self.sensor_id,
@@ -270,6 +343,7 @@ class RainfallSimulator:
                     "source": "simulation",
                     "rate_mm_per_hour": rate * (60 / interval_minutes),
                     "scenario": "spike",
+                    "target_accumulation": final_target,
                 },
             }
 
