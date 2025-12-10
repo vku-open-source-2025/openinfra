@@ -38,7 +38,7 @@ const Header: React.FC = () => {
     }, []);
 
     return (
-        <header className="fixed z-50 top-0 left-0 h-20 w-full bg-transparent backdrop-blur-md">
+        <header className="fixed z-50 top-0 left-0 h-20 w-full bg-white backdrop-blur-md shadow-sm">
             <div className="flex items-center justify-between h-full px-4 mx-auto max-w-7xl">
                 {/* Logo */}
                 <div className="flex items-center">
