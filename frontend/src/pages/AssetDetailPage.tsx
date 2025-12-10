@@ -181,7 +181,7 @@ const AssetDetailPage: React.FC = () => {
                         className="mb-6"
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Map
+                        Quay lại bản đồ
                     </Button>
 
                     {/* Asset Header */}
@@ -508,7 +508,7 @@ const AssetDetailPage: React.FC = () => {
                                     <MaintenanceLogList assetId={id} />
                                 ) : (
                                     <div className="text-center py-8 text-slate-500">
-                                        <p>No maintenance history available.</p>
+                                        <p>Không có lịch sử bảo trì.</p>
                                     </div>
                                 )}
                             </div>
@@ -604,7 +604,7 @@ const AssetDetailPage: React.FC = () => {
                                             variant="default"
                                         >
                                             <MapPin className="h-4 w-4 mr-2" />
-                                            View on Map
+                                            Xem trên bản đồ
                                         </Button>
                                     </Link>
                                     <Button

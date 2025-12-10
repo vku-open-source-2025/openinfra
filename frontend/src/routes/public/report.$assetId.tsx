@@ -126,7 +126,7 @@ function ReportIncidentPage() {
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                         id="description"
-                        placeholder="Describe the problem..."
+                        placeholder="Mô tả vấn đề..."
                         value={incidentData.description}
                         onChange={e => setIncidentData({ ...incidentData, description: e.target.value })}
                         required
@@ -146,7 +146,7 @@ function ReportIncidentPage() {
                         <Label htmlFor="reporter_contact">Contact (Optional)</Label>
                         <Input
                             id="reporter_contact"
-                            placeholder="Phone/Email"
+                            placeholder="Số điện thoại / Email"
                             value={incidentData.reporter_contact}
                             onChange={e => setIncidentData({ ...incidentData, reporter_contact: e.target.value })}
                         />

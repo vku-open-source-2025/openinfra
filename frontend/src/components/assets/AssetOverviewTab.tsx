@@ -28,31 +28,31 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
     <div className="space-y-6">
       {/* Basic Information */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Basic Information</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Thông tin cơ bản</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wide">Asset Name</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Tên tài sản</label>
             <p className="text-sm font-medium text-slate-900 mt-1">{asset.name || asset.feature_code}</p>
           </div>
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wide">Asset Type</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Loại tài sản</label>
             <p className="text-sm font-medium text-slate-900 mt-1">{asset.feature_type}</p>
           </div>
           {asset.managing_unit && (
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Managing Unit</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Đơn vị quản lý</label>
               <p className="text-sm font-medium text-slate-900 mt-1">{asset.managing_unit}</p>
             </div>
           )}
           {asset.manufacturer && (
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Manufacturer</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Nhà sản xuất</label>
               <p className="text-sm font-medium text-slate-900 mt-1">{asset.manufacturer}</p>
             </div>
           )}
           {asset.lifecycle?.commissioned_date && (
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Commissioned Date</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Ngày đưa vào sử dụng</label>
               <p className="text-sm font-medium text-slate-900 mt-1">
                 {format(new Date(asset.lifecycle.commissioned_date), "dd/MM/yyyy")}
               </p>
@@ -60,7 +60,7 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
           )}
           {asset.lifecycle?.designed_lifespan_years && (
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Designed Lifespan</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Tuổi thọ thiết kế</label>
               <p className="text-sm font-medium text-slate-900 mt-1">
                 {asset.lifecycle.designed_lifespan_years} years
               </p>
@@ -71,10 +71,10 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
 
       {/* Status Summary */}
       <div>
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Status Summary</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Tóm tắt trạng thái</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-50 rounded-lg p-4">
-            <label className="text-xs text-slate-500 uppercase tracking-wide">Current Status</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wide">Trạng thái hiện tại</label>
             <div className="mt-2">
               <span className={`px-2 py-1 text-xs font-bold rounded uppercase ${
                 asset.lifecycle?.lifecycle_status === "operational" ? "bg-green-100 text-green-700" :
@@ -87,7 +87,7 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
             </div>
           </div>
           <div className="bg-slate-50 rounded-lg p-4">
-            <label className="text-xs text-slate-500 uppercase tracking-wide">Health Score</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wide">Điểm sức khỏe</label>
             <div className="mt-2">
               <span className="text-lg font-bold text-slate-900">
                 {asset.lifecycle?.health_score ?? 0}/100
@@ -102,16 +102,16 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
                   lifecycleTab?.click();
                 }}
               >
-                View Details
+                Xem chi tiết
               </Button>
             </div>
           </div>
           <div className="bg-slate-50 rounded-lg p-4">
-            <label className="text-xs text-slate-500 uppercase tracking-wide">Remaining Life</label>
+            <label className="text-xs text-slate-500 uppercase tracking-wide">Thời gian còn lại</label>
             <div className="mt-2">
               <span className="text-sm font-semibold text-slate-900">
                 {asset.lifecycle?.remaining_lifespan_years
-                  ? `${asset.lifecycle.remaining_lifespan_years} years`
+                  ? `${asset.lifecycle.remaining_lifespan_years} năm`
                   : "N/A"}
               </span>
             </div>
@@ -122,8 +122,8 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
       {/* Last 5 Maintenance Records */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Last 5 Maintenance Records</h3>
-          <Button
+          <h3 className="text-lg font-semibold text-slate-900">5 bản ghi bảo trì gần đây</h3>
+            <Button
             variant="ghost"
             size="sm"
             onClick={() => {
@@ -131,7 +131,7 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
               maintenanceTab?.click();
             }}
           >
-            View All <ExternalLink size={14} className="ml-1" />
+            Xem tất cả <ExternalLink size={14} className="ml-1" />
           </Button>
         </div>
         {maintenanceLoading ? (
@@ -145,11 +145,11 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Summary</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Technician</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Cost</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">View</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Ngày</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tóm tắt</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Kỹ thuật viên</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Chi phí</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Xem</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
@@ -168,7 +168,7 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
                         : "N/A"}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <Button variant="ghost" size="sm">View</Button>
+                      <Button variant="ghost" size="sm">Xem</Button>
                     </td>
                   </tr>
                 ))}
@@ -177,7 +177,7 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
           </div>
         ) : (
           <div className="text-center py-8 text-slate-500">
-            <p>No maintenance records found.</p>
+            <p>Không tìm thấy bản ghi bảo trì.</p>
           </div>
         )}
       </div>
@@ -185,8 +185,8 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
       {/* Active / Recent Incidents */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Active / Recent Incidents</h3>
-          <Button
+          <h3 className="text-lg font-semibold text-slate-900">Sự cố hoạt động / gần đây</h3>
+            <Button
             variant="ghost"
             size="sm"
             onClick={() => {
@@ -194,7 +194,7 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
               incidentsTab?.click();
             }}
           >
-            View All <ExternalLink size={14} className="ml-1" />
+            Xem tất cả <ExternalLink size={14} className="ml-1" />
           </Button>
         </div>
         {incidentsLoading ? (
@@ -232,14 +232,14 @@ const AssetOverviewTab: React.FC<AssetOverviewTabProps> = ({ assetId, asset }) =
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">View</Button>
+                  <Button variant="ghost" size="sm">Xem</Button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-8 text-slate-500">
-            <p>No incidents found.</p>
+            <p>Không tìm thấy sự cố.</p>
           </div>
         )}
       </div>

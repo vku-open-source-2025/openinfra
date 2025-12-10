@@ -259,7 +259,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                                 onChange={(e) => setTitle(e.target.value)}
                                 required
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                placeholder="e.g., Broken Equipment"
+                                placeholder="ví dụ: Thiết bị hỏng"
                             />
                         </div>
 
@@ -317,7 +317,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                                 required
                                 rows={4}
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
-                                placeholder="Please describe the issue in detail..."
+                                placeholder="Vui lòng mô tả chi tiết vấn đề..."
                             />
                         </div>
 

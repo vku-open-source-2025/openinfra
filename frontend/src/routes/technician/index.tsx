@@ -91,7 +91,7 @@ function TechnicianTaskList() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-xl">My Tasks</h2>
+                <h2 className="font-bold text-xl">Công việc của tôi</h2>
                 <div className="flex items-center gap-2 text-sm">
                     <span className="text-slate-600">
                         {allMyIncidents?.length || 0} incidents,{" "}
@@ -102,15 +102,15 @@ function TechnicianTaskList() {
 
             {/* Tab Navigation */}
             <div className="flex gap-2 border-b border-slate-200">
-                <button
+                    <button
                     onClick={() => setActiveTab("all")}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === "all"
                             ? "border-blue-600 text-blue-600"
                             : "border-transparent text-slate-500 hover:text-slate-700"
                     }`}
-                >
-                    All Tasks
+                    >
+                    Tất cả công việc
                 </button>
                 <button
                     onClick={() => setActiveTab("incidents")}
@@ -121,7 +121,7 @@ function TechnicianTaskList() {
                     }`}
                 >
                     <AlertTriangle className="inline h-4 w-4 mr-1" />
-                    Incidents ({allMyIncidents?.length || 0})
+                    Sự cố ({allMyIncidents?.length || 0})
                 </button>
                 <button
                     onClick={() => setActiveTab("maintenance")}
@@ -132,7 +132,7 @@ function TechnicianTaskList() {
                     }`}
                 >
                     <Wrench className="inline h-4 w-4 mr-1" />
-                    Maintenance ({activeMaintenance.length})
+                    Bảo trì ({activeMaintenance.length})
                 </button>
             </div>
 
@@ -171,13 +171,13 @@ function TechnicianTaskList() {
             ) : (
                 <div className="text-center p-8 text-slate-500 bg-white rounded-lg border border-slate-200">
                     <p>
-                        {activeTab === "all" &&
-                            "No active tasks assigned to you."}
-                        {activeTab === "incidents" &&
-                            "No active incidents assigned to you."}
-                        {activeTab === "maintenance" &&
-                            "No active maintenance work orders assigned to you."}
-                    </p>
+                            {activeTab === "all" &&
+                                "Không có công việc nào được phân công cho bạn."}
+                            {activeTab === "incidents" &&
+                                "Không có sự cố nào được phân công cho bạn."}
+                            {activeTab === "maintenance" &&
+                                "Không có lệnh bảo trì nào được phân công cho bạn."}
+                        </p>
                 </div>
             )}
         </div>

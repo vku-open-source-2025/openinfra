@@ -87,7 +87,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
           }}
         >
           <Plus className="h-4 w-4 mr-2" />
-          Report New Incident
+          Báo sự cố mới
         </Button>
       </div>
 
@@ -95,12 +95,12 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
       <div className="bg-slate-50 rounded-lg p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Status</label>
+            <label className="text-xs text-slate-500 mb-1 block">Trạng thái</label>
             <Select
               value={statusFilter}
               onValueChange={setStatusFilter}
             >
-              <option value="">All Statuses</option>
+              <option value="">Tất cả trạng thái</option>
               <option value="reported">Reported</option>
               <option value="acknowledged">Acknowledged</option>
               <option value="assigned">Assigned</option>
@@ -110,12 +110,12 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
             </Select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Severity</label>
+            <label className="text-xs text-slate-500 mb-1 block">Mức độ</label>
             <Select
               value={severityFilter}
               onValueChange={setSeverityFilter}
             >
-              <option value="">All Severities</option>
+              <option value="">Tất cả mức độ</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -123,7 +123,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
             </Select>
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Date From</label>
+            <label className="text-xs text-slate-500 mb-1 block">Từ ngày</label>
             <Input
               type="date"
               value={dateFrom}
@@ -132,7 +132,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
             />
           </div>
           <div>
-            <label className="text-xs text-slate-500 mb-1 block">Date To</label>
+            <label className="text-xs text-slate-500 mb-1 block">Đến ngày</label>
             <Input
               type="date"
               value={dateTo}
@@ -186,10 +186,10 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
                       </div>
                       <p className="text-sm text-slate-600 mb-2 line-clamp-2">{incident.description}</p>
                       <div className="flex items-center gap-4 text-xs text-slate-500">
-                        <span>Date: {format(new Date(incident.created_at), "dd/MM/yyyy")}</span>
-                        <span>Reporter: {incident.reporter_type}</span>
-                        {incident.assigned_to && <span>Assigned: {incident.assigned_to}</span>}
-                        {incident.upvotes > 0 && <span>Upvotes: {incident.upvotes}</span>}
+                        <span>Ngày: {format(new Date(incident.created_at), "dd/MM/yyyy")}</span>
+                        <span>Người báo: {incident.reporter_type}</span>
+                        {incident.assigned_to && <span>Người được phân công: {incident.assigned_to}</span>}
+                        {incident.upvotes > 0 && <span>Được bình chọn: {incident.upvotes}</span>}
                       </div>
                     </div>
                   </div>
@@ -200,7 +200,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
         </div>
       ) : (
         <div className="text-center py-12 text-slate-500">
-          <p>No incidents found.</p>
+          <p>Không tìm thấy sự cố.</p>
         </div>
       )}
 
@@ -218,13 +218,13 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-wide">Description</label>
+                <label className="text-xs text-slate-500 uppercase tracking-wide">Mô tả</label>
                 <p className="text-sm text-slate-900 mt-1">{selectedIncident.description}</p>
               </div>
 
               {/* Status Workflow Bar */}
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Status Workflow</label>
+                <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Quy trình trạng thái</label>
                 <div className="flex items-center gap-2">
                   {["reported", "acknowledged", "assigned", "in_progress", "resolved", "closed"].map((status, idx) => {
                     const isActive = selectedIncident.status === status;
@@ -252,29 +252,29 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-slate-500 uppercase tracking-wide">Status</label>
+                  <label className="text-xs text-slate-500 uppercase tracking-wide">Trạng thái</label>
                   <p className="text-sm text-slate-900 mt-1 capitalize">{selectedIncident.status.replace("_", " ")}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 uppercase tracking-wide">Severity</label>
+                  <label className="text-xs text-slate-500 uppercase tracking-wide">Mức độ</label>
                   <p className="text-sm text-slate-900 mt-1 capitalize">{selectedIncident.severity}</p>
                 </div>
                 {selectedIncident.assigned_to && (
                   <div>
-                    <label className="text-xs text-slate-500 uppercase tracking-wide">Assigned Technician</label>
+                    <label className="text-xs text-slate-500 uppercase tracking-wide">Kỹ thuật viên được phân công</label>
                     <p className="text-sm text-slate-900 mt-1">{selectedIncident.assigned_to}</p>
                   </div>
                 )}
                 <div>
-                  <label className="text-xs text-slate-500 uppercase tracking-wide">Reporter</label>
+                  <label className="text-xs text-slate-500 uppercase tracking-wide">Người báo</label>
                   <p className="text-sm text-slate-900 mt-1 capitalize">{selectedIncident.reporter_type}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 uppercase tracking-wide">Created</label>
+                  <label className="text-xs text-slate-500 uppercase tracking-wide">Ngày tạo</label>
                   <p className="text-sm text-slate-900 mt-1">{format(new Date(selectedIncident.created_at), "dd/MM/yyyy HH:mm")}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-slate-500 uppercase tracking-wide">Updated</label>
+                  <label className="text-xs text-slate-500 uppercase tracking-wide">Cập nhật</label>
                   <p className="text-sm text-slate-900 mt-1">{format(new Date(selectedIncident.updated_at), "dd/MM/yyyy HH:mm")}</p>
                 </div>
               </div>
@@ -282,7 +282,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
               {/* Activity Log / Comments */}
               {selectedIncident.comments && selectedIncident.comments.length > 0 && (
                 <div>
-                  <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Activity Log</label>
+                          <label className="text-xs text-slate-500 uppercase tracking-wide mb-2 block">Nhật ký hoạt động</label>
                   <div className="space-y-2">
                     {selectedIncident.comments.map((comment, idx) => {
                       const dateStr = comment.posted_at || comment.created_at;
@@ -302,7 +302,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
                           </div>
                           <p className="text-sm text-slate-700">{comment.comment}</p>
                           {comment.is_internal && (
-                            <span className="text-xs text-amber-600 mt-1 inline-block">Internal Note</span>
+                            <span className="text-xs text-amber-600 mt-1 inline-block">Ghi chú nội bộ</span>
                           )}
                         </div>
                       );

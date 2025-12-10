@@ -45,7 +45,7 @@ const AssetReportsTab: React.FC<AssetReportsTabProps> = ({ assetId }) => {
     <div className="space-y-6">
       {/* Report Generation */}
       <div className="bg-slate-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Generate Report</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Tạo báo cáo</h3>
         <ReportGenerator
           reportType={reportType}
           format={format}
@@ -71,8 +71,8 @@ const AssetReportsTab: React.FC<AssetReportsTabProps> = ({ assetId }) => {
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-semibold text-green-900 mb-1">Report Generated Successfully</h4>
-              <p className="text-sm text-green-700">Report ID: {generatedReport.report_id}</p>
+              <h4 className="font-semibold text-green-900 mb-1">Tạo báo cáo thành công</h4>
+              <p className="text-sm text-green-700">Mã báo cáo: {generatedReport.report_id}</p>
             </div>
             <Button
               onClick={() => window.open(generatedReport.report_url, "_blank")}
@@ -81,12 +81,12 @@ const AssetReportsTab: React.FC<AssetReportsTabProps> = ({ assetId }) => {
               {format === "pdf" ? (
                 <>
                   <FileText className="h-4 w-4 mr-2" />
-                  Download PDF
+                  Tải PDF
                 </>
               ) : (
                 <>
                   <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  Download Excel
+                  Tải Excel
                 </>
               )}
             </Button>
@@ -96,11 +96,11 @@ const AssetReportsTab: React.FC<AssetReportsTabProps> = ({ assetId }) => {
 
       {/* Report History Placeholder */}
       <div className="bg-slate-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Generated Report History</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Lịch sử báo cáo đã tạo</h3>
         <div className="text-center py-8 text-slate-500">
           <FileText size={48} className="mx-auto mb-4 opacity-50" />
-          <p>Report history will appear here</p>
-          <p className="text-xs mt-1">(Feature to be implemented)</p>
+          <p>Lịch sử báo cáo sẽ hiển thị tại đây</p>
+          <p className="text-xs mt-1">(Tính năng đang triển khai)</p>
         </div>
       </div>
     </div>

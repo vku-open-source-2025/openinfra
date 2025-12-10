@@ -84,7 +84,7 @@ const AssetDetail: React.FC = () => {
                     </p>
                     <Button onClick={() => navigate({ to: "/admin/assets" })}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Assets
+                        Quay lại danh sách tài sản
                     </Button>
                 </div>
             </div>

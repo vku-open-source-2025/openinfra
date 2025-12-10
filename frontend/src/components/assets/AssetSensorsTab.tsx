@@ -32,8 +32,8 @@ const AssetSensorsTab: React.FC<AssetSensorsTabProps> = ({ assetId }) => {
     return (
       <div className="text-center py-12 text-slate-500">
         <Activity className="h-12 w-12 mx-auto mb-4 text-slate-300" />
-        <p className="text-lg font-medium mb-2">No Sensors Connected</p>
-        <p className="text-sm">This asset doesn't have any IoT sensors linked to it.</p>
+        <p className="text-lg font-medium mb-2">Chưa kết nối cảm biến</p>
+        <p className="text-sm">Tài sản này chưa có cảm biến IoT liên kết.</p>
       </div>
     )
   }
@@ -41,7 +41,7 @@ const AssetSensorsTab: React.FC<AssetSensorsTabProps> = ({ assetId }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Connected Sensors ({sensors.length})</h3>
+      <h3 className="text-lg font-semibold">Cảm biến đã kết nối ({sensors.length})</h3>
       </div>
 
       <div className="grid gap-4">
@@ -61,7 +61,7 @@ const AssetSensorsTab: React.FC<AssetSensorsTabProps> = ({ assetId }) => {
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <span className="text-slate-500">Last Reading:</span>
+                    <span className="text-slate-500">Lần đọc cuối:</span>
                     <span className="ml-2 font-medium">
                       {sensor.last_reading != null
                         ? `${typeof sensor.last_reading === 'object' 
@@ -71,19 +71,19 @@ const AssetSensorsTab: React.FC<AssetSensorsTabProps> = ({ assetId }) => {
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Unit:</span>
+                    <span className="text-slate-500">Đơn vị:</span>
                     <span className="ml-2 font-medium">{sensor.measurement_unit || 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Sample Rate:</span>
+                    <span className="text-slate-500">Tần suất mẫu:</span>
                     <span className="ml-2 font-medium">{sensor.sample_rate ? `${sensor.sample_rate}s` : 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Last Seen:</span>
+                    <span className="text-slate-500">Lần xuất hiện cuối:</span>
                     <span className="ml-2 font-medium">
                       {sensor.last_seen
                         ? format(new Date(sensor.last_seen), "MMM d, HH:mm")
-                        : 'Never'}
+                        : 'Chưa từng'}
                     </span>
                   </div>
                 </div>

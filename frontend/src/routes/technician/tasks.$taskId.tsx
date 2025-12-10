@@ -123,7 +123,7 @@ function TaskExecutionPage() {
                 className="pl-0"
                 onClick={() => navigate({ to: "/technician" })}
             >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
+                <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại công việc
             </Button>
 
             <div className="bg-white p-4 rounded-lg shadow-sm border space-y-4">
@@ -174,7 +174,7 @@ function TaskExecutionPage() {
                                 }
                             >
                                 <ExternalLink className="h-4 w-4 mr-1" />
-                                View Maintenance
+                                Xem bảo trì
                             </Button>
                         </div>
                     </div>
@@ -242,11 +242,11 @@ function TaskExecutionPage() {
                                 required
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Describe work performed, parts replaced, issues found..."
+                                placeholder="Mô tả công việc đã thực hiện, bộ phận thay thế, vấn đề phát hiện..."
                                 rows={5}
                             />
                             <p className="text-xs text-slate-500 mt-1">
-                                Required: Describe the work that was performed.
+                                Bắt buộc: Mô tả công việc đã thực hiện.
                             </p>
                         </div>
                         <div>
@@ -270,7 +270,7 @@ function TaskExecutionPage() {
                                 className="flex-1"
                                 onClick={() => setShowCompleteForm(false)}
                             >
-                                Cancel
+                                Hủy
                             </Button>
                             <Button
                                 type="submit"
@@ -280,7 +280,7 @@ function TaskExecutionPage() {
                                 {completeMutation.isPending && (
                                     <Loader2 className="animate-spin mr-2" />
                                 )}
-                                Submit
+                                Gửi
                             </Button>
                         </div>
                     </form>
@@ -320,7 +320,7 @@ function TaskExecutionPage() {
                                 required
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Describe how the incident was resolved..."
+                                placeholder="Mô tả cách sự cố đã được xử lý..."
                                 rows={5}
                             />
                         </div>

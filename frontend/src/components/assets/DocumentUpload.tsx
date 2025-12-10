@@ -135,7 +135,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
               type="text"
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value)}
-              placeholder="e.g., Manual, Certificate, Photo"
+              placeholder="ví dụ: Hướng dẫn sử dụng, Chứng chỉ, Ảnh"
             />
           </div>
           <div className="flex items-center gap-2">

@@ -47,7 +47,7 @@ export const AlertFeed: React.FC<AlertFeedProps> = ({
     return (
       <div className="text-center py-8 text-slate-500">
         <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-        <p>No active alerts</p>
+        <p>Không có cảnh báo hoạt động</p>
       </div>
     )
   }

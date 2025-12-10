@@ -211,7 +211,7 @@ function MaintenanceDetailPage() {
                 className="pl-0"
                 onClick={() => navigate({ to: "/technician" })}
             >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
+                <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại công việc
             </Button>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
@@ -553,7 +553,7 @@ function MaintenanceDetailPage() {
                                     onChange={(e) =>
                                         setCompletionNotes(e.target.value)
                                     }
-                                    placeholder="Describe work performed, parts replaced, issues found..."
+                                    placeholder="Mô tả công việc đã thực hiện, bộ phận thay thế, vấn đề phát hiện..."
                                     rows={5}
                                 />
                                 <p className="text-xs text-slate-500 mt-1">

@@ -73,7 +73,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         <Textarea
           value={formData.description || ""}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Transaction description..."
+          placeholder="Mô tả giao dịch..."
           rows={3}
         />
         {errors.description && <FormError>{errors.description}</FormError>}

@@ -135,7 +135,7 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
           <Input
             value={parameters.feature_type || ""}
             onChange={(e) => updateParameter("feature_type", e.target.value)}
-            placeholder="e.g., road, bridge, building"
+            placeholder="ví dụ: đường, cầu, tòa nhà"
           />
         </FormField>
         <FormField>

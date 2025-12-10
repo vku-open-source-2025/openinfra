@@ -85,7 +85,7 @@ function IncidentStatusPage() {
                 </div>
             )}
 
-            <Button variant="outline" onClick={() => window.location.reload()}>Refresh Status</Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>Làm mới trạng thái</Button>
         </div>
     );
 }

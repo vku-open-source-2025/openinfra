@@ -51,10 +51,10 @@ const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
       {/* Upload Area */}
       <div className="bg-slate-50 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Upload Documents</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Tải lên tài liệu</h3>
           <Button onClick={() => setShowUpload(true)}>
             <Upload className="h-4 w-4 mr-2" />
-            Upload Document
+            Tải tài liệu lên
           </Button>
         </div>
         <DocumentUpload
@@ -78,12 +78,12 @@ const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Version</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Uploaded By</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Loại</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Tên</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Phiên bản</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Người tải lên</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Ngày</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Hành động</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
@@ -138,7 +138,7 @@ const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
       ) : (
         <div className="text-center py-12 text-slate-500">
           <FileText size={48} className="mx-auto mb-4 opacity-50" />
-          <p>No documents uploaded yet.</p>
+          <p>Chưa có tài liệu được tải lên.</p>
         </div>
       )}
 
@@ -159,10 +159,10 @@ const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
               ) : (
                 <div className="bg-slate-50 rounded-lg p-8 text-center">
                   <FileText size={64} className="mx-auto mb-4 text-slate-400" />
-                  <p className="text-slate-600 mb-4">Preview not available for this file type.</p>
+                  <p className="text-slate-600 mb-4">Xem trước không có sẵn cho loại tệp này.</p>
                   <Button onClick={() => handleDownload(selectedDocument)}>
                     <Download className="h-4 w-4 mr-2" />
-                    Download File
+                    Tải tệp
                   </Button>
                 </div>
               )}

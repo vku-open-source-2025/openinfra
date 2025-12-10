@@ -10,7 +10,7 @@ export const SensorStatistics: React.FC<SensorStatisticsProps> = ({ readings, un
   if (readings.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500">
-        <p>No statistics available</p>
+        <p>Không có thống kê</p>
       </div>
     )
   }
@@ -35,37 +35,37 @@ export const SensorStatistics: React.FC<SensorStatisticsProps> = ({ readings, un
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <div className="text-xs text-slate-500 mb-1">Average</div>
+        <div className="text-xs text-slate-500 mb-1">Trung bình</div>
         <div className="text-2xl font-bold text-slate-900">{avg.toFixed(2)}</div>
         <div className="text-xs text-slate-500">{unit}</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <div className="text-xs text-slate-500 mb-1">Min</div>
+        <div className="text-xs text-slate-500 mb-1">Tối thiểu</div>
         <div className="text-2xl font-bold text-slate-900">{min.toFixed(2)}</div>
         <div className="text-xs text-slate-500">{unit}</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <div className="text-xs text-slate-500 mb-1">Max</div>
+        <div className="text-xs text-slate-500 mb-1">Tối đa</div>
         <div className="text-2xl font-bold text-slate-900">{max.toFixed(2)}</div>
         <div className="text-xs text-slate-500">{unit}</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <div className="text-xs text-slate-500 mb-1">Median</div>
+        <div className="text-xs text-slate-500 mb-1">Trung vị</div>
         <div className="text-2xl font-bold text-slate-900">{median.toFixed(2)}</div>
         <div className="text-xs text-slate-500">{unit}</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <div className="text-xs text-slate-500 mb-1">Count</div>
+        <div className="text-xs text-slate-500 mb-1">Số lượng</div>
         <div className="text-2xl font-bold text-slate-900">{readings.length}</div>
         <div className="text-xs text-slate-500">readings</div>
       </div>
       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <div className="text-xs text-slate-500 mb-1">Trend</div>
+        <div className="text-xs text-slate-500 mb-1">Xu hướng</div>
         <div className="flex items-center gap-2">
           {trend === "up" && <TrendingUp className="h-5 w-5 text-green-600" />}
           {trend === "down" && <TrendingDown className="h-5 w-5 text-red-600" />}
           {trend === "stable" && <Minus className="h-5 w-5 text-slate-600" />}
-          <span className="text-lg font-semibold text-slate-900 capitalize">{trend}</span>
+          <span className="text-lg font-semibold text-slate-900 capitalize">{trend === 'up' ? 'Tăng' : trend === 'down' ? 'Giảm' : 'Ổn định'}</span>
         </div>
       </div>
     </div>

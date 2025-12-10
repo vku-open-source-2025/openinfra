@@ -31,7 +31,7 @@ export const SensorChart: React.FC<SensorChartProps> = ({ readings, unit = "", h
   if (!chartData || chartData.readings.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 text-slate-500 bg-slate-50 rounded-lg border border-slate-200">
-        <p>No data available</p>
+        <p>Không có dữ liệu</p>
       </div>
     )
   }
@@ -46,7 +46,7 @@ export const SensorChart: React.FC<SensorChartProps> = ({ readings, unit = "", h
     <div className="bg-white rounded-lg border border-slate-200 p-4">
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600">Value Range</span>
+          <span className="text-slate-600">Phạm vi giá trị</span>
           <span className="font-semibold">
             {min.toFixed(2)} - {max.toFixed(2)} {unit}
           </span>
