@@ -10,7 +10,7 @@
 [![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-green.svg)](https://www.mongodb.com/)
 
-OpenInfra is a comprehensive urban infrastructure asset management system designed to digitize and optimize the lifecycle management of public infrastructure and telecommunications assets. The system helps government agencies and utilities track, maintain, and optimize infrastructure assets while improving service quality, extending asset lifespan, reducing costs, and enhancing community safety through data-driven decision making.
+OpenInfra is a comprehensive, production-grade urban infrastructure asset management system designed to digitize and optimize the lifecycle management of public infrastructure and telecommunications assets. Built with **Clean Architecture** principles and **Domain-Driven Design** patterns, OpenInfra empowers government agencies and utilities to track, maintain, and optimize infrastructure assets while improving service quality, extending asset lifespan, reducing operational costs, and enhancing community safety through data-driven decision making.
 
 ---
 
@@ -26,6 +26,8 @@ OpenInfra is a comprehensive urban infrastructure asset management system design
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Running the Application](#running-the-application)
+- [Documentation](#-documentation)
+- [AI Integration & MCP Server](#-ai-integration--mcp-server)
 - [User Roles](#-user-roles)
 - [API Documentation](#-api-documentation)
 - [Deployment](#-deployment)
@@ -38,17 +40,30 @@ OpenInfra is a comprehensive urban infrastructure asset management system design
 
 ## 🎯 Overview
 
-OpenInfra addresses the critical need for modern infrastructure management by providing:
+![Homepage](images/Homepage.png)
 
-- **Complete Asset Lifecycle Management**: Track assets from installation to retirement
-- **Real-time IoT Monitoring**: Monitor infrastructure health with sensor data and alerts
-- **GIS Integration**: Visualize and query assets on interactive maps
-- **Maintenance Optimization**: Schedule preventive maintenance and track work orders
-- **Citizen Engagement**: Enable public reporting through QR/NFC codes
-- **Budget Management**: Track costs and optimize resource allocation
-- **Data-driven Decisions**: Generate insights through analytics and reporting
+OpenInfra addresses the critical need for modern infrastructure management by providing a unified platform that combines:
 
-The system is built on **Clean Architecture** principles with **Domain-Driven Design** patterns, ensuring scalability, maintainability, and production-grade reliability.
+- **Complete Asset Lifecycle Management**: Track assets from installation to retirement with comprehensive audit trails
+- **Real-time IoT Monitoring**: Monitor infrastructure health with sensor data, automated alerts, and predictive maintenance
+- **GIS Integration**: Visualize and query assets on interactive maps with geospatial analytics
+- **Maintenance Optimization**: Schedule preventive maintenance, track work orders, and optimize resource allocation
+- **Citizen Engagement**: Enable public reporting through QR/NFC codes and mobile-friendly interfaces
+- **Data-driven Decisions**: Generate insights through analytics, reporting, and AI-powered recommendations
+
+The system is architected for **production-scale deployments**, handling millions of assets, thousands of concurrent users, and high-frequency IoT data ingestion while maintaining sub-200ms API response times and 99.9%+ uptime.
+
+### Why OpenInfra?
+
+Traditional infrastructure management relies on paper-based records, disconnected systems, and reactive maintenance. OpenInfra transforms this by:
+
+- **Digitizing** all asset information in a centralized, searchable database
+- **Automating** monitoring and alerting through IoT sensors
+- **Optimizing** maintenance schedules based on real-time data and predictive analytics
+- **Engaging** citizens through transparent, accessible public interfaces
+- **Enabling** AI-powered insights through semantic APIs and MCP integration
+
+For detailed architecture information, see [Architecture Documentation](backend/docs/architecture.md).
 
 ---
 
@@ -81,6 +96,8 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 
 ### 1. 🗺️ Interactive GIS Mapping
 
+![GIS Map](images/Gismap.png)
+
 - **Multi-layer Visualization**: Display BTS stations, signal strength (RSRP, SINR), and coverage anomalies
 - **Geospatial Queries**: Find assets by location, radius, or custom polygons
 - **Real-time Updates**: View live asset status and sensor readings
@@ -88,6 +105,8 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 - **Population-weighted Prioritization**: Focus on high-impact areas
 
 ### 2. 📦 Complete Asset Lifecycle Management
+
+![Lifecycle](images/Lifecycle.png)
 
 - **Comprehensive Asset Profiles**: Track manufacturer, model, installation date, specifications
 - **Maintenance History**: Complete audit trail of all maintenance and repairs
@@ -98,6 +117,8 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 
 ### 3. 📱 Field Access via QR/NFC
 
+![NFC](images/NFC.jpg)
+
 - **Quick Scanning**: Access asset information instantly in the field
 - **Public Information**: Citizens can view basic asset details
 - **Citizen Reporting**: Report issues with photos directly from scanned assets
@@ -105,6 +126,8 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 - **Offline Support**: Basic information available without connectivity
 
 ### 4. 🔔 Real-time IoT Monitoring & Alerts
+
+![Dashboard](images/Dashboard.png)
 
 - **Multi-sensor Support**: Temperature, tilt, door sensors, voltage, UPS, A/C monitoring
 - **Threshold-based Alerts**: Automatic warnings when readings exceed limits
@@ -122,6 +145,8 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 
 ### 6. 🔧 Maintenance Management
 
+![Incident](images/Incident.png)
+
 - **Work Order System**: Create, assign, and track maintenance tasks
 - **Technician Assignment**: Route tasks to appropriate field workers
 - **Mobile-friendly Interface**: Optimized for field use
@@ -129,21 +154,16 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 - **Quality Assurance**: Approval workflows and verification
 - **Recurring Maintenance**: Automated scheduling for preventive tasks
 
-### 7. 💰 Budget Management
+### 7. 🤖 AI-Ready API (MCP - Model Context Protocol)
 
-- **Budget Planning**: Allocate funds by department and category
-- **Transaction Tracking**: Monitor actual spending vs. budget
-- **Approval Workflows**: Multi-level authorization for expenses
-- **Financial Reporting**: Real-time budget utilization dashboards
-- **Cost Analysis**: Link maintenance costs to assets and projects
-
-### 8. 🤖 AI-Ready API (MCP - Model Context Protocol)
+![OpenAPI](images/OpenAPI.png)
 
 - **Semantic API**: NGSI-LD format for IoT data interoperability
-- **MCP Integration**: Simplified AI agent interaction
-- **Self-documenting**: No need to learn complex API structures
+- **MCP Integration**: Simplified AI agent interaction with self-documenting APIs
 - **Automatic Authentication**: Built-in security for AI systems
 - **Dual Format**: Standard JSON (`/api/v1/iot`) + NGSI-LD (`/api/v1/ld`)
+
+For detailed information about AI integration, see [AI Agent Documentation](docs/ai-agent-prompt.md) and [MCP Server Documentation](docs/mcp-server.md).
 
 ---
 
@@ -178,6 +198,11 @@ The system is built on **Clean Architecture** principles with **Domain-Driven De
 - **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
 - **Tracing**: OpenTelemetry + Jaeger
 
+For detailed technology stack information, see:
+- [Backend Architecture](backend/docs/architecture.md)
+- [Frontend Tech Stack](frontend/TECH_STACK_SUMMARY.md)
+- [API Design](backend/docs/api-design.md)
+
 ---
 
 ## 🏗️ Architecture
@@ -200,7 +225,7 @@ OpenInfra follows **Clean Architecture** principles with clear separation of con
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
 │               Domain Layer (Business Logic)                 │
-│  • Services: Asset, Maintenance, IoT, Budget, Alert         │
+│  • Services: Asset, Maintenance, IoT, Alert                 │
 │  • Models: Domain entities with business rules              │
 │  • Repositories: Abstract data access interfaces            │
 └────────────────────────┬────────────────────────────────────┘
@@ -223,7 +248,11 @@ OpenInfra follows **Clean Architecture** principles with clear separation of con
 - ✅ **Scalable**: Horizontal scaling of all components
 - ✅ **Flexible**: Easy to swap infrastructure components
 
-For detailed architecture documentation, see [backend/docs/architecture.md](backend/docs/architecture.md).
+For comprehensive architecture documentation, see:
+- [System Architecture](backend/docs/architecture.md)
+- [Database Design](backend/docs/database-design.md)
+- [API Design](backend/docs/api-design.md)
+- [Project Plan](backend/docs/project-plan.md)
 
 ---
 
@@ -241,7 +270,7 @@ For detailed architecture documentation, see [backend/docs/architecture.md](back
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/your-org/openinfra.git
+git clone https://github.com/vku-open-source-2025/openinfra.git
 cd openinfra
 ```
 
@@ -350,7 +379,6 @@ MQTT_PASSWORD=change-this
 # Celery
 CELERY_BROKER_URL=redis://localhost:6379/1
 CELERY_RESULT_BACKEND=redis://localhost:6379/2
-
 ```
 
 #### Frontend Configuration (`.env`)
@@ -387,6 +415,8 @@ source venv/bin/activate
 celery -A app.celery_app beat --loglevel=info
 ```
 
+For more information about Celery, see [Celery CLI Documentation](backend/scripts/CELERY_CLI.md).
+
 #### Frontend
 
 ```bash
@@ -409,6 +439,123 @@ npm run dev
 
 **⚠️ Security Note**: Change the default credentials in `.env` before running `create_superuser.py`. Never use example credentials in production.
 
+For additional setup information, see:
+- [Infrastructure Setup](infra/README.md)
+- [Data Seeding Guide](infra/DATA_SEEDING.md)
+- [Frontend Quick Start](frontend/QUICK_START.md)
+
+---
+
+## 📚 Documentation
+
+OpenInfra provides comprehensive documentation across multiple areas:
+
+### Core Documentation
+
+- **[System Architecture](backend/docs/architecture.md)** - Detailed architecture overview, design principles, and system structure
+- **[Database Design](backend/docs/database-design.md)** - Database schema, indexes, and data modeling decisions
+- **[API Design](backend/docs/api-design.md)** - API conventions, versioning, and design patterns
+- **[Project Plan](backend/docs/project-plan.md)** - Development roadmap and implementation phases
+- **[Deployment Guide](backend/docs/deployment.md)** - Production deployment strategies and best practices
+
+### AI & Integration Documentation
+
+- **[AI Agent Prompt](docs/ai-agent-prompt.md)** - Guide for AI assistants interacting with OpenInfra
+- **[MCP Server Documentation](docs/mcp-server.md)** - Model Context Protocol server setup and usage
+
+### API Documentation
+
+- **[Complete API Reference](backend/docs/API_DOCUMENTATION.md)** - Full API endpoint documentation
+- **[Interactive API Docs](https://api.openinfra.space/docs)** - Live Swagger UI documentation
+
+### Frontend Documentation
+
+- **[Frontend Architecture](frontend/docs/architecture.md)** - React application structure and patterns
+- **[Frontend Tech Stack](frontend/TECH_STACK_SUMMARY.md)** - Technology choices and rationale
+- **[Feature Flow Summary](frontend/docs/FEATURE_FLOW_SUMMARY.md)** - User flow documentation
+- **[API Endpoints Summary](frontend/docs/API_ENDPOINTS_SUMMARY.md)** - Frontend API integration guide
+
+### Development Documentation
+
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
+- **[Code of Conduct](CODE_OF_CONDUCT.md)** - Community guidelines
+- **[Security Policy](SECURITY.md)** - Security reporting and best practices
+- **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Current development status
+
+### Infrastructure Documentation
+
+- **[Infrastructure Setup](infra/README.md)** - Docker Compose and infrastructure services
+- **[Data Seeding](infra/DATA_SEEDING.md)** - How to seed test data
+- **[Celery CLI](backend/scripts/CELERY_CLI.md)** - Background task management
+
+---
+
+## 🤖 AI Integration & MCP Server
+
+OpenInfra provides advanced AI integration capabilities through the **Model Context Protocol (MCP)**, enabling AI assistants to interact with infrastructure data seamlessly.
+
+### MCP Server
+
+The OpenInfra MCP server exposes **Open Data API documentation** to AI assistants, providing read-only access to publicly accessible endpoints.
+
+**Connection Details:**
+- **Server URL**: `https://mcp.openinfra.space/sse`
+- **Transport**: SSE (Server-Sent Events)
+- **Protocol**: MCP 2.0+
+
+**Available Tools:**
+- `get_opendata_endpoints` - List all public Open Data API endpoints
+- `get_opendata_docs` - Detailed Open Data API documentation
+- `get_iot_docs` - IoT Sensors API documentation
+
+### Client Configuration
+
+**Claude Desktop** (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}
+```
+
+**GitHub Copilot** (VS Code `settings.json`):
+```json
+{
+  "github.copilot.chat.mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}
+```
+
+**Cursor** (MCP configuration):
+```json
+{
+  "mcpServers": {
+    "openinfra": {
+      "url": "https://mcp.openinfra.space/sse"
+    }
+  }
+}
+```
+
+### AI Agent Capabilities
+
+Once connected, AI assistants can:
+- Query infrastructure assets and their specifications
+- Retrieve IoT sensor data and readings
+- Access public Open Data endpoints
+- Provide code examples for API integration
+- Explain OpenInfra system architecture
+
+For detailed information, see:
+- **[MCP Server Documentation](docs/mcp-server.md)** - Complete MCP setup guide
+- **[AI Agent Prompt](docs/ai-agent-prompt.md)** - AI assistant capabilities and guidelines
+
 ---
 
 ## 👥 User Roles
@@ -418,7 +565,6 @@ npm run dev
 
 - Manage all assets and infrastructure
 - Create and assign maintenance work orders
-- Allocate and approve budgets
 - Monitor system-wide status and alerts
 - Generate reports and analytics
 - Manage user accounts and permissions
@@ -450,6 +596,7 @@ npm run dev
 
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+- **Production API**: https://api.openinfra.space/docs
 
 ### API Versioning
 
@@ -512,17 +659,14 @@ Alerts
   POST   /api/v1/alerts/{id}/acknowledge # Acknowledge alert
   POST   /api/v1/alerts/{id}/resolve     # Resolve alert
 
-Budgets
-  GET    /api/v1/budgets                 # List budgets
-  POST   /api/v1/budgets                 # Create budget
-  GET    /api/v1/budgets/{id}            # Get budget details
-
 Public Access (No Authentication)
   GET    /api/v1/public/assets/{code}    # Get asset by QR/NFC code
   POST   /api/v1/public/incidents        # Anonymous incident reporting
 ```
 
-For complete API documentation, see [backend/docs/API_DOCUMENTATION.md](backend/docs/API_DOCUMENTATION.md).
+For complete API documentation, see:
+- **[API Documentation](backend/docs/API_DOCUMENTATION.md)** - Complete endpoint reference
+- **[API Design Guide](backend/docs/api-design.md)** - API design principles and patterns
 
 ---
 
@@ -571,9 +715,11 @@ kubectl apply -f k8s/
 - Cloud Storage for files
 - Cloud Monitoring & Logging
 
-For detailed deployment instructions, see [backend/docs/deployment.md](backend/docs/deployment.md).
-
+For detailed deployment instructions, see:
+- **[Deployment Guide](backend/docs/deployment.md)** - Comprehensive deployment documentation
+- **[Production Readiness Checklist](PRODUCTION_READINESS_CHECKLIST.md)** - Production deployment checklist
 ---
+
 
 ## 🤝 Contributing
 
@@ -581,8 +727,8 @@ We welcome contributions from the community! Here's how you can help:
 
 ### Ways to Contribute
 
-- 🐛 **Report bugs** via GitHub Issues
-- 💡 **Suggest features** via GitHub Discussions
+- 🐛 **Report bugs** via [GitHub Issues](https://github.com/vku-open-source-2025/openinfra/issues)
+- 💡 **Suggest features** via [GitHub Discussions](https://github.com/vku-open-source-2025/openinfra/discussions)
 - 📝 **Improve documentation**
 - 🔧 **Submit pull requests**
 
@@ -624,6 +770,10 @@ cd frontend
 npm test
 npm run test:e2e
 ```
+
+For more information, see:
+- **[Contributing Guide](CONTRIBUTING.md)** - Detailed contribution guidelines
+- **[Code of Conduct](CODE_OF_CONDUCT.md)** - Community standards
 
 ---
 
@@ -701,7 +851,7 @@ OGL-licensed data is available through:
 - **Open Data API**: `/api/v1/opendata/*`
 - **License Information**: `/api/v1/opendata/license`
 
-For more information about data licensing, see [frontend/docs/DATA_LICENSE_RECOMMENDATION.md](frontend/docs/DATA_LICENSE_RECOMMENDATION.md).
+For more information about data licensing, see [Data License Documentation](frontend/docs/DATA_LICENSE_RECOMMENDATION.md).
 
 ---
 
@@ -737,6 +887,7 @@ For more information about data licensing, see [frontend/docs/DATA_LICENSE_RECOM
 - GIS integration
 - IoT sensor monitoring
 - Real-time alerts
+- MCP server for AI integration
 
 ### In Progress 🚧
 - Advanced coverage analysis
@@ -750,6 +901,8 @@ For more information about data licensing, see [frontend/docs/DATA_LICENSE_RECOM
 - Multi-city deployment
 - Public API marketplace
 - Integration with government systems
+
+For current implementation status, see [Implementation Status](IMPLEMENTATION_STATUS.md).
 
 ---
 
@@ -767,11 +920,19 @@ OpenInfra is designed to handle city-scale deployments:
 
 ## 🎓 Learn More
 
-- **Architecture Guide**: [backend/docs/architecture.md](backend/docs/architecture.md)
-- **Database Design**: [backend/docs/database-design.md](backend/docs/database-design.md)
-- **API Design**: [backend/docs/api-design.md](backend/docs/api-design.md)
-- **Project Plan**: [backend/docs/project-plan.md](backend/docs/project-plan.md)
-- **Deployment Guide**: [backend/docs/deployment.md](backend/docs/deployment.md)
+### Architecture & Design
+- **[Architecture Guide](backend/docs/architecture.md)** - System architecture and design principles
+- **[Database Design](backend/docs/database-design.md)** - Database schema and modeling
+- **[API Design](backend/docs/api-design.md)** - API conventions and patterns
+
+### Development
+- **[Project Plan](backend/docs/project-plan.md)** - Development roadmap
+- **[Deployment Guide](backend/docs/deployment.md)** - Deployment strategies
+- **[Implementation Status](IMPLEMENTATION_STATUS.md)** - Current development status
+
+### AI & Integration
+- **[AI Agent Documentation](docs/ai-agent-prompt.md)** - AI assistant integration
+- **[MCP Server Documentation](docs/mcp-server.md)** - Model Context Protocol setup
 
 ---
 
