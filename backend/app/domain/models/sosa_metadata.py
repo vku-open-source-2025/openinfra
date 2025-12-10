@@ -45,6 +45,7 @@ class ObservableProperty(str, Enum):
     POWER = "http://openinfra.space/properties/Power"
     VOLTAGE = "http://openinfra.space/properties/Voltage"
     CURRENT = "http://openinfra.space/properties/Current"
+    RAINFALL = "http://openinfra.space/properties/Rainfall"
     CUSTOM = "http://openinfra.space/properties/Custom"
 
 
@@ -246,6 +247,7 @@ def sensor_type_to_observable_property(sensor_type: str) -> ObservableProperty:
         "power": ObservableProperty.POWER,
         "voltage": ObservableProperty.VOLTAGE,
         "current": ObservableProperty.CURRENT,
+        "rainfall": ObservableProperty.RAINFALL,
     }
     return mapping.get(sensor_type.lower(), ObservableProperty.CUSTOM)
 
@@ -260,6 +262,7 @@ def unit_to_qudt_uri(unit: str) -> Optional[str]:
         "Pa": "http://qudt.org/vocab/unit/PA",
         "cm": "http://qudt.org/vocab/unit/CentiM",
         "m": "http://qudt.org/vocab/unit/M",
+        "mm": "http://qudt.org/vocab/unit/MilliM",
         "L/s": "http://qudt.org/vocab/unit/L-PER-SEC",
         "m³/s": "http://qudt.org/vocab/unit/M3-PER-SEC",
         "Hz": "http://qudt.org/vocab/unit/HZ",
@@ -282,6 +285,7 @@ def unit_to_label(unit: str) -> str:
         "Pa": "Pascal",
         "cm": "Centimeter",
         "m": "Meter",
+        "mm": "Millimeter",
         "L/s": "Liters per Second",
         "m³/s": "Cubic Meters per Second",
         "Hz": "Hertz",

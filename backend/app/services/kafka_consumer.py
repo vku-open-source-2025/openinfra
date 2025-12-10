@@ -1,6 +1,11 @@
 """
 Kafka Consumer Service for IoT Sensor Data
 Consumes messages from ESP8266 sensors via Kafka and stores in MongoDB
+
+Architecture (Hybrid Store with SOSA):
+- sensor_readings: Raw time-series data (high performance)
+- sensors_metadata: SOSA semantic layer (created on-demand)
+- iot_sensors: Device registry
 """
 import asyncio
 import json
@@ -20,11 +25,125 @@ KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "openinfra-iot-consumer")
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
 MONGODB_DB = os.getenv("DATABASE_NAME", os.getenv("MONGODB_DB", "gis_db"))
 
+# SOSA Observable Properties mapping
+SOSA_OBSERVABLE_PROPERTIES = {
+    "temperature": "http://openinfra.space/properties/Temperature",
+    "humidity": "http://openinfra.space/properties/Humidity",
+    "pressure": "http://openinfra.space/properties/Pressure",
+    "water_level": "http://openinfra.space/properties/WaterLevel",
+    "flow_rate": "http://openinfra.space/properties/FlowRate",
+    "air_quality": "http://openinfra.space/properties/AirQuality",
+    "vibration": "http://openinfra.space/properties/Vibration",
+    "power": "http://openinfra.space/properties/Power",
+    "voltage": "http://openinfra.space/properties/Voltage",
+    "current": "http://openinfra.space/properties/Current",
+    "rainfall": "http://openinfra.space/properties/Rainfall",
+}
+
+# Unit to QUDT URI mapping
+UNIT_TO_QUDT = {
+    "°C": "http://qudt.org/vocab/unit/DEG_C",
+    "%": "http://qudt.org/vocab/unit/PERCENT",
+    "kPa": "http://qudt.org/vocab/unit/KiloPA",
+    "m": "http://qudt.org/vocab/unit/M",
+    "cm": "http://qudt.org/vocab/unit/CentiM",
+    "mm": "http://qudt.org/vocab/unit/MilliM",
+    "L/s": "http://qudt.org/vocab/unit/L-PER-SEC",
+    "kW": "http://qudt.org/vocab/unit/KiloW",
+    "V": "http://qudt.org/vocab/unit/V",
+    "A": "http://qudt.org/vocab/unit/A",
+}
+
 
 async def get_database():
     """Get MongoDB connection"""
     client = AsyncIOMotorClient(MONGODB_URL)
     return client[MONGODB_DB]
+
+
+async def ensure_sosa_metadata(db, sensor: dict, asset_id: str, reading_type: str, unit: str):
+    """
+    Ensure SOSA metadata exists for a sensor (create if not exists).
+    This follows the Hybrid Store pattern - metadata is created on-demand.
+    """
+    sensor_id = str(sensor["_id"])
+    
+    # Check if metadata already exists
+    existing = await db["sensors_metadata"].find_one({"_id": sensor_id})
+    if existing:
+        return  # Already has metadata
+    
+    # Get asset info for FeatureOfInterest
+    asset_info = {"id": asset_id, "name": f"Asset {asset_id}", "feature_type": "", "feature_code": ""}
+    try:
+        from bson import ObjectId
+        if ObjectId.is_valid(asset_id):
+            asset = await db["assets"].find_one({"_id": ObjectId(asset_id)})
+            if asset:
+                asset_info = {
+                    "id": str(asset["_id"]),
+                    "name": asset.get("ten", asset.get("name", f"Asset {asset_id}")),
+                    "feature_type": asset.get("feature_type", ""),
+                    "feature_code": asset.get("feature_code", ""),
+                    "location": asset.get("geometry"),
+                }
+    except Exception as e:
+        logger.warning(f"Could not get asset info: {e}")
+    
+    # Determine observable property from reading type or sensor type
+    sensor_type = sensor.get("sensor_type", reading_type)
+    observable_property = SOSA_OBSERVABLE_PROPERTIES.get(
+        sensor_type, 
+        SOSA_OBSERVABLE_PROPERTIES.get(reading_type, "http://openinfra.space/properties/Custom")
+    )
+    
+    # Create SOSA metadata
+    metadata = {
+        "_id": sensor_id,
+        "type": "sosa:Sensor",
+        "label": f"Cảm biến {sensor.get('sensor_code', sensor_id)}",
+        "description": f"IoT sensor measuring {reading_type}",
+        "observes": observable_property,
+        "has_feature_of_interest": {
+            "id": asset_info["id"],
+            "type": "sosa:FeatureOfInterest",
+            "name": asset_info["name"],
+            "description": "",
+            "location": asset_info.get("location"),
+            "properties": {
+                "feature_type": asset_info.get("feature_type", ""),
+                "feature_code": asset_info.get("feature_code", ""),
+            }
+        },
+        "observation_config": {
+            "unit": {
+                "symbol": unit,
+                "qudt_uri": UNIT_TO_QUDT.get(unit),
+                "label": unit,
+            },
+            "result_type": "xsd:float",
+            "sampling_interval": sensor.get("sample_rate"),
+        },
+        "is_hosted_by": sensor.get("gateway_id"),
+        "same_as": [],
+        "see_also": [],
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": "kafka_consumer",
+        "custom_properties": {
+            "sensor_code": sensor.get("sensor_code"),
+            "manufacturer": sensor.get("manufacturer"),
+            "model": sensor.get("model"),
+            "connection_type": sensor.get("connection_type"),
+        }
+    }
+    
+    try:
+        await db["sensors_metadata"].insert_one(metadata)
+        logger.info(f"Created SOSA metadata for sensor {sensor_id}")
+    except Exception as e:
+        if "duplicate key" not in str(e).lower():
+            logger.error(f"Failed to create SOSA metadata: {e}")
 
 
 async def check_thresholds_and_alert(db, reading: dict):
@@ -117,28 +236,58 @@ async def process_message(db, message_value: bytes):
         # Support multiple reading types
         value = None
         unit = "m"  # default unit
+        reading_type = "custom"
         
         if "water_level" in readings_data:
             value = readings_data["water_level"]
             unit = "m"
+            reading_type = "water_level"
         elif "temperature" in readings_data:
             value = readings_data["temperature"]
             unit = "°C"
+            reading_type = "temperature"
         elif "humidity" in readings_data:
             value = readings_data["humidity"]
             unit = "%"
+            reading_type = "humidity"
         elif "pressure" in readings_data:
             value = readings_data["pressure"]
             unit = "kPa"
+            reading_type = "pressure"
+        elif "flow_rate" in readings_data:
+            value = readings_data["flow_rate"]
+            unit = "L/s"
+            reading_type = "flow_rate"
+        elif "rainfall" in readings_data or "rainfall_mm" in readings_data:
+            value = readings_data.get("rainfall") or readings_data.get("rainfall_mm")
+            unit = "mm"
+            reading_type = "rainfall"
+        elif "power" in readings_data:
+            value = readings_data["power"]
+            unit = "kW"
+            reading_type = "power"
+        elif "voltage" in readings_data:
+            value = readings_data["voltage"]
+            unit = "V"
+            reading_type = "voltage"
+        elif "current" in readings_data:
+            value = readings_data["current"]
+            unit = "A"
+            reading_type = "current"
         elif readings_data:
             # Use first available reading
             first_key = list(readings_data.keys())[0]
             value = readings_data[first_key]
             unit = ""
+            reading_type = first_key
         
         if value is None:
             logger.warning(f"No reading value found in message: {data}")
             return
+        
+        # Ensure SOSA metadata exists for this sensor (Hybrid Store pattern)
+        if sensor:
+            await ensure_sosa_metadata(db, sensor, actual_asset_id, reading_type, unit)
         
         # Prepare reading document in standard SensorReading format
         reading = {

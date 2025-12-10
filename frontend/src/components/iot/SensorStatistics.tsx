@@ -27,9 +27,10 @@ export const SensorStatistics: React.FC<SensorStatisticsProps> = ({ readings, un
       ? (sortedValues[sortedValues.length / 2 - 1] + sortedValues[sortedValues.length / 2]) / 2
       : sortedValues[Math.floor(sortedValues.length / 2)]
 
-  const firstValue = values[0]
-  const lastValue = values[values.length - 1]
-  const trend = lastValue > firstValue ? "up" : lastValue < firstValue ? "down" : "stable"
+  // readings are sorted newest first, so values[0] is latest, values[length-1] is oldest
+  const latestValue = values[0]
+  const oldestValue = values[values.length - 1]
+  const trend = latestValue > oldestValue ? "up" : latestValue < oldestValue ? "down" : "stable"
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

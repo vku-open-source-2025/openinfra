@@ -18,6 +18,7 @@ class SensorType(str, Enum):
     FLOW_RATE = "flow_rate"
     WATER_LEVEL = "water_level"
     AIR_QUALITY = "air_quality"
+    RAINFALL = "rainfall"
     CUSTOM = "custom"
 
 
@@ -62,7 +63,7 @@ class IoTSensor(BaseModel):
 
     # Configuration
     measurement_unit: str  # "°C" | "%" | "kPa" | "Hz" | "kW"
-    sample_rate: int  # seconds between readings
+    sample_rate: int = 60  # seconds between readings (default 60s)
     thresholds: Optional[SensorThresholds] = None
 
     # Connectivity
