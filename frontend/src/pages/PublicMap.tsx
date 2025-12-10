@@ -12,6 +12,7 @@ import NFCWriteModal from "../components/NFCWriteModal";
 import ReportModal from "../components/ReportModal";
 import IoTSensorChart from "../components/IoTSensorChart";
 import { Button } from "@/components/ui/button";
+import AIChatWidget from "../components/AIChatWidget";
 
 // Extended Asset type with status added by useIoT hook
 type AssetWithStatus = Asset & {
@@ -324,6 +325,9 @@ const PublicMap: React.FC = () => {
                     onClose={() => setShowReportModal(false)}
                     asset={selectedAsset}
                 />
+
+                {/* AI Chatbot Widget */}
+                <AIChatWidget selectedAsset={selectedAsset} />
             </main>
         </div>
     );
