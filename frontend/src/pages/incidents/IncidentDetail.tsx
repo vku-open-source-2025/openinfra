@@ -8,6 +8,7 @@ import { IncidentActions } from "../../components/incidents/IncidentActions"
 import { IncidentWorkflowInfo } from "../../components/incidents/IncidentWorkflowInfo"
 import { IncidentMergeSuggestions } from "../../components/incidents/IncidentMergeSuggestions"
 import { IncidentHierarchy } from "../../components/incidents/IncidentHierarchy"
+import { IncidentVerificationPanel } from "../../components/incidents/IncidentVerificationPanel"
 import { Button } from "../../components/ui/button"
 import { Skeleton } from "../../components/ui/skeleton"
 import { ArrowLeft, MapPin, Clock, User, Wrench, CheckCircle, Loader2, Image } from "lucide-react"
@@ -373,10 +374,11 @@ const IncidentDetail: React.FC = () => {
             {/* Related Reports - Show main report with sub-reports */}
             <IncidentHierarchy incidentId={id} incident={incident} />
 
-            {/* Merge Suggestions - Only show if admin/technician */}
+            {/* Unified Verification & Duplicate Detection Panel */}
             {(user?.role === "admin" || user?.role === "technician") && (
-                <IncidentMergeSuggestions
+                <IncidentVerificationPanel
                     incidentId={id}
+                    incident={incident}
                     canManage={user?.role === "admin" || user?.role === "technician"}
                 />
             )}
