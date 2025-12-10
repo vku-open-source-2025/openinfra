@@ -22,3 +22,4 @@ infra/mqtt/config/passwd
 
 # Uploaded files
 backend/uploads/
+backend/celerybeat-schedule
