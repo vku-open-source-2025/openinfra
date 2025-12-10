@@ -84,7 +84,7 @@ const AssetDetail: React.FC = () => {
                     </p>
                     <Button onClick={() => navigate({ to: "/admin/assets" })}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Assets
+                        Quay lại danh sách tài sản
                     </Button>
                 </div>
             </div>
@@ -246,7 +246,7 @@ const AssetDetail: React.FC = () => {
                                       ),
                                       "dd/MM/yyyy"
                                   )
-                                : "Not scheduled"}
+                                : "Chưa lên lịch"}
                         </div>
                     </div>
                     <div className="bg-slate-50 rounded-lg p-4">
@@ -322,20 +322,14 @@ const AssetDetail: React.FC = () => {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="mb-6">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="sensors">Sensors</TabsTrigger>
-                        <TabsTrigger value="maintenance">
-                            Maintenance History
-                        </TabsTrigger>
-                        <TabsTrigger value="incidents">Incidents</TabsTrigger>
-                        <TabsTrigger value="preventive">
-                            Preventive Maintenance
-                        </TabsTrigger>
-                        <TabsTrigger value="lifecycle">
-                            Lifecycle & Condition
-                        </TabsTrigger>
-                        <TabsTrigger value="documents">Documents</TabsTrigger>
-                        <TabsTrigger value="reports">Reports</TabsTrigger>
+                        <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+                        <TabsTrigger value="sensors">Cảm biến</TabsTrigger>
+                        <TabsTrigger value="maintenance">Lịch sử bảo trì</TabsTrigger>
+                        <TabsTrigger value="incidents">Sự cố</TabsTrigger>
+                        <TabsTrigger value="preventive">Bảo trì phòng ngừa</TabsTrigger>
+                        <TabsTrigger value="lifecycle">Vòng đời & Tình trạng</TabsTrigger>
+                        <TabsTrigger value="documents">Tài liệu</TabsTrigger>
+                        <TabsTrigger value="reports">Báo cáo</TabsTrigger>
                     </TabsList>
 
                     <Suspense fallback={<Skeleton className="h-96 w-full" />}>

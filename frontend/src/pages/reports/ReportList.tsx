@@ -42,7 +42,7 @@ const ReportList: React.FC = () => {
         window.open(file_url, "_blank")
       }
     } catch (error) {
-      console.error("Failed to download report:", error)
+      console.error("Tải báo cáo thất bại:", error)
     }
   }
 
@@ -61,7 +61,7 @@ const ReportList: React.FC = () => {
           onChange={(e) => setType(e.target.value)}
           placeholder="Tất cả loại"
         >
-          <option value="">All Types</option>
+          <option value="">Tất cả loại</option>
           <option value="maintenance">Bảo trì</option>
           <option value="budget">Ngân sách</option>
           <option value="incident">Sự cố</option>
@@ -72,7 +72,7 @@ const ReportList: React.FC = () => {
           onChange={(e) => setStatus(e.target.value)}
           placeholder="Tất cả trạng thái"
         >
-          <option value="">All Statuses</option>
+          <option value="">Tất cả trạng thái</option>
           <option value="pending">Đang chờ</option>
           <option value="generating">Đang tạo</option>
           <option value="completed">Hoàn thành</option>

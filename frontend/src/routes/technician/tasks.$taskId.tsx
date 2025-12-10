@@ -91,7 +91,7 @@ function TaskExecutionPage() {
                 <Loader2 className="animate-spin" />
             </div>
         );
-    if (!incident) return <div className="p-8 text-center">Task not found</div>;
+    if (!incident) return <div className="p-8 text-center">Không tìm thấy công việc</div>;
 
     const handleStart = () => {
         if (incident.maintenance_record_id) {
@@ -123,7 +123,7 @@ function TaskExecutionPage() {
                 className="pl-0"
                 onClick={() => navigate({ to: "/technician" })}
             >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
+                <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại công việc
             </Button>
 
             <div className="bg-white p-4 rounded-lg shadow-sm border space-y-4">
@@ -174,7 +174,7 @@ function TaskExecutionPage() {
                                 }
                             >
                                 <ExternalLink className="h-4 w-4 mr-1" />
-                                View Maintenance
+                                Xem bảo trì
                             </Button>
                         </div>
                     </div>
@@ -196,7 +196,7 @@ function TaskExecutionPage() {
                                     ) : (
                                         <PlayCircle className="mr-2" />
                                     )}
-                                    Start Maintenance Work
+                                    Bắt đầu công việc bảo trì
                                 </Button>
                             )}
 
@@ -208,7 +208,7 @@ function TaskExecutionPage() {
                                     onClick={() => setShowCompleteForm(true)}
                                 >
                                     <CheckCircle className="mr-2" />
-                                    Complete Maintenance Work
+                                    Hoàn tất công việc bảo trì
                                 </Button>
                             )}
 
@@ -221,7 +221,7 @@ function TaskExecutionPage() {
                                     onClick={() => setShowResolveForm(true)}
                                 >
                                     <CheckCircle className="mr-2" />
-                                    Resolve Incident
+                                    Xử lý sự cố
                                 </Button>
                             )}
                     </>
@@ -232,25 +232,25 @@ function TaskExecutionPage() {
                         onSubmit={handleComplete}
                         className="bg-slate-50 p-4 rounded border space-y-4"
                     >
-                        <h3 className="font-semibold">Completion Details</h3>
+                        <h3 className="font-semibold">Chi tiết hoàn thành</h3>
                         <div>
                             <Label htmlFor="work-performed-maintenance">
-                                Work Performed *
+                                Công việc đã thực hiện *
                             </Label>
                             <Textarea
                                 id="work-performed-maintenance"
                                 required
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Describe work performed, parts replaced, issues found..."
+                                placeholder="Mô tả công việc đã thực hiện, bộ phận thay thế, vấn đề phát hiện..."
                                 rows={5}
                             />
                             <p className="text-xs text-slate-500 mt-1">
-                                Required: Describe the work that was performed.
+                                Bắt buộc: Mô tả công việc đã thực hiện.
                             </p>
                         </div>
                         <div>
-                            <Label>Total Cost ($)</Label>
+                            <Label>Tổng chi phí ($)</Label>
                             <Input
                                 type="number"
                                 min="0"
@@ -259,8 +259,8 @@ function TaskExecutionPage() {
                                 onChange={(e) => setCost(e.target.value)}
                                 placeholder="0.00"
                             />
-                            <p className="text-xs text-slate-500 mt-1">
-                                Leave 0 if no separate costs.
+                                <p className="text-xs text-slate-500 mt-1">
+                                Để 0 nếu không có chi phí riêng.
                             </p>
                         </div>
                         <div className="flex gap-2">
@@ -270,7 +270,7 @@ function TaskExecutionPage() {
                                 className="flex-1"
                                 onClick={() => setShowCompleteForm(false)}
                             >
-                                Cancel
+                                Hủy
                             </Button>
                             <Button
                                 type="submit"
@@ -280,7 +280,7 @@ function TaskExecutionPage() {
                                 {completeMutation.isPending && (
                                     <Loader2 className="animate-spin mr-2" />
                                 )}
-                                Submit
+                                Gửi
                             </Button>
                         </div>
                     </form>
@@ -292,10 +292,10 @@ function TaskExecutionPage() {
                         onSubmit={handleResolveIncident}
                         className="bg-slate-50 p-4 rounded border space-y-4 mt-4"
                     >
-                        <h3 className="font-semibold">Resolve Incident</h3>
+                        <h3 className="font-semibold">Xử lý sự cố</h3>
                         <div>
-                            <Label htmlFor="resolution-type">
-                                Resolution Type
+                                <Label htmlFor="resolution-type">
+                                Loại kết quả xử lý
                             </Label>
                             <select
                                 id="resolution-type"
@@ -305,27 +305,27 @@ function TaskExecutionPage() {
                                 }
                                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                             >
-                                <option value="fixed">Fixed</option>
-                                <option value="duplicate">Duplicate</option>
-                                <option value="invalid">Invalid</option>
-                                <option value="deferred">Deferred</option>
+                                <option value="fixed">Đã sửa</option>
+                                <option value="duplicate">Trùng lặp</option>
+                                <option value="invalid">Không hợp lệ</option>
+                                <option value="deferred">Hoãn</option>
                             </select>
                         </div>
                         <div>
-                            <Label htmlFor="resolve-notes">
-                                Resolution Notes *
+                                <Label htmlFor="resolve-notes">
+                                Ghi chú kết quả xử lý *
                             </Label>
                             <Textarea
                                 id="resolve-notes"
                                 required
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Describe how the incident was resolved..."
+                                placeholder="Mô tả cách sự cố đã được xử lý..."
                                 rows={5}
                             />
                         </div>
                         <div className="flex gap-2">
-                            <Button
+                                <Button
                                 type="button"
                                 variant="outline"
                                 className="flex-1"
@@ -334,7 +334,7 @@ function TaskExecutionPage() {
                                     setNotes("");
                                 }}
                             >
-                                Cancel
+                                Hủy
                             </Button>
                             <Button
                                 type="submit"
@@ -347,7 +347,7 @@ function TaskExecutionPage() {
                                 {resolveIncidentMutation.isPending && (
                                     <Loader2 className="animate-spin mr-2 h-4 w-4" />
                                 )}
-                                Submit Resolution
+                                Gửi kết quả xử lý
                             </Button>
                         </div>
                     </form>
@@ -356,7 +356,7 @@ function TaskExecutionPage() {
                 {incident.status === "resolved" && (
                     <div className="bg-green-50 p-4 rounded border border-green-200 text-green-800 text-center">
                         <CheckCircle className="mx-auto h-8 w-8 mb-2" />
-                        <p className="font-semibold">Incident Resolved</p>
+                        <p className="font-semibold">Sự cố đã được giải quyết</p>
                         {incident.resolution_notes && (
                             <p className="text-sm mt-1">
                                 {incident.resolution_notes}
@@ -368,11 +368,11 @@ function TaskExecutionPage() {
                 {incident.status === "waiting_approval" && (
                     <div className="bg-yellow-50 p-4 rounded border border-yellow-200 text-yellow-800 text-center">
                         <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p className="font-semibold">
-                            Waiting for Admin Approval
+                            <p className="font-semibold">
+                            Đang chờ phê duyệt từ quản trị viên
                         </p>
                         <p className="text-sm">
-                            Work completed. Pending cost approval.
+                            Công việc đã hoàn thành. Đang chờ phê duyệt chi phí.
                         </p>
                     </div>
                 )}

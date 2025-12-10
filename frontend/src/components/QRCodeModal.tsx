@@ -34,12 +34,12 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
 
             // Add Title
             pdf.setFontSize(14);
-            pdf.text('Asset QR Code', pdfWidth / 2, 15, { align: 'center' });
+            pdf.text('Mã QR tài sản', pdfWidth / 2, 15, { align: 'center' });
 
             // Add Asset Info
             pdf.setFontSize(10);
             pdf.text(`ID: ${getAssetId(asset)}`, pdfWidth / 2, 25, { align: 'center' });
-            pdf.text(`Type: ${asset.feature_type}`, pdfWidth / 2, 30, { align: 'center' });
+            pdf.text(`Loại: ${asset.feature_type}`, pdfWidth / 2, 30, { align: 'center' });
 
             // Add QR Image
             const imgWidth = 60;
@@ -55,16 +55,16 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
 
             pdf.save(`asset-qr-${getAssetId(asset)}.pdf`);
         } catch (err) {
-            console.error("Error generating PDF:", err);
-            alert("Failed to generate PDF");
+            console.error("Lỗi khi tạo PDF:", err);
+            alert("Tạo PDF thất bại");
         }
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center p-4 border-b border-slate-100">
-                    <h3 className="font-bold text-lg text-slate-800">Asset QR Code</h3>
+                    <h3 className="font-bold text-lg text-slate-800">Mã QR tài sản</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
                         <X size={20} />
                     </button>
@@ -90,7 +90,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, asset }) => 
                         className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors shadow-sm"
                     >
                         <Download size={18} />
-                        Export PDF
+                        Tải xuống PDF
                     </button>
                 </div>
             </div>

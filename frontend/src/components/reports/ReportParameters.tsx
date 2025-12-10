@@ -23,27 +23,27 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
     return (
       <Form>
         <FormField>
-          <FormLabel>Status</FormLabel>
+          <FormLabel>Trạng thái</FormLabel>
           <Select
             value={parameters.status || ""}
             onChange={(e) => updateParameter("status", e.target.value)}
           >
-            <option value="">All Statuses</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="scheduled">Đã lên lịch</option>
+            <option value="in_progress">Đang thực hiện</option>
+            <option value="completed">Hoàn thành</option>
+            <option value="cancelled">Bị hủy</option>
           </Select>
         </FormField>
         <FormField>
-          <FormLabel>From Date</FormLabel>
+          <FormLabel>Từ ngày</FormLabel>
           <DatePicker
             value={parameters.from_date ? new Date(parameters.from_date) : null}
             onChange={(date) => updateParameter("from_date", date?.toISOString())}
           />
         </FormField>
         <FormField>
-          <FormLabel>To Date</FormLabel>
+          <FormLabel>Đến ngày</FormLabel>
           <DatePicker
             value={parameters.to_date ? new Date(parameters.to_date) : null}
             onChange={(date) => updateParameter("to_date", date?.toISOString())}
@@ -57,7 +57,7 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
     return (
       <Form>
         <FormField>
-          <FormLabel>Fiscal Year</FormLabel>
+          <FormLabel>Năm tài chính</FormLabel>
           <Input
             type="number"
             value={parameters.fiscal_year || ""}
@@ -66,15 +66,15 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
           />
         </FormField>
         <FormField>
-          <FormLabel>Status</FormLabel>
+          <FormLabel>Trạng thái</FormLabel>
           <Select
             value={parameters.status || ""}
             onChange={(e) => updateParameter("status", e.target.value)}
           >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="submitted">Submitted</option>
-            <option value="approved">Approved</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="draft">Bản nháp</option>
+            <option value="submitted">Đã gửi</option>
+            <option value="approved">Đã phê duyệt</option>
           </Select>
         </FormField>
       </Form>
@@ -85,39 +85,39 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
     return (
       <Form>
         <FormField>
-          <FormLabel>Severity</FormLabel>
+          <FormLabel>Mức nghiêm trọng</FormLabel>
           <Select
             value={parameters.severity || ""}
             onChange={(e) => updateParameter("severity", e.target.value)}
           >
-            <option value="">All Severities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
+            <option value="">Tất cả mức độ</option>
+            <option value="low">Thấp</option>
+            <option value="medium">Trung bình</option>
+            <option value="high">Cao</option>
+            <option value="critical">Nguy kịch</option>
           </Select>
         </FormField>
         <FormField>
-          <FormLabel>Status</FormLabel>
+          <FormLabel>Trạng thái</FormLabel>
           <Select
             value={parameters.status || ""}
             onChange={(e) => updateParameter("status", e.target.value)}
           >
-            <option value="">All Statuses</option>
-            <option value="reported">Reported</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="reported">Đã báo cáo</option>
+            <option value="resolved">Đã xử lý</option>
+            <option value="closed">Đã đóng</option>
           </Select>
         </FormField>
         <FormField>
-          <FormLabel>From Date</FormLabel>
+          <FormLabel>Từ ngày</FormLabel>
           <DatePicker
             value={parameters.from_date ? new Date(parameters.from_date) : null}
             onChange={(date) => updateParameter("from_date", date?.toISOString())}
           />
         </FormField>
         <FormField>
-          <FormLabel>To Date</FormLabel>
+          <FormLabel>Đến ngày</FormLabel>
           <DatePicker
             value={parameters.to_date ? new Date(parameters.to_date) : null}
             onChange={(date) => updateParameter("to_date", date?.toISOString())}
@@ -131,23 +131,23 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
     return (
       <Form>
         <FormField>
-          <FormLabel>Feature Type</FormLabel>
+          <FormLabel>Loại tài sản</FormLabel>
           <Input
             value={parameters.feature_type || ""}
             onChange={(e) => updateParameter("feature_type", e.target.value)}
-            placeholder="e.g., road, bridge, building"
+            placeholder="ví dụ: đường, cầu, tòa nhà"
           />
         </FormField>
         <FormField>
-          <FormLabel>Status</FormLabel>
+          <FormLabel>Trạng thái</FormLabel>
           <Select
             value={parameters.status || ""}
             onChange={(e) => updateParameter("status", e.target.value)}
           >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="maintenance">Maintenance</option>
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Ngưng hoạt động</option>
+            <option value="maintenance">Bảo trì</option>
           </Select>
         </FormField>
       </Form>

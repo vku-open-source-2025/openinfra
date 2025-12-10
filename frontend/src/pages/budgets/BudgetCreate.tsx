@@ -38,15 +38,15 @@ const BudgetCreate: React.FC = () => {
     setErrors({})
 
     if (!formData.fiscal_year) {
-      setErrors({ fiscal_year: "Fiscal year is required" })
+      setErrors({ fiscal_year: "Năm tài chính là bắt buộc" })
       return
     }
     if (!formData.category?.trim()) {
-      setErrors({ category: "Category is required" })
+      setErrors({ category: "Danh mục là bắt buộc" })
       return
     }
     if (!formData.total_amount || formData.total_amount <= 0) {
-      setErrors({ total_amount: "Total amount must be greater than 0" })
+      setErrors({ total_amount: "Tổng số tiền phải lớn hơn 0" })
       return
     }
 
@@ -57,11 +57,11 @@ const BudgetCreate: React.FC = () => {
     <div className="p-6 space-y-6">
       <Button variant="ghost" onClick={() => navigate({ to: "/admin/budgets" })}>
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Budgets
+        Quay lại danh sách ngân sách
       </Button>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">Create New Budget</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Tạo ngân sách mới</h1>
 
         <Form onSubmit={handleSubmit}>
           <FormField>
@@ -82,7 +82,7 @@ const BudgetCreate: React.FC = () => {
             <Input
               value={formData.category || ""}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="e.g., Maintenance, Infrastructure, Operations"
+              placeholder="ví dụ: Bảo trì, Cơ sở hạ tầng, Vận hành"
             />
             {errors.category && <FormError>{errors.category}</FormError>}
           </FormField>
@@ -105,14 +105,14 @@ const BudgetCreate: React.FC = () => {
 
           <div className="flex gap-4 mt-6">
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Budget"}
+              {createMutation.isPending ? "Đang tạo..." : "Tạo ngân sách"}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: "/admin/budgets" })}
             >
-              Cancel
+              Hủy
             </Button>
           </div>
         </Form>

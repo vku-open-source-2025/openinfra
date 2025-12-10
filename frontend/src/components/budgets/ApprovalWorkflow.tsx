@@ -26,22 +26,22 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
   return (
     <div className="space-y-2">
       {budget.status === "draft" && canSubmit && (
-        <Button onClick={onSubmit} disabled={isProcessing} className="w-full">
+          <Button onClick={onSubmit} disabled={isProcessing} className="w-full">
           <Send className="h-4 w-4 mr-2" />
-          Submit for Approval
+          Gửi phê duyệt
         </Button>
       )}
 
       {budget.status === "submitted" && canApprove && (
         <div className="flex gap-2">
-          <Button onClick={onApprove} disabled={isProcessing} className="flex-1" variant="default">
+            <Button onClick={onApprove} disabled={isProcessing} className="flex-1" variant="default">
             <CheckCircle className="h-4 w-4 mr-2" />
-            Approve Budget
+            Phê duyệt ngân sách
           </Button>
           {canReject && onReject && (
             <Button onClick={onReject} disabled={isProcessing} className="flex-1" variant="destructive">
               <X className="h-4 w-4 mr-2" />
-              Reject
+              Từ chối
             </Button>
           )}
         </div>
@@ -49,13 +49,13 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
 
       {budget.status === "approved" && (
         <div className="text-sm text-green-600 font-medium">
-          Budget approved and active
+          Ngân sách đã được phê duyệt và hoạt động
         </div>
       )}
 
       {budget.status === "rejected" && (
         <div className="text-sm text-red-600 font-medium">
-          Budget was rejected
+          Ngân sách đã bị từ chối
         </div>
       )}
     </div>

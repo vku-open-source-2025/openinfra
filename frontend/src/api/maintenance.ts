@@ -137,7 +137,7 @@ export const maintenanceApi = {
         data: MaintenanceCompleteRequest
     ): Promise<Maintenance> => {
         if (!data.work_performed || !data.work_performed.trim()) {
-            throw new Error("Work performed description is required");
+            throw new Error("Mô tả công việc thực hiện là bắt buộc");
         }
         const response = await httpClient.post<Maintenance>(
             `/maintenance/${id}/complete`,

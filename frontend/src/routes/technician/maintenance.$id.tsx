@@ -113,7 +113,7 @@ function MaintenanceDetailPage() {
         try {
             await uploadPhotosMutation.mutateAsync({ files: photos, type });
         } catch (error) {
-            console.error("Failed to upload photos:", error);
+            console.error("Không thể tải ảnh:", error);
         } finally {
             setUploadingPhotos(false);
         }
@@ -150,7 +150,7 @@ function MaintenanceDetailPage() {
     if (!maintenance) {
         return (
             <div className="p-8 text-center text-red-500">
-                Maintenance work order not found.
+                Không tìm thấy phiếu công việc bảo trì.
             </div>
         );
     }
@@ -162,28 +162,28 @@ function MaintenanceDetailPage() {
                     icon: Calendar,
                     color: "text-blue-600",
                     bgColor: "bg-blue-50",
-                    label: "Scheduled",
+                    label: "Đã lên lịch",
                 };
             case "in_progress":
                 return {
                     icon: Wrench,
                     color: "text-orange-600",
                     bgColor: "bg-orange-50",
-                    label: "In Progress",
+                    label: "Đang tiến hành",
                 };
             case "completed":
                 return {
                     icon: CheckCircle,
                     color: "text-green-600",
                     bgColor: "bg-green-50",
-                    label: "Completed",
+                    label: "Hoàn thành",
                 };
             case "cancelled":
                 return {
                     icon: XCircle,
                     color: "text-red-600",
                     bgColor: "bg-red-50",
-                    label: "Cancelled",
+                    label: "Đã hủy",
                 };
             default:
                 return {
@@ -211,7 +211,7 @@ function MaintenanceDetailPage() {
                 className="pl-0"
                 onClick={() => navigate({ to: "/technician" })}
             >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
+                <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại công việc
             </Button>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
@@ -259,7 +259,7 @@ function MaintenanceDetailPage() {
                         <div className="flex items-center gap-2 text-sm text-slate-600">
                             <Calendar className="h-4 w-4" />
                             <span>
-                                <strong>Scheduled:</strong>{" "}
+                                <strong>Lên lịch:</strong>{" "}
                                 {format(
                                     new Date(maintenance.scheduled_date),
                                     "MMM d, yyyy HH:mm"
@@ -270,7 +270,7 @@ function MaintenanceDetailPage() {
                             <div className="flex items-center gap-2 text-sm text-slate-600">
                                 <Clock className="h-4 w-4" />
                                 <span>
-                                    <strong>Started:</strong>{" "}
+                                    <strong>Bắt đầu:</strong>{" "}
                                     {format(
                                         new Date(maintenance.started_at),
                                         "MMM d, yyyy HH:mm"
@@ -282,7 +282,7 @@ function MaintenanceDetailPage() {
                             <div className="flex items-center gap-2 text-sm text-green-600">
                                 <CheckCircle className="h-4 w-4" />
                                 <span>
-                                    <strong>Completed:</strong>{" "}
+                                    <strong>Hoàn thành:</strong>{" "}
                                     {format(
                                         new Date(maintenance.completed_at),
                                         "MMM d, yyyy HH:mm"
@@ -294,7 +294,7 @@ function MaintenanceDetailPage() {
                             <div className="flex items-center gap-2 text-sm text-slate-600">
                                 <DollarSign className="h-4 w-4" />
                                 <span>
-                                    <strong>Estimated Cost:</strong> $
+                                    <strong>Chi phí ước tính:</strong> $
                                     {maintenance.estimated_cost.toFixed(2)}
                                 </span>
                             </div>
@@ -303,7 +303,7 @@ function MaintenanceDetailPage() {
                             <div className="flex items-center gap-2 text-sm text-green-600">
                                 <DollarSign className="h-4 w-4" />
                                 <span>
-                                    <strong>Actual Cost:</strong> $
+                                    <strong>Chi phí thực tế:</strong> $
                                     {maintenance.actual_cost.toFixed(2)}
                                 </span>
                             </div>
@@ -312,7 +312,7 @@ function MaintenanceDetailPage() {
                             <div className="flex items-center gap-2 text-sm text-slate-600">
                                 <MapPin className="h-4 w-4" />
                                 <span>
-                                    <strong>Asset ID:</strong>{" "}
+                                    <strong>ID tài sản:</strong>{" "}
                                     {maintenance.asset_id}
                                 </span>
                             </div>
@@ -323,7 +323,7 @@ function MaintenanceDetailPage() {
                 {/* Notes Section */}
                 {maintenance.notes && (
                     <div className="pt-4 border-t border-slate-200">
-                        <h3 className="font-semibold mb-2">Notes</h3>
+                        <h3 className="font-semibold mb-2">Ghi chú</h3>
                         <p className="text-sm text-slate-700 whitespace-pre-wrap">
                             {maintenance.notes}
                         </p>
@@ -333,7 +333,7 @@ function MaintenanceDetailPage() {
                 {/* Completion Notes */}
                 {maintenance.status === "completed" && maintenance.notes && (
                     <div className="pt-4 border-t border-slate-200">
-                        <h3 className="font-semibold mb-2">Completion Notes</h3>
+                        <h3 className="font-semibold mb-2">Ghi chú hoàn thành</h3>
                         <p className="text-sm text-slate-700 whitespace-pre-wrap">
                             {maintenance.notes}
                         </p>
@@ -345,12 +345,12 @@ function MaintenanceDetailPage() {
                     <div className="pt-4 border-t border-slate-200">
                         <h3 className="font-semibold mb-4 flex items-center gap-2">
                             <Camera className="h-5 w-5" />
-                            Photos
+                            Ảnh
                         </h3>
 
                         {/* Before Photos */}
                         <div className="mb-6">
-                            <Label className="mb-2 block">Before Photos</Label>
+                            <Label className="mb-2 block">Ảnh trước</Label>
                             <div className="space-y-3">
                                 <div className="flex gap-2">
                                     <Input
@@ -375,7 +375,7 @@ function MaintenanceDetailPage() {
                                             ) : (
                                                 <>
                                                     <Camera className="h-4 w-4 mr-1" />
-                                                    Upload
+                                                    Tải lên
                                                 </>
                                             )}
                                         </Button>
@@ -412,7 +412,7 @@ function MaintenanceDetailPage() {
 
                         {/* After Photos */}
                         <div>
-                            <Label className="mb-2 block">After Photos</Label>
+                            <Label className="mb-2 block">Ảnh sau</Label>
                             <div className="space-y-3">
                                 <div className="flex gap-2">
                                     <Input
@@ -437,7 +437,7 @@ function MaintenanceDetailPage() {
                                             ) : (
                                                 <>
                                                     <Camera className="h-4 w-4 mr-1" />
-                                                    Upload
+                                                    Tải lên
                                                 </>
                                             )}
                                         </Button>
@@ -477,7 +477,7 @@ function MaintenanceDetailPage() {
                             maintenance.attachments.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-slate-200">
                                     <h4 className="text-sm font-semibold mb-2">
-                                        Uploaded Photos
+                                        Ảnh đã tải lên
                                     </h4>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         {maintenance.attachments.map(
@@ -520,7 +520,7 @@ function MaintenanceDetailPage() {
                             ) : (
                                 <PlayCircle className="mr-2 h-4 w-4" />
                             )}
-                            Start Work
+                            Bắt đầu công việc
                         </Button>
                     )}
 
@@ -530,7 +530,7 @@ function MaintenanceDetailPage() {
                             onClick={() => setShowCompleteForm(true)}
                         >
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Complete Work
+                            Hoàn thành công việc
                         </Button>
                     )}
 
@@ -540,11 +540,11 @@ function MaintenanceDetailPage() {
                             className="bg-slate-50 p-4 rounded border space-y-4"
                         >
                             <h3 className="font-semibold">
-                                Completion Details
+                                Chi tiết hoàn thành
                             </h3>
                             <div>
                                 <Label htmlFor="work-performed">
-                                    Work Performed *
+                                    Công việc đã thực hiện *
                                 </Label>
                                 <Textarea
                                     id="work-performed"
@@ -553,17 +553,16 @@ function MaintenanceDetailPage() {
                                     onChange={(e) =>
                                         setCompletionNotes(e.target.value)
                                     }
-                                    placeholder="Describe work performed, parts replaced, issues found..."
+                                    placeholder="Mô tả công việc đã thực hiện, bộ phận thay thế, vấn đề phát hiện..."
                                     rows={5}
                                 />
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Required: Describe the work that was
-                                    performed.
+                                    Bắt buộc: Mô tả công việc đã thực hiện.
                                 </p>
                             </div>
                             <div>
                                 <Label htmlFor="actual-cost">
-                                    Actual Cost ($)
+                                    Chi phí thực tế ($)
                                 </Label>
                                 <Input
                                     id="actual-cost"
@@ -577,8 +576,7 @@ function MaintenanceDetailPage() {
                                     placeholder="0.00"
                                 />
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Enter the actual cost if different from
-                                    estimated cost.
+                                    Nhập chi phí thực tế nếu khác chi phí ước tính.
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -592,7 +590,7 @@ function MaintenanceDetailPage() {
                                         setActualCost("");
                                     }}
                                 >
-                                    Cancel
+                                    Hủy
                                 </Button>
                                 <Button
                                     type="submit"
@@ -605,7 +603,7 @@ function MaintenanceDetailPage() {
                                     {completeMutation.isPending && (
                                         <Loader2 className="animate-spin mr-2 h-4 w-4" />
                                     )}
-                                    Submit Completion
+                                    Gửi hoàn thành
                                 </Button>
                             </div>
                         </form>
@@ -616,10 +614,10 @@ function MaintenanceDetailPage() {
                             <div className="bg-yellow-50 p-4 rounded border border-yellow-200 text-yellow-800 text-center">
                                 <AlertCircle className="mx-auto h-8 w-8 mb-2 opacity-50" />
                                 <p className="font-semibold">
-                                    Waiting for Admin Approval
+                                    Đang chờ phê duyệt quản trị
                                 </p>
                                 <p className="text-sm">
-                                    Work completed. Pending cost approval.
+                                    Công việc đã hoàn thành. Đang chờ phê duyệt chi phí.
                                 </p>
                             </div>
                         )}
@@ -629,7 +627,7 @@ function MaintenanceDetailPage() {
                             <div className="bg-green-50 p-4 rounded border border-green-200 text-green-800 text-center">
                                 <CheckCircle className="mx-auto h-8 w-8 mb-2" />
                                 <p className="font-semibold">
-                                    Work Completed and Approved
+                                    Công việc đã hoàn thành và được phê duyệt
                                 </p>
                             </div>
                         )}

@@ -76,9 +76,9 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
     <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-blue-500" />
-          <h3 className="font-semibold text-lg">Report Verification & Quality</h3>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-blue-500" />
+            <h3 className="font-semibold text-lg">Xác minh & Chất lượng báo cáo</h3>
         </div>
         {canManage && (
           <Button
@@ -88,7 +88,7 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
             disabled={checkingDuplicates}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${checkingDuplicates ? "animate-spin" : ""}`} />
-            Check for Duplicates
+            Kiểm tra trùng lặp
           </Button>
         )}
       </div>
@@ -122,10 +122,10 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
                   <XCircle className="h-5 w-5 text-red-600" />
                 )}
                 <span className="font-semibold">
-                  {verificationStatus === "verified" && "Report Verified"}
-                  {verificationStatus === "to_be_verified" && (isLowTrust ? "Low Trust Score" : "Needs Review")}
-                  {verificationStatus === "pending" && "Verification Pending"}
-                  {verificationStatus === "failed" && "Verification Failed"}
+                  {verificationStatus === "verified" && "Báo cáo đã được xác minh"}
+                  {verificationStatus === "to_be_verified" && (isLowTrust ? "Điểm tin cậy thấp" : "Cần kiểm tra")}
+                  {verificationStatus === "pending" && "Đang chờ xác minh"}
+                  {verificationStatus === "failed" && "Xác minh thất bại"}
                 </span>
                 {scorePercent !== null && (
                   <Badge variant={isLowTrust ? "destructive" : "default"}>
@@ -150,8 +150,8 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-blue-500" />
-            <h4 className="font-semibold">Possible Duplicates</h4>
-            <Badge>{pendingSuggestions.length} {pendingSuggestions.length === 1 ? 'match' : 'matches'}</Badge>
+                <h4 className="font-semibold">Có khả năng trùng lặp</h4>
+              <Badge>{pendingSuggestions.length} {'trùng khớp'}</Badge>
           </div>
           
           {pendingSuggestions.map((suggestion: any) => {
@@ -176,21 +176,21 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
                         <GitMerge className="h-5 w-5 text-blue-500" />
                       )}
                       <span className="font-medium">
-                        {isRecurrence ? "Issue Happened Again" : "Similar Reports Found"}
+                        {isRecurrence ? "Sự cố lặp lại" : "Tìm thấy báo cáo tương tự"}
                       </span>
                       <Badge variant={isRecurrence ? "destructive" : "default"}>
                         {similarity}% match
                       </Badge>
                     </div>
-                    <p className="text-sm text-slate-600 ml-7">
-                      {suggestion.duplicate_incident_ids.length} {suggestion.duplicate_incident_ids.length === 1 ? 'report' : 'reports'} might be the same issue
+                      <p className="text-sm text-slate-600 ml-7">
+                      {suggestion.duplicate_incident_ids.length} báo cáo có thể cùng một vấn đề
                     </p>
                   </div>
                 </div>
 
                 {canManage && (
                   <div className="flex gap-2 ml-7">
-                    <Button
+                      <Button
                       size="sm"
                       variant="default"
                       onClick={() => approveMutation.mutate(suggestion.id)}
@@ -198,7 +198,7 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Merge Together
+                      Gộp báo cáo
                     </Button>
                     <Button
                       size="sm"
@@ -207,7 +207,7 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
                       disabled={rejectMutation.isPending}
                     >
                       <XCircle className="h-4 w-4 mr-2" />
-                      Keep Separate
+                      Giữ riêng
                     </Button>
                   </div>
                 )}
@@ -217,7 +217,7 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
         </div>
       ) : canManage ? (
         <div className="text-center py-4 text-slate-500 text-sm">
-          No duplicate reports found. Click "Check for Duplicates" to search.
+          Không tìm thấy báo cáo trùng lặp. Nhấp "Kiểm tra trùng lặp" để tìm kiếm.
         </div>
       ) : null}
     </div>

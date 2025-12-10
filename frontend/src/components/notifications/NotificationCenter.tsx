@@ -53,9 +53,9 @@ export const NotificationCenter: React.FC = () => {
       <DropdownMenuContent align="end" className="w-80 max-h-[500px] overflow-y-auto">
         <div className="p-2 border-b">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-sm">Notifications</h3>
+            <h3 className="font-semibold text-sm">Thông báo</h3>
             {unreadNotifications.length > 0 && (
-              <Button
+                <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => markAllAsReadMutation.mutate()}
@@ -63,7 +63,7 @@ export const NotificationCenter: React.FC = () => {
                 className="h-7 text-xs"
               >
                 <CheckCheck className="h-3 w-3 mr-1" />
-                Mark all read
+                Đánh dấu tất cả là đã đọc
               </Button>
             )}
           </div>
@@ -91,9 +91,9 @@ export const NotificationCenter: React.FC = () => {
                     />
                   </div>
                 ))}
-                {readNotifications.length > 0 && (
+                    {readNotifications.length > 0 && (
                   <div className="border-t pt-2 mt-2">
-                    <p className="text-xs text-slate-500 mb-2 px-2">Earlier</p>
+                    <p className="text-xs text-slate-500 mb-2 px-2">Trước đây</p>
                   </div>
                 )}
               </>
@@ -105,7 +105,7 @@ export const NotificationCenter: React.FC = () => {
         ) : (
           <div className="p-8 text-center text-slate-500">
             <Bell className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-            <p className="text-sm">No notifications</p>
+            <p className="text-sm">Không có thông báo</p>
           </div>
         )}
       </DropdownMenuContent>

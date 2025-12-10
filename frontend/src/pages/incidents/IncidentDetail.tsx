@@ -340,7 +340,7 @@ const IncidentDetail: React.FC = () => {
                                 })
                             }
                         >
-                            View Asset Details
+                            Xem chi tiết tài sản
                         </Button>
                     </div>
                 )}
@@ -472,7 +472,7 @@ const IncidentDetail: React.FC = () => {
                                             })
                                         }
                                     >
-                                        View Maintenance
+                                        Xem bảo trì
                                     </Button>
                                 </div>
                             </div>

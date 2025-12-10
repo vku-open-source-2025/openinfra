@@ -45,7 +45,7 @@ const Header: React.FC = () => {
     }, []);
 
     return (
-        <header className="fixed z-50 top-0 left-0 h-20 w-full bg-white backdrop-blur-md shadow-sm">
+        <header className="fixed z-60 top-0 left-0 h-20 w-full bg-white backdrop-blur-md shadow-sm">
             <div className="flex items-center justify-between h-full px-4 mx-auto max-w-7xl">
                 {/* Logo */}
                 <div className="flex items-center">
@@ -94,7 +94,15 @@ const Header: React.FC = () => {
                                     to={item.to}
                                     search={item.search}
                                     onClick={closeMobileMenu}
-                                    className="ml-8 text-base h-10 bg-linear-to-r from-[#00F2FE] from-21% to-[#4FACFE] px-6 flex items-center rounded-full max-lg:mx-2 max-lg:w-4/5 max-lg:text-xl max-lg:flex-col max-lg:justify-center hover:shadow-lg transition-shadow"
+                                    className="ml-8 
+                                    text-base 
+                                    h-10 bg-linear-to-r
+                                    from-[#00F2FE] from-21% to-[#4FACFE] 
+                                    px-6 flex items-center rounded-full 
+                                    max-lg:mx-2 max-lg:w-4/5 max-lg:text-xl 
+                                    max-lg:flex-col max-lg:justify-center 
+                                    hover:shadow-lg transition-shadow
+                                    z-70"
                                 >
                                     <span className="text-white font-semibold text-center">
                                         {item.label}

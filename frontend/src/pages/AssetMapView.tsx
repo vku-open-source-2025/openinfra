@@ -328,10 +328,10 @@ const AssetMapView: React.FC = () => {
         );
 
     return (
-        <div className="relative w-full h-full min-h-0 bg-slate-50 overflow-hidden">
+        <div className="relative w-full h-full min-h-0 bg-slate-50 overflow-hidden z-0">
             {/* Loading overlay */}
             {isLoading && (
-                <div className="absolute inset-0 z-100 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
                     <div className="text-center">
                         <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                         <p className="text-slate-500 font-medium">

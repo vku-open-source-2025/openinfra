@@ -29,11 +29,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     setErrors({})
 
     if (!formData.amount || formData.amount <= 0) {
-      setErrors({ amount: "Amount must be greater than 0" })
+      setErrors({ amount: "Số tiền phải lớn hơn 0" })
       return
     }
     if (!formData.description?.trim()) {
-      setErrors({ description: "Description is required" })
+      setErrors({ description: "Mô tả là bắt buộc" })
       return
     }
 
@@ -44,20 +44,20 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
   return (
     <Form onSubmit={handleSubmit}>
       <FormField>
-        <FormLabel required>Transaction Type</FormLabel>
+        <FormLabel required>Loại giao dịch</FormLabel>
         <Select
           value={formData.transaction_type || "expense"}
           onChange={(e) =>
             setFormData({ ...formData, transaction_type: e.target.value as TransactionType })
           }
         >
-          <option value="expense">Expense</option>
-          <option value="allocation">Allocation</option>
+          <option value="expense">Chi phí</option>
+          <option value="allocation">Phân bổ</option>
         </Select>
       </FormField>
 
       <FormField>
-        <FormLabel required>Amount (VND)</FormLabel>
+        <FormLabel required>Số tiền (VND)</FormLabel>
         <Input
           type="number"
           step="0.01"
@@ -69,11 +69,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
       </FormField>
 
       <FormField>
-        <FormLabel required>Description</FormLabel>
+        <FormLabel required>Mô tả</FormLabel>
         <Textarea
           value={formData.description || ""}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Transaction description..."
+          placeholder="Mô tả giao dịch..."
           rows={3}
         />
         {errors.description && <FormError>{errors.description}</FormError>}
@@ -81,10 +81,10 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
       <div className="flex gap-4 mt-4">
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Adding..." : "Add Transaction"}
+          {isLoading ? "Đang thêm..." : "Thêm giao dịch"}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          Hủy
         </Button>
       </div>
     </Form>

@@ -84,21 +84,21 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
       {plan ? (
         <div className="bg-slate-50 rounded-lg p-6">
           <div className="flex items-start justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Current Plan Summary</h3>
-            <Button variant="outline" size="sm" onClick={handleEdit}>
+            <h3 className="text-lg font-semibold text-slate-900">Tóm tắt kế hoạch hiện tại</h3>
+              <Button variant="outline" size="sm" onClick={handleEdit}>
               <Edit className="h-4 w-4 mr-2" />
-              Edit Plan
+              Chỉnh sửa kế hoạch
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Cycle</label>
+                <label className="text-xs text-slate-500 uppercase tracking-wide">Chu kỳ</label>
               <p className="text-sm font-medium text-slate-900 mt-1">
-                {plan.cycle_description || `Every ${plan.cycle_days} days`}
+                {plan.cycle_description || `Mỗi ${plan.cycle_days} ngày`}
               </p>
             </div>
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Last Maintenance</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Bảo trì gần nhất</label>
               <p className="text-sm font-medium text-slate-900 mt-1">
                 {plan.last_maintenance_date
                   ? format(new Date(plan.last_maintenance_date), "dd/MM/yyyy")
@@ -106,7 +106,7 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
               </p>
             </div>
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide">Next Maintenance</label>
+              <label className="text-xs text-slate-500 uppercase tracking-wide">Bảo trì tiếp theo</label>
               <p className="text-sm font-medium text-slate-900 mt-1">
                 {format(new Date(plan.next_maintenance_date), "dd/MM/yyyy")}
               </p>
@@ -121,9 +121,9 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
         </div>
       ) : (
         <div className="bg-slate-50 rounded-lg p-6 text-center">
-          <p className="text-slate-600 mb-4">No preventive maintenance plan configured.</p>
+          <p className="text-slate-600 mb-4">Chưa có kế hoạch bảo trì định kỳ.</p>
           <Button onClick={() => setShowEditModal(true)}>
-            Create Preventive Maintenance Plan
+            Tạo kế hoạch bảo trì định kỳ
           </Button>
         </div>
       )}
@@ -131,7 +131,7 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
       {/* Upcoming Tasks */}
       {upcomingTasks && upcomingTasks.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Upcoming Tasks</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Công việc sắp tới</h3>
           <div className="space-y-2">
             {upcomingTasks.map((task) => {
               const isOverdue = isMaintenanceOverdue(task.scheduled_date);
@@ -157,19 +157,19 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
                         <p className="font-medium text-slate-900">
                           Due: {format(new Date(task.scheduled_date), "dd/MM/yyyy")}
                         </p>
-                        <p className="text-sm text-slate-600">
-                          Status: {task.status.replace("_", " ")}
+                          <p className="text-sm text-slate-600">
+                          Trạng thái: {task.status.replace("_", " ")}
                         </p>
                       </div>
                     </div>
-                    {isOverdue && (
+                      {isOverdue && (
                       <span className="px-2 py-1 text-xs font-bold rounded bg-red-100 text-red-700">
-                        OVERDUE
+                        QUÁ HẠN
                       </span>
                     )}
                     {isDueSoon && !isOverdue && (
                       <span className="px-2 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700">
-                        DUE SOON
+                        SẮP ĐẾN
                       </span>
                     )}
                   </div>
@@ -244,42 +244,42 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
                 type="number"
                 value={cycleDays}
                 onChange={(e) => setCycleDays(e.target.value)}
-                placeholder="e.g., 180 for 6 months"
+                placeholder="ví dụ: 180 cho 6 tháng"
                 min="1"
               />
             </div>
             <div>
               <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-                Cycle Description (optional)
+                Mô tả chu kỳ (tùy chọn)
               </label>
               <Input
                 type="text"
                 value={cycleDescription}
                 onChange={(e) => setCycleDescription(e.target.value)}
-                placeholder="e.g., Every 6 months"
+                placeholder="ví dụ: Mỗi 6 tháng"
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-                Warning Days
+                <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
+                Số ngày cảnh báo
               </label>
               <Input
                 type="number"
                 value={warningDays}
                 onChange={(e) => setWarningDays(e.target.value)}
-                placeholder="Days before due date to show warning"
+                placeholder="Số ngày trước hạn để hiển thị cảnh báo"
                 min="1"
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-                Responsible Team (optional)
+                <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
+                Nhóm chịu trách nhiệm (tùy chọn)
               </label>
               <Input
                 type="text"
                 value={responsibleTeam}
                 onChange={(e) => setResponsibleTeam(e.target.value)}
-                placeholder="Team name"
+                placeholder="Tên nhóm"
               />
             </div>
             <div className="flex gap-2 pt-4">
@@ -288,13 +288,13 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
                 onClick={() => setShowEditModal(false)}
                 disabled={updateMutation.isPending}
               >
-                Cancel
+                Hủy
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={!cycleDays || updateMutation.isPending}
               >
-                {updateMutation.isPending ? "Saving..." : plan ? "Update Plan" : "Create Plan"}
+                {updateMutation.isPending ? "Đang lưu..." : plan ? "Cập nhật kế hoạch" : "Tạo kế hoạch"}
               </Button>
             </div>
           </div>

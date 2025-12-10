@@ -25,7 +25,7 @@ function ReportIncidentPage() {
     const [turnstileToken, setTurnstileToken] = useState<string>("");
     const [captchaError, setCaptchaError] = useState<string>("");
     const [incidentData, setIncidentData] = useState({
-        title: 'Incident Report',
+        title: 'Báo cáo sự cố',
         description: '',
         severity: 'medium',
         category: 'malfunction',
@@ -59,7 +59,7 @@ function ReportIncidentPage() {
         
         // Validate captcha
         if (TURNSTILE_SITE_KEY && !turnstileToken) {
-            setCaptchaError("Please complete the captcha verification");
+            setCaptchaError("Vui lòng hoàn thành xác minh captcha");
             return;
         }
         
@@ -88,14 +88,14 @@ function ReportIncidentPage() {
             navigate({ to: '/public/incidents/$incidentId', params: { incidentId: incident.id } });
         } catch (error) {
             console.error('Failed to report incident', error);
-            alert('Failed to submit report. Please try again.');
+            alert('Gửi báo cáo thất bại. Vui lòng thử lại.');
         } finally {
             setSubmitting(false);
         }
     };
 
     if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
-    if (!asset) return <div className="p-8 text-center text-red-500">Asset not found</div>;
+    if (!asset) return <div className="p-8 text-center text-red-500">Không tìm thấy tài sản</div>;
 
     return (
         <div className="max-w-md mx-auto p-4 space-y-6">
@@ -107,26 +107,26 @@ function ReportIncidentPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <Label htmlFor="category">Issue Type</Label>
+                    <Label htmlFor="category">Loại sự cố</Label>
                     <select
                         id="category"
                         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
                         value={incidentData.category}
                         onChange={(e) => setIncidentData(prev => ({ ...prev, category: e.target.value }))}
                     >
-                        <option value="" disabled>Select issue type</option>
-                        <option value="malfunction">Not Working / Malfunction</option>
-                        <option value="damage">Physical Damage</option>
-                        <option value="safety_hazard">Safety Hazard</option>
-                        <option value="other">Other</option>
+                        <option value="" disabled>Chọn loại sự cố</option>
+                        <option value="malfunction">Không hoạt động / Hỏng</option>
+                        <option value="damage">Hư hỏng vật lý</option>
+                        <option value="safety_hazard">Nguy hiểm an toàn</option>
+                        <option value="other">Khác</option>
                     </select>
                 </div>
 
                 <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">Mô tả</Label>
                     <Textarea
                         id="description"
-                        placeholder="Describe the problem..."
+                        placeholder="Mô tả vấn đề..."
                         value={incidentData.description}
                         onChange={e => setIncidentData({ ...incidentData, description: e.target.value })}
                         required
@@ -135,7 +135,7 @@ function ReportIncidentPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <Label htmlFor="reporter_name">Your Name (Optional)</Label>
+                        <Label htmlFor="reporter_name">Tên bạn (Tùy chọn)</Label>
                         <Input
                             id="reporter_name"
                             value={incidentData.reporter_name}
@@ -143,10 +143,10 @@ function ReportIncidentPage() {
                         />
                     </div>
                     <div>
-                        <Label htmlFor="reporter_contact">Contact (Optional)</Label>
+                        <Label htmlFor="reporter_contact">Liên hệ (Tùy chọn)</Label>
                         <Input
                             id="reporter_contact"
-                            placeholder="Phone/Email"
+                            placeholder="Số điện thoại / Email"
                             value={incidentData.reporter_contact}
                             onChange={e => setIncidentData({ ...incidentData, reporter_contact: e.target.value })}
                         />
@@ -154,11 +154,11 @@ function ReportIncidentPage() {
                 </div>
 
                 <div>
-                    <Label>Photos</Label>
+                    <Label>Ảnh</Label>
                     <div className="mt-2 flex items-center gap-4">
                         <Button type="button" variant="outline" className="w-full" onClick={() => document.getElementById('photo-upload')?.click()}>
                             <Camera className="mr-2 h-4 w-4" />
-                            Take / Upload Photo
+                            Chụp / Tải ảnh lên
                         </Button>
                         <input
                             id="photo-upload"
@@ -170,19 +170,19 @@ function ReportIncidentPage() {
                         />
                     </div>
                     {photos.length > 0 && (
-                        <p className="text-sm text-green-600 mt-2">{photos.length} photo(s) selected</p>
+                        <p className="text-sm text-green-600 mt-2">Đã chọn {photos.length} ảnh</p>
                     )}
                 </div>
 
                 {/* Cloudflare Turnstile Captcha */}
                 {TURNSTILE_SITE_KEY && (
                     <div>
-                        <Label>Verify you're human</Label>
+                        <Label>Xác minh bạn là con người</Label>
                         <Turnstile
                             siteKey={TURNSTILE_SITE_KEY}
                             onVerify={(token) => setTurnstileToken(token)}
                             onExpire={() => setTurnstileToken("")}
-                            onError={() => setCaptchaError("Captcha verification failed. Please try again.")}
+                            onError={() => setCaptchaError("Xác minh captcha thất bại. Vui lòng thử lại.")}
                             theme="auto"
                             className="mt-2"
                         />
@@ -192,9 +192,9 @@ function ReportIncidentPage() {
                     </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={submitting || (TURNSTILE_SITE_KEY ? !turnstileToken : false)}>
+                    <Button type="submit" className="w-full" disabled={submitting || (TURNSTILE_SITE_KEY ? !turnstileToken : false)}>
                     {submitting ? <Loader2 className="animate-spin mr-2" /> : null}
-                    Submit Report
+                    Gửi báo cáo
                 </Button>
             </form>
         </div>

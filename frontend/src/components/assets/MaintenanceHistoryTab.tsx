@@ -218,7 +218,7 @@ const MaintenanceHistoryTab: React.FC<MaintenanceHistoryTabProps> = ({ assetId }
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <label className="text-xs text-slate-500 uppercase tracking-wide">Full Description</label>
+                <label className="text-xs text-slate-500 uppercase tracking-wide">Mô tả đầy đủ</label>
                 <p className="text-sm text-slate-900 mt-1">{selectedRecord.description}</p>
               </div>
               {selectedRecord.notes && (

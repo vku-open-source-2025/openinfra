@@ -95,7 +95,7 @@ const BudgetDetail: React.FC = () => {
                 onClick={() => navigate({ to: "/admin/budgets" })}
             >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Budgets
+            Quay lại danh sách ngân sách
             </Button>
 
             <div className="bg-white rounded-lg border border-slate-200 p-6">
@@ -166,14 +166,14 @@ const BudgetDetail: React.FC = () => {
 
             <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">Transactions</h2>
+                    <h2 className="text-lg font-semibold">Giao dịch</h2>
                     {canManage && budget.status === "approved" && (
                         <Button
                             onClick={() => setShowTransactionForm(true)}
                             size="sm"
                         >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Transaction
+                            Thêm giao dịch
                         </Button>
                     )}
                 </div>
@@ -182,7 +182,7 @@ const BudgetDetail: React.FC = () => {
                     <TransactionList transactions={transactions} />
                 ) : (
                     <div className="text-center py-8 text-slate-500">
-                        <p>No transactions yet</p>
+                        <p>Chưa có giao dịch nào</p>
                     </div>
                 )}
             </div>

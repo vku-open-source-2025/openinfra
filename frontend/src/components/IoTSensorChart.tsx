@@ -21,7 +21,7 @@ const LineChart = ({
     color?: string;
     thresholds?: { max?: number; critical_max?: number };
 }) => {
-    if (data.length === 0) return <div className="text-gray-400 text-center py-8">No data available</div>;
+    if (data.length === 0) return <div className="text-gray-400 text-center py-8">Không có dữ liệu</div>;
 
     const padding = { top: 20, right: 20, bottom: 30, left: 50 };
     const chartWidth = width - padding.left - padding.right;
@@ -145,7 +145,7 @@ const AlertBadge = ({ alert, onAcknowledge }: { alert: IoTAlert; onAcknowledge?:
                     onClick={onAcknowledge}
                     className="text-xs px-2 py-1 bg-white/10 rounded hover:bg-white/20 transition"
                 >
-                    Acknowledge
+                    Xác nhận
                 </button>
             )}
         </div>

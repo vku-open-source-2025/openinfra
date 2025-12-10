@@ -43,19 +43,19 @@ const Sidebar: React.FC<SidebarProps> = () => {
     const technicianMenuItems: MenuItem[] = [
         {
             id: "dashboard",
-            label: "Dashboard",
+            label: "Bảng điều khiển",
             icon: LayoutDashboard,
             path: "/technician",
         },
         {
             id: "assets",
-            label: "Assets",
+            label: "Tài sản",
             icon: Building2,
             path: "/admin/assets",
         },
         {
             id: "tasks",
-            label: "My Tasks",
+            label: "Công việc của tôi",
             icon: AlertTriangle,
             path: "/technician",
         },
@@ -65,51 +65,51 @@ const Sidebar: React.FC<SidebarProps> = () => {
     const adminMenuItems: MenuItem[] = [
         {
             id: "dashboard",
-            label: "Dashboard",
+            label: "Bảng điều khiển",
             icon: LayoutDashboard,
             path: "/admin",
         },
         {
             id: "map",
-            label: "Map View",
+            label: "Xem bản đồ",
             icon: Map,
             path: "/admin/map",
         },
         {
             id: "assets",
-            label: "Assets",
+            label: "Tài sản",
             icon: Building2,
             path: "/admin/assets",
         },
         {
             id: "incidents",
-            label: "Incidents",
+            label: "Sự cố",
             icon: AlertTriangle,
             path: "/admin/incidents",
             badge: 0, // Could be dynamic from state
         },
         {
             id: "alerts",
-            label: "Alerts",
+            label: "Cảnh báo",
             icon: Activity,
             path: "/admin/alerts",
             badge: 0, // Could be dynamic from state
         },
         {
             id: "iot",
-            label: "IoT Sensors",
+            label: "Cảm biến IoT",
             icon: Radio,
             path: "/admin/iot",
         },
         {
             id: "budgets",
-            label: "Budgets",
+            label: "Ngân sách",
             icon: DollarSign,
             path: "/admin/budgets",
         },
         {
             id: "reports",
-            label: "Reports",
+            label: "Báo cáo",
             icon: FileText,
             path: "/admin/reports",
         },
@@ -119,7 +119,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
     const adminOnlyItems: MenuItem[] = [
         {
             id: "users",
-            label: "User Management",
+            label: "Quản lý người dùng",
             icon: Users,
             path: "/admin/users",
         },
@@ -189,7 +189,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
 
             {/* Sidebar */}
             <div
-                className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white flex flex-col shadow-xl transform transition-transform duration-300 ease-in-out ${
+                className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col shadow-xl transform transition-transform duration-300 ease-in-out ${
                     isMobileOpen
                         ? "translate-x-0"
                         : "-translate-x-full lg:translate-x-0"
@@ -214,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             </h1>
                             <p className="text-xs text-slate-400">
                                 {user?.role === "technician"
-                                    ? "Technician"
+                                    ? "Kỹ thuật viên"
                                     : "v1.0.0"}
                             </p>
                         </div>
@@ -342,7 +342,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
                         >
                             <Settings size={16} />
-                            <span>Settings</span>
+                            <span>Cài đặt</span>
                         </Link>
                     </div>
                 </div>

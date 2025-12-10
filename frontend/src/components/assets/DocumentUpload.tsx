@@ -80,7 +80,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
       >
         <Upload className="mx-auto mb-4 text-slate-400" size={48} />
         <p className="text-sm text-slate-600 mb-2">
-          Drag and drop files here, or click to select
+          Kéo thả tập tin vào đây, hoặc nhấp để chọn
         </p>
         <input
           type="file"
@@ -91,7 +91,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
         />
         <label htmlFor="file-upload">
           <Button variant="outline" as="span">
-            Select Files
+            Chọn tập tin
           </Button>
         </label>
       </div>
@@ -99,7 +99,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
       {/* Selected Files */}
       {files.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-slate-900">Selected Files</h4>
+          <h4 className="text-sm font-semibold text-slate-900">Tập tin đã chọn</h4>
           {files.map((file, index) => (
             <div
               key={index}
@@ -129,13 +129,13 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
         <div className="space-y-4 bg-slate-50 p-4 rounded-lg">
           <div>
             <label className="text-xs text-slate-500 uppercase tracking-wide mb-1 block">
-              Document Type (optional)
+              Loại tài liệu (tùy chọn)
             </label>
             <Input
               type="text"
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value)}
-              placeholder="e.g., Manual, Certificate, Photo"
+              placeholder="ví dụ: Hướng dẫn sử dụng, Chứng chỉ, Ảnh"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
               className="rounded border-slate-300"
             />
             <label htmlFor="is-public" className="text-sm text-slate-700">
-              Make document public (visible to citizens via QR/NFC)
+              Công khai tài liệu (hiển thị cho công dân qua QR/NFC)
             </label>
           </div>
           <Button
@@ -155,7 +155,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
             disabled={uploadMutation.isPending}
             className="w-full"
           >
-            {uploadMutation.isPending ? "Uploading..." : `Upload ${files.length} File(s)`}
+            {uploadMutation.isPending ? "Đang tải lên..." : `Tải lên ${files.length} tệp`}
           </Button>
         </div>
       )}

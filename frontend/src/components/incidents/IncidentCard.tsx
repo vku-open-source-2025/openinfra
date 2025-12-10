@@ -5,7 +5,7 @@ import { format } from "date-fns"
 
 // Helper function to get display string for incident location
 const getLocationDisplay = (location?: IncidentLocation): string => {
-  if (!location) return "Location not specified";
+  if (!location) return "Vị trí chưa được xác định";
   
   // First, try geometry.coordinates [lng, lat] - more reliable than address
   if (location.geometry?.coordinates && Array.isArray(location.geometry.coordinates)) {
@@ -21,11 +21,11 @@ const getLocationDisplay = (location?: IncidentLocation): string => {
   }
   
   // Finally, try address (but skip if it's literally "Location not specified")
-  if (location.address && location.address !== "Location not specified") {
+  if (location.address && !["Location not specified", "Vị trí chưa được xác định"].includes(location.address)) {
     return location.address;
   }
   
-  return "Location not specified";
+  return "Vị trí chưa được xác định";
 };
 
 interface IncidentCardProps {
@@ -49,37 +49,37 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
         return (
           <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason}>
             <CheckCircle className="h-3.5 w-3.5" />
-            <span>Safe {scorePercent && `(${scorePercent}%)`}</span>
+            <span>Đã xác minh {scorePercent && `(${scorePercent}%)`}</span>
           </div>
         );
-      case 'to_be_verified':
+            case 'to_be_verified':
         // Differentiate spam risk vs likely safe
-        if (isSpamRisk) {
+          if (isSpamRisk) {
           return (
-            <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason || `Low trust score: ${scorePercent}% confidence this is legitimate`}>
+              <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason || `Mức tin cậy thấp: ${scorePercent}% xác suất hợp lệ`}>
               <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Low Trust {scorePercent !== null && `(${scorePercent}%)`}</span>
+              <span>Nguy cơ spam {scorePercent !== null && `(${scorePercent}%)`}</span>
             </div>
           );
         }
         return (
-          <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason || `Trust score: ${scorePercent}% confidence this is legitimate`}>
+            <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason || `Mức độ tin cậy: ${scorePercent}% xác suất hợp lệ`}>
             <AlertTriangle className="h-3.5 w-3.5" />
-            <span>To Verify {scorePercent !== null && `(${scorePercent}%)`}</span>
+            <span>Chờ xác minh {scorePercent !== null && `(${scorePercent}%)`}</span>
           </div>
         );
       case 'failed':
         return (
           <div className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium" title={incident.ai_verification_reason}>
             <XCircle className="h-3.5 w-3.5" />
-            <span>Check Failed</span>
+            <span>Xác minh thất bại</span>
           </div>
         );
       default:
         return (
           <div className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-1 rounded-full text-xs font-medium">
             <ClockIcon className="h-3.5 w-3.5" />
-            <span>Pending</span>
+            <span>Đang chờ</span>
           </div>
         );
     }
@@ -95,7 +95,7 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
           <h3 className="font-semibold text-slate-900">{incident.title}</h3>
           {assetDisplayName && incident.asset?.id && (
             <div className="flex items-center gap-1.5 mt-1">
-              <Box className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+              <Box className="h-3.5 w-3.5 text-blue-500 shrink-0" />
               <a
                 href={`/admin/assets/${incident.asset.id}`}
                 onClick={(e) => e.stopPropagation()}
@@ -124,23 +124,23 @@ export const IncidentCard: React.FC<IncidentCardProps> = ({ incident, onClick })
         </div>
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
-          <span>{format(new Date(incident.created_at), "MMM d, yyyy")}</span>
+          <span>{new Date(incident.created_at).toLocaleDateString('vi-VN')}</span>
         </div>
         {incident.assigned_to && (
           <div className="flex items-center gap-1">
             <User className="h-3 w-3" />
-            <span>Assigned</span>
+            <span>Đã phân công</span>
           </div>
         )}
         {incident.cost_status === 'pending' && (
-          <div className="flex items-center gap-1 text-orange-600 font-medium">
-            <span>$ Approval Needed</span>
+            <div className="flex items-center gap-1 text-orange-600 font-medium">
+            <span>Chờ phê duyệt chi phí</span>
           </div>
         )}
       </div>
-      {incident.upvotes > 0 && (
+          {incident.upvotes > 0 && (
         <div className="mt-2 text-xs text-slate-500">
-          {incident.upvotes} upvote{incident.upvotes !== 1 ? "s" : ""}
+          {incident.upvotes} lượt thích
         </div>
       )}
     </div>
