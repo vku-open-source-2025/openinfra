@@ -17,6 +17,7 @@ OpenInfra is a comprehensive urban infrastructure asset management system design
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
+- [App Demo](#-app-demo)
 - [Key Features](#-key-features)
 - [Technology Stack](#-technology-stack)
 - [Architecture](#-architecture)
@@ -48,6 +49,31 @@ OpenInfra addresses the critical need for modern infrastructure management by pr
 - **Data-driven Decisions**: Generate insights through analytics and reporting
 
 The system is built on **Clean Architecture** principles with **Domain-Driven Design** patterns, ensuring scalability, maintainability, and production-grade reliability.
+
+---
+
+## 📸 App Demo
+
+### Homepage
+![Homepage](images/Homepage.png)
+
+### Dashboard
+![Dashboard](images/Dashboard.png)
+
+### GIS Map
+![GIS Map](images/Gismap.png)
+
+### Asset Lifecycle Management
+![Lifecycle](images/Lifecycle.png)
+
+### Incident Management
+![Incident](images/Incident.png)
+
+### QR/NFC Field Access
+![NFC](images/NFC.jpg)
+
+### OpenAPI Documentation
+![OpenAPI](images/OpenAPI.png)
 
 ---
 
@@ -605,6 +631,77 @@ npm run test:e2e
 
 ### Code License
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+### Data License - Open Government Licence (OGL) v3.0
+
+OpenInfra makes public infrastructure data available under the **Open Government Licence v3.0 (OGL)**. This license is designed for government and public sector data, allowing free use and reuse of data while maintaining appropriate attribution.
+
+#### What is OGL?
+
+The Open Government Licence (OGL) is a free, open license for government and public sector information. Version 3.0 is maintained by The National Archives (UK) and is widely used internationally for open data initiatives.
+
+#### Key Features of OGL v3.0
+
+**You are free to:**
+- ✅ **Copy, publish, distribute and transmit** the data
+- ✅ **Adapt the data** and create derivative works
+- ✅ **Use the data commercially** and non-commercially
+- ✅ **Combine the data** with other datasets
+
+**Under the following conditions:**
+- 📋 **Attribution**: You must acknowledge the source of the data
+- 📋 **License Notice**: You must include the OGL license notice
+- 📋 **No Misrepresentation**: You must not mislead others or misrepresent the data or its source
+
+#### What Data is Licensed Under OGL?
+
+The following data types in OpenInfra are available under OGL:
+
+- **Public Infrastructure Assets**: Location, type, specifications, and public status
+- **Aggregated Maintenance Statistics**: Summary maintenance data (not detailed personal records)
+- **Public Incident Reports**: Citizen-reported issues (with privacy filters applied)
+- **Geospatial Data**: Asset coordinates and location information
+- **Public API Data**: Data accessible through `/api/v1/public/*` endpoints
+
+#### What Data is NOT Licensed Under OGL?
+
+The following data types are **NOT** subject to open licensing:
+
+- ❌ **Personal Identifiable Information (PII)**: User accounts, emails, phone numbers
+- ❌ **Detailed Financial Data**: Individual transactions, vendor information
+- ❌ **Sensitive Operational Data**: Security information, detailed audit logs
+- ❌ **Private User Data**: Personal preferences, private incident details
+
+#### Attribution Requirements
+
+When using OGL-licensed data, you must include attribution such as:
+
+```
+Data source: OpenInfra (https://openinfra.space) - Licensed under Open Government Licence v3.0
+```
+
+Or in API responses:
+```json
+{
+  "license": "OGL",
+  "license_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+  "attribution": "Data provided by OpenInfra (https://openinfra.space). Licensed under OGL."
+}
+```
+
+#### Full License Text
+
+For the complete OGL v3.0 license text, visit:
+**https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/**
+
+#### API Access
+
+OGL-licensed data is available through:
+- **Public API Endpoints**: `/api/v1/public/*`
+- **Open Data API**: `/api/v1/opendata/*`
+- **License Information**: `/api/v1/opendata/license`
+
+For more information about data licensing, see [frontend/docs/DATA_LICENSE_RECOMMENDATION.md](frontend/docs/DATA_LICENSE_RECOMMENDATION.md).
 
 ---
 
