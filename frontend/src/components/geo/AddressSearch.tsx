@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { useMap } from "react-leaflet";
 import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { Input } from "../ui/input";
 import { geoApi } from "../../api/geo";
@@ -8,15 +7,16 @@ import L from "leaflet";
 import { useDebounce } from "../../hooks/useDebounce";
 
 interface AddressSearchProps {
+    map: L.Map;
     onLocationSelect?: (lat: number, lng: number, address: string) => void;
     onClear?: () => void;
 }
 
 export const AddressSearch: React.FC<AddressSearchProps> = ({
+    map,
     onLocationSelect,
     onClear,
 }) => {
-    const map = useMap();
     const [query, setQuery] = useState("");
     const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
     const [isOpen, setIsOpen] = useState(false);

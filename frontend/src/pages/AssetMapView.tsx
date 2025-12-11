@@ -7,14 +7,6 @@ import React, {
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import {
-    MapContainer,
-    TileLayer,
-    Marker,
-    Polyline,
-    useMap,
-    useMapEvents,
-} from "react-leaflet";
 import L from "leaflet";
 import { assetsApi } from "../api/assets";
 import type { Asset } from "../types/asset";
@@ -73,73 +65,6 @@ const latLngsToBounds = (
     return L.latLngBounds(points);
 };
 
-const MapUpdater: React.FC<{
-    selectedAsset: Asset | null;
-    markerRefs: React.MutableRefObject<{ [key: string]: L.Marker | null }>;
-}> = ({ selectedAsset, markerRefs }) => {
-    const map = useMap();
-
-    useEffect(() => {
-        if (!selectedAsset) return;
-
-        const assetId = (selectedAsset as any).id || (selectedAsset as any)._id;
-
-        if (selectedAsset.geometry.type === "Point") {
-            const [lng, lat] = selectedAsset.geometry.coordinates as number[];
-
-            map.flyTo([lat, lng], 18, {
-                animate: true,
-                duration: 1.5,
-            });
-
-            const marker = markerRefs.current[assetId];
-            if (marker) {
-                setTimeout(() => {
-                    marker.openPopup();
-                }, 500);
-            }
-            return;
-        }
-
-        const latLngs = geometryToLatLngs(selectedAsset.geometry);
-        if (latLngs.length) {
-            const bounds = latLngsToBounds(latLngs);
-            if (bounds) {
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
-            }
-        }
-    }, [selectedAsset, map, markerRefs]);
-
-    return null;
-};
-
-const BoundsWatcher: React.FC<{
-    onBoundsChange: (bounds: L.LatLngBounds) => void;
-}> = ({ onBoundsChange }) => {
-    const map = useMapEvents({
-        moveend: () => {
-            onBoundsChange(map.getBounds());
-        },
-        zoomend: () => {
-            onBoundsChange(map.getBounds());
-        },
-        resize: () => {
-            onBoundsChange(map.getBounds());
-        },
-    });
-
-    useEffect(() => {
-        // Initial bounds set - only once
-        const bounds = map.getBounds();
-        if (bounds) {
-            onBoundsChange(bounds);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map]);
-
-    return null;
-};
-
 const AssetMapView: React.FC = () => {
     const navigate = useNavigate();
     const searchParams = useSearch({ from: "/admin/map" }) as {
@@ -160,8 +85,14 @@ const AssetMapView: React.FC = () => {
     const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
     const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
     const [openChatbot, setOpenChatbot] = useState(false);
-    const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(null);
+    const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(
+        null
+    );
+    const mapRef = useRef<L.Map | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
+    const polylineRefs = useRef<{ [key: string]: L.Polyline | null }>({});
+    const tileLayerRef = useRef<L.TileLayer | null>(null);
     const hasInitializedAssets = useRef(false);
     const isUpdatingFromUrl = useRef(false);
 
@@ -308,10 +239,158 @@ const AssetMapView: React.FC = () => {
         []
     );
 
-    // Memoize bounds change handler
-    const handleBoundsChange = useCallback((bounds: L.LatLngBounds) => {
-        setMapBounds(bounds);
+    // Initialize map
+    useEffect(() => {
+        if (!containerRef.current || mapRef.current) return;
+
+        const map = L.map(containerRef.current, {
+            center,
+            zoom: 16,
+            maxZoom: 20,
+            scrollWheelZoom: true,
+        });
+
+        // Add tile layer
+        const tileLayer = VIETMAP_API_KEY
+            ? L.tileLayer(
+                  `https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`,
+                  {
+                      attribution:
+                          '&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳',
+                      maxZoom: 20,
+                  }
+              )
+            : L.tileLayer(
+                  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  {
+                      attribution:
+                          '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                      maxZoom: 20,
+                      maxNativeZoom: 16,
+                  }
+              );
+
+        tileLayer.addTo(map);
+        tileLayerRef.current = tileLayer;
+        mapRef.current = map;
+
+        // Set initial bounds
+        setMapBounds(map.getBounds());
+
+        // Listen to map events for bounds updates
+        const updateBounds = () => {
+            setMapBounds(map.getBounds());
+        };
+
+        map.on("moveend", updateBounds);
+        map.on("zoomend", updateBounds);
+        map.on("resize", updateBounds);
+
+        return () => {
+            map.off("moveend", updateBounds);
+            map.off("zoomend", updateBounds);
+            map.off("resize", updateBounds);
+            map.remove();
+            mapRef.current = null;
+        };
     }, []);
+
+    // Handle selected asset changes - fly to or fit bounds
+    useEffect(() => {
+        if (!mapRef.current || !selectedAsset) return;
+
+        const map = mapRef.current;
+        const assetId = (selectedAsset as any).id || (selectedAsset as any)._id;
+
+        if (selectedAsset.geometry.type === "Point") {
+            const [lng, lat] = selectedAsset.geometry.coordinates as number[];
+
+            map.flyTo([lat, lng], 18, {
+                animate: true,
+                duration: 1.5,
+            });
+
+            const marker = markerRefs.current[assetId];
+            if (marker) {
+                setTimeout(() => {
+                    marker.openPopup();
+                }, 500);
+            }
+            return;
+        }
+
+        const latLngs = geometryToLatLngs(selectedAsset.geometry);
+        if (latLngs.length) {
+            const bounds = latLngsToBounds(latLngs);
+            if (bounds) {
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
+            }
+        }
+    }, [selectedAsset]);
+
+    // Render markers and polylines
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        const map = mapRef.current;
+
+        // Clean up old markers and polylines
+        Object.values(markerRefs.current).forEach((marker) => {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+        });
+        Object.values(polylineRefs.current).forEach((polyline) => {
+            if (polyline) {
+                map.removeLayer(polyline);
+            }
+        });
+        markerRefs.current = {};
+        polylineRefs.current = {};
+
+        // Add Point markers
+        visibleAssets.forEach((asset) => {
+            if (asset.geometry.type === "Point") {
+                const coords = asset.geometry.coordinates as number[];
+                const position: [number, number] = [coords[1], coords[0]];
+                const assetId = (asset as any).id || (asset as any)._id;
+                const isSelected =
+                    selectedAsset &&
+                    ((selectedAsset as any).id ||
+                        (selectedAsset as any)._id) === assetId;
+
+                const marker = L.marker(position, {
+                    icon: getIconForAsset(asset.feature_code, !!isSelected),
+                    zIndexOffset: isSelected ? 1000 : 0,
+                })
+                    .addTo(map)
+                    .on("click", () => handleAssetClick(asset));
+
+                markerRefs.current[assetId] = marker;
+            }
+        });
+
+        // Add LineString polylines
+        visibleAssets.forEach((asset) => {
+            if (asset.geometry.type === "LineString") {
+                const positions = (
+                    asset.geometry.coordinates as number[][]
+                ).map((coord: any) => [coord[1], coord[0]] as [number, number]);
+                const color = getColorForFeatureCode(asset.feature_code);
+                const assetId = (asset as any).id || (asset as any)._id;
+
+                const polyline = L.polyline(positions, {
+                    color,
+                    weight: 4,
+                    opacity: 0.8,
+                })
+                    .addTo(map)
+                    .on("click", () => handleAssetClick(asset));
+
+                polylineRefs.current[assetId] = polyline;
+            }
+        });
+    }, [visibleAssets, selectedAsset, handleAssetClick]);
 
     if (error)
         return (
@@ -349,99 +428,7 @@ const AssetMapView: React.FC = () => {
             )}
 
             {/* Map Container */}
-            <MapContainer
-                center={center}
-                zoom={16}
-                maxZoom={20}
-                scrollWheelZoom={true}
-                className="h-full w-full z-0"
-            >
-                <MapUpdater
-                    selectedAsset={selectedAsset}
-                    markerRefs={markerRefs}
-                />
-                <BoundsWatcher onBoundsChange={handleBoundsChange} />
-
-                {/* Map Tile Layer */}
-                {VIETMAP_API_KEY ? (
-                    <TileLayer
-                        attribution='&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳'
-                        url={`https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`}
-                    />
-                ) : (
-                    <TileLayer
-                        attribution='&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        maxZoom={20}
-                        maxNativeZoom={16}
-                    />
-                )}
-
-                {/* Point Markers */}
-                {visibleAssets.map((asset) => {
-                    if (asset.geometry.type === "Point") {
-                        const coords = asset.geometry.coordinates as number[];
-                        const position: [number, number] = [
-                            coords[1],
-                            coords[0],
-                        ];
-                        const assetId = (asset as any).id || (asset as any)._id;
-                        const isSelected =
-                            selectedAsset &&
-                            ((selectedAsset as any).id ||
-                                (selectedAsset as any)._id) === assetId;
-                        return (
-                            <Marker
-                                key={assetId}
-                                position={position}
-                                icon={getIconForAsset(
-                                    asset.feature_code,
-                                    !!isSelected
-                                )}
-                                eventHandlers={{
-                                    click: () => handleAssetClick(asset),
-                                }}
-                                ref={(el) => {
-                                    if (el) {
-                                        markerRefs.current[assetId] = el;
-                                    }
-                                }}
-                                zIndexOffset={isSelected ? 1000 : 0}
-                            />
-                        );
-                    }
-                    return null;
-                })}
-
-                {/* LineString Assets */}
-                {visibleAssets.map((asset) => {
-                    if (asset.geometry.type === "LineString") {
-                        const positions = (
-                            asset.geometry.coordinates as number[][]
-                        ).map(
-                            (coord: any) =>
-                                [coord[1], coord[0]] as [number, number]
-                        );
-                        const color = getColorForFeatureCode(
-                            asset.feature_code
-                        );
-                        const assetId = (asset as any).id || (asset as any)._id;
-                        return (
-                            <Polyline
-                                key={assetId}
-                                positions={positions}
-                                color={color}
-                                weight={4}
-                                opacity={0.8}
-                                eventHandlers={{
-                                    click: () => handleAssetClick(asset),
-                                }}
-                            />
-                        );
-                    }
-                    return null;
-                })}
-            </MapContainer>
+            <div ref={containerRef} className="h-full w-full z-0" />
 
             {/* Asset Info Panel */}
             <AssetInfoPanel
@@ -454,7 +441,7 @@ const AssetMapView: React.FC = () => {
             />
 
             {/* AI Chatbot Widget */}
-            <AIChatWidget 
+            <AIChatWidget
                 openChat={openChatbot}
                 onOpenChange={(isOpen) => {
                     setOpenChatbot(isOpen);
@@ -463,7 +450,10 @@ const AssetMapView: React.FC = () => {
                         isUpdatingFromUrl.current = true;
                         setIsModalOpen(false);
                         setSelectedAsset(null);
-                        navigate({ to: "/admin/map", search: { assetId: undefined } });
+                        navigate({
+                            to: "/admin/map",
+                            search: { assetId: undefined },
+                        });
                     } else {
                         // Reset asset to add when closing
                         setAssetToAddToChat(null);

@@ -5,15 +5,6 @@ import React, {
     useMemo,
     useCallback,
 } from "react";
-import {
-    MapContainer,
-    TileLayer,
-    Marker,
-    Popup,
-    Polyline,
-    useMap,
-    useMapEvents,
-} from "react-leaflet";
 import { type Asset, getAssetId } from "../api";
 import { getIconForAsset, getColorForFeatureCode } from "../utils/mapIcons";
 import HeatmapLayer from "./HeatmapLayer";
@@ -56,7 +47,11 @@ const geometryToLatLngs = (geometry: Asset["geometry"]): [number, number][] => {
             }
             return [];
         case "LineString":
-            if (Array.isArray(coords) && Array.isArray(coords[0]) && typeof coords[0][0] === "number") {
+            if (
+                Array.isArray(coords) &&
+                Array.isArray(coords[0]) &&
+                typeof coords[0][0] === "number"
+            ) {
                 return (coords as number[][]).map(toLatLng);
             }
             return [];
@@ -68,7 +63,11 @@ const geometryToLatLngs = (geometry: Asset["geometry"]): [number, number][] => {
             }
             return [];
         case "Polygon":
-            if (Array.isArray(coords) && Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+            if (
+                Array.isArray(coords) &&
+                Array.isArray(coords[0]) &&
+                Array.isArray(coords[0][0])
+            ) {
                 return (coords as number[][][])[0].map(toLatLng);
             }
             return [];
@@ -80,7 +79,11 @@ const geometryToLatLngs = (geometry: Asset["geometry"]): [number, number][] => {
             }
             return [];
         case "MultiPoint":
-            if (Array.isArray(coords) && Array.isArray(coords[0]) && typeof coords[0][0] === "number") {
+            if (
+                Array.isArray(coords) &&
+                Array.isArray(coords[0]) &&
+                typeof coords[0][0] === "number"
+            ) {
                 return (coords as number[][]).map(toLatLng);
             }
             return [];
@@ -97,64 +100,6 @@ const latLngsToBounds = (
     return L.latLngBounds(points);
 };
 
-const MapUpdater: React.FC<{
-    selectedAsset: Asset | null;
-    markerRefs: React.MutableRefObject<{ [key: string]: L.Marker | null }>;
-}> = ({ selectedAsset, markerRefs }) => {
-    const map = useMap();
-
-    useEffect(() => {
-        if (!selectedAsset) return;
-
-        if (selectedAsset.geometry.type === "Point") {
-            const [lng, lat] = selectedAsset.geometry.coordinates as number[];
-
-            // Fly to the asset
-            map.flyTo([lat, lng], 18, {
-                animate: true,
-                duration: 1.5,
-            });
-
-            // Open popup if marker exists
-            const marker = markerRefs.current[getAssetId(selectedAsset)];
-            if (marker) {
-                // Small timeout to ensure flyTo starts/completes or just to be safe with UI updates
-                setTimeout(() => {
-                    marker.openPopup();
-                }, 500);
-            }
-            return;
-        }
-
-        // For non-Point geometries, fit bounds to the shape
-        const latLngs = geometryToLatLngs(selectedAsset.geometry);
-        if (latLngs.length) {
-            const bounds = latLngsToBounds(latLngs);
-            if (bounds) {
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
-            }
-        }
-    }, [selectedAsset, map, markerRefs]);
-
-    return null;
-};
-
-const BoundsWatcher: React.FC<{
-    onBoundsChange: (bounds: L.LatLngBounds) => void;
-}> = ({ onBoundsChange }) => {
-    const map = useMapEvents({
-        moveend: () => onBoundsChange(map.getBounds()),
-        zoomend: () => onBoundsChange(map.getBounds()),
-        resize: () => onBoundsChange(map.getBounds()),
-    });
-
-    useEffect(() => {
-        onBoundsChange(map.getBounds());
-    }, [map, onBoundsChange]);
-
-    return null;
-};
-
 const MapComponent: React.FC<MapProps> = ({
     assets,
     onAssetSelect,
@@ -165,7 +110,12 @@ const MapComponent: React.FC<MapProps> = ({
 }) => {
     const [mapMode, setMapMode] = useState<"markers" | "heatmap">("markers");
     const center: [number, number] = [16.047079, 108.20623];
+    const mapRef = useRef<L.Map | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
+    const polylineRefs = useRef<{ [key: string]: L.Polyline | null }>({});
+    const routePolylineRef = useRef<L.Polyline | null>(null);
+    const tileLayerRef = useRef<L.TileLayer | null>(null);
     const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
     const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
 
@@ -219,6 +169,237 @@ const MapComponent: React.FC<MapProps> = ({
         return filtered;
     }, [filteredAssets, assetIntersectsBounds, mapBounds, selectedAsset]);
 
+    // Initialize map
+    useEffect(() => {
+        if (!containerRef.current || mapRef.current) return;
+
+        const map = L.map(containerRef.current, {
+            center,
+            zoom: 16,
+            maxZoom: 20,
+            scrollWheelZoom: true,
+        });
+
+        // Add tile layer
+        const tileLayer = VIETMAP_API_KEY
+            ? L.tileLayer(
+                  `https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`,
+                  {
+                      attribution:
+                          '&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳',
+                      maxZoom: 20,
+                  }
+              )
+            : L.tileLayer(
+                  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  {
+                      attribution:
+                          '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                      maxZoom: 20,
+                      maxNativeZoom: 16,
+                  }
+              );
+
+        tileLayer.addTo(map);
+        tileLayerRef.current = tileLayer;
+        mapRef.current = map;
+
+        // Set initial bounds
+        setMapBounds(map.getBounds());
+
+        // Listen to map events for bounds updates
+        const updateBounds = () => {
+            setMapBounds(map.getBounds());
+        };
+
+        map.on("moveend", updateBounds);
+        map.on("zoomend", updateBounds);
+        map.on("resize", updateBounds);
+
+        return () => {
+            map.off("moveend", updateBounds);
+            map.off("zoomend", updateBounds);
+            map.off("resize", updateBounds);
+            map.remove();
+            mapRef.current = null;
+        };
+    }, []);
+
+    // Handle selected asset changes - fly to or fit bounds
+    useEffect(() => {
+        if (!mapRef.current || !selectedAsset) return;
+
+        const map = mapRef.current;
+
+        if (selectedAsset.geometry.type === "Point") {
+            const [lng, lat] = selectedAsset.geometry.coordinates as number[];
+
+            // Fly to the asset
+            map.flyTo([lat, lng], 18, {
+                animate: true,
+                duration: 1.5,
+            });
+
+            // Open popup if marker exists
+            const marker = markerRefs.current[getAssetId(selectedAsset)];
+            if (marker) {
+                setTimeout(() => {
+                    marker.openPopup();
+                }, 500);
+            }
+            return;
+        }
+
+        // For non-Point geometries, fit bounds to the shape
+        const latLngs = geometryToLatLngs(selectedAsset.geometry);
+        if (latLngs.length) {
+            const bounds = latLngsToBounds(latLngs);
+            if (bounds) {
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
+            }
+        }
+    }, [selectedAsset]);
+
+    // Render markers and polylines
+    useEffect(() => {
+        if (!mapRef.current || mapMode !== "markers") return;
+
+        const map = mapRef.current;
+
+        // Clean up old markers and polylines
+        Object.values(markerRefs.current).forEach((marker) => {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+        });
+        Object.values(polylineRefs.current).forEach((polyline) => {
+            if (polyline) {
+                map.removeLayer(polyline);
+            }
+        });
+        markerRefs.current = {};
+        polylineRefs.current = {};
+
+        // Add Point markers
+        visibleAssets.forEach((asset) => {
+            if (asset.geometry.type === "Point") {
+                const coords = asset.geometry.coordinates as number[];
+                const position: [number, number] = [coords[1], coords[0]];
+                const assetId = getAssetId(asset);
+                const isSelected = selectedAsset
+                    ? getAssetId(selectedAsset) === assetId
+                    : false;
+
+                // Create popup content
+                const hash = Array.from(assetId).reduce(
+                    (h, c) => (h * 31 + c.charCodeAt(0)) | 0,
+                    0
+                );
+                const isOnline = Math.abs(hash) % 100 > 10; // ~90% online
+                const popupContent = `
+                    <div class="font-semibold text-slate-900">${
+                        asset.feature_type
+                    }</div>
+                    <div class="text-xs text-slate-500">${
+                        asset.feature_code
+                    }</div>
+                    <div class="mt-2 text-xs">
+                        <span class="px-2 py-0.5 rounded-full ${
+                            isOnline
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                        }">
+                            ${isOnline ? "Trực tuyến" : "Ngoại tuyến"}
+                        </span>
+                    </div>
+                `;
+
+                const marker = L.marker(position, {
+                    icon: getIconForAsset(asset.feature_code, isSelected),
+                    zIndexOffset: isSelected ? 1000 : 0,
+                })
+                    .addTo(map)
+                    .bindPopup(popupContent, {
+                        className: "custom-popup",
+                    })
+                    .on("click", () => {
+                        onAssetSelect(asset);
+                    });
+
+                markerRefs.current[assetId] = marker;
+            }
+        });
+
+        // Add LineString polylines
+        visibleAssets.forEach((asset) => {
+            if (asset.geometry.type === "LineString") {
+                const positions = (
+                    asset.geometry.coordinates as number[][]
+                ).map(
+                    (coord: number[]) =>
+                        [coord[1], coord[0]] as [number, number]
+                );
+                const color = getColorForFeatureCode(asset.feature_code);
+                const assetId = getAssetId(asset);
+
+                const popupContent = `
+                    <div class="font-semibold text-slate-900">${asset.feature_type}</div>
+                    <div class="text-xs text-slate-500">${asset.feature_code}</div>
+                `;
+
+                const polyline = L.polyline(positions, {
+                    color,
+                    weight: 4,
+                    opacity: 0.8,
+                })
+                    .addTo(map)
+                    .bindPopup(popupContent, {
+                        className: "custom-popup",
+                    })
+                    .on("click", () => {
+                        console.log("LineString clicked:", asset);
+                        console.log("Geometry type:", asset.geometry.type);
+                        console.log("Coordinates:", asset.geometry.coordinates);
+                        onAssetSelect(asset);
+                    });
+
+                polylineRefs.current[assetId] = polyline;
+            }
+        });
+    }, [visibleAssets, mapMode, selectedAsset, onAssetSelect]);
+
+    // Render route polyline
+    useEffect(() => {
+        if (!mapRef.current || !routePoints || routePoints.length <= 1) {
+            if (routePolylineRef.current) {
+                mapRef.current?.removeLayer(routePolylineRef.current);
+                routePolylineRef.current = null;
+            }
+            return;
+        }
+
+        const map = mapRef.current;
+        const positions = routePoints
+            .filter((a) => a.geometry.type === "Point")
+            .map((a) => {
+                const coords = a.geometry.coordinates as number[];
+                return [coords[1], coords[0]] as [number, number];
+            });
+
+        if (routePolylineRef.current) {
+            map.removeLayer(routePolylineRef.current);
+        }
+
+        const routePolyline = L.polyline(positions, {
+            color: "blue",
+            weight: 4,
+            opacity: 0.7,
+            dashArray: "10, 10",
+        }).addTo(map);
+
+        routePolylineRef.current = routePolyline;
+    }, [routePoints]);
+
     return (
         <div
             className={`w-full relative group ${
@@ -235,11 +416,11 @@ const MapComponent: React.FC<MapProps> = ({
             <div className="absolute top-4 right-4 z-51 bg-white rounded-lg shadow-md border border-slate-200 p-1 flex flex-col gap-1">
                 <button
                     onClick={() => setMapMode("markers")}
-                    className={`p - 2 rounded hover: bg - slate - 100 ${
+                    className={`p-2 rounded hover:bg-slate-100 ${
                         mapMode === "markers"
                             ? "bg-blue-50 text-blue-600"
                             : "text-slate-600"
-                    } `}
+                    }`}
                     title="Chế độ điểm"
                 >
                     <svg
@@ -259,11 +440,11 @@ const MapComponent: React.FC<MapProps> = ({
                 </button>
                 <button
                     onClick={() => setMapMode("heatmap")}
-                    className={`p - 2 rounded hover: bg - slate - 100 ${
+                    className={`p-2 rounded hover:bg-slate-100 ${
                         mapMode === "heatmap"
                             ? "bg-blue-50 text-blue-600"
                             : "text-slate-600"
-                    } `}
+                    }`}
                     title="Bản đồ nhiệt"
                 >
                     <svg
@@ -291,153 +472,16 @@ const MapComponent: React.FC<MapProps> = ({
                 </button>
             </div>
 
-            <MapContainer
-                center={center}
-                zoom={16}
-                maxZoom={20}
-                scrollWheelZoom={true}
+            {/* Map Container */}
+            <div
+                ref={containerRef}
                 className="h-full w-full rounded-xl shadow-sm border border-slate-200"
-            >
-                <MapUpdater
-                    selectedAsset={selectedAsset || null}
-                    markerRefs={markerRefs}
-                />
-                <BoundsWatcher onBoundsChange={setMapBounds} />
-                {/* Map Tile Layer (VietMap with fallback to OpenStreetMap) */}
-                {VIETMAP_API_KEY ? (
-                    <TileLayer
-                        attribution='&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳'
-                        url={`https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`}
-                    />
-                ) : (
-                    <TileLayer
-                        attribution='&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        maxZoom={20}
-                        maxNativeZoom={16}
-                    />
-                )}
+            />
 
-                {mapMode === "markers" && (
-                    <>
-                        {visibleAssets.map((asset) => {
-                                if (asset.geometry.type === "Point") {
-                                const coords = asset.geometry.coordinates as number[];
-                                const position: [number, number] = [coords[1], coords[0]];
-                                const assetId = getAssetId(asset);
-                                const isSelected = selectedAsset ? getAssetId(selectedAsset) === assetId : undefined;
-                                return (
-                                    <Marker
-                                        key={assetId}
-                                        position={position}
-                                        icon={getIconForAsset(
-                                            asset.feature_code,
-                                            isSelected
-                                        )}
-                                        eventHandlers={{
-                                            click: () => onAssetSelect(asset),
-                                        }}
-                                        ref={(el) => {
-                                            if (el) {
-                                                markerRefs.current[assetId] =
-                                                    el;
-                                            }
-                                        }}
-                                    >
-                                        <Popup className="custom-popup">
-                                            <div className="font-semibold text-slate-900">
-                                                {asset.feature_type}
-                                            </div>
-                                            <div className="text-xs text-slate-500">
-                                                {asset.feature_code}
-                                            </div>
-                                            <div className="mt-2 text-xs">
-                                                {(() => {
-                                                    // Deterministic 'online' state based on asset id
-                                                    const hash = Array.from(assetId).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
-                                                    const isOnline = Math.abs(hash) % 100 > 10; // ~90% online
-                                                    return (
-                                                        <span className={`px-2 py-0.5 rounded-full ${isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                                                            {isOnline ? "Trực tuyến" : "Ngoại tuyến"}
-                                                        </span>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </Popup>
-                                    </Marker>
-                                );
-                            }
-                            return null;
-                        })}
-                        {visibleAssets.map((asset) => {
-                            if (asset.geometry.type === "LineString") {
-                                    const positions =
-                                    (asset.geometry.coordinates as number[][]).map(
-                                        (coord: number[]) => [coord[1], coord[0]] as [number, number]
-                                    );
-                                const color = getColorForFeatureCode(
-                                    asset.feature_code
-                                );
-                                return (
-                                    <Polyline
-                                        key={getAssetId(asset)}
-                                        positions={positions}
-                                        color={color}
-                                        weight={4}
-                                        opacity={0.8}
-                                        eventHandlers={{
-                                            click: () => {
-                                                console.log(
-                                                    "LineString clicked:",
-                                                    asset
-                                                );
-                                                console.log(
-                                                    "Geometry type:",
-                                                    asset.geometry.type
-                                                );
-                                                console.log(
-                                                    "Coordinates:",
-                                                    asset.geometry.coordinates
-                                                );
-                                                onAssetSelect(asset);
-                                            },
-                                        }}
-                                    >
-                                        <Popup className="custom-popup">
-                                            <div className="font-semibold text-slate-900">
-                                                {asset.feature_type}
-                                            </div>
-                                            <div className="text-xs text-slate-500">
-                                                {asset.feature_code}
-                                            </div>
-                                        </Popup>
-                                    </Polyline>
-                                );
-                            }
-                            return null;
-                        })}
-                    </>
-                )}
-
-                {mapMode === "heatmap" && (
-                    <HeatmapLayer points={heatmapPoints} />
-                )}
-
-                    {routePoints && routePoints.length > 1 && (
-                    <Polyline
-                            positions={routePoints
-                                .filter((a) => a.geometry.type === "Point")
-                                .map((a) => {
-                                    const coords = a.geometry.coordinates as number[];
-                                    return [coords[1], coords[0]] as [number, number];
-                                })}
-                        color="blue"
-                        weight={4}
-                        opacity={0.7}
-                        dashArray="10, 10"
-                    />
-                )}
-            </MapContainer>
+            {/* Heatmap Layer */}
+            {mapMode === "heatmap" && mapRef.current && (
+                <HeatmapLayer map={mapRef.current} points={heatmapPoints} />
+            )}
         </div>
     );
 };

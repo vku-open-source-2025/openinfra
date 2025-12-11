@@ -1,15 +1,13 @@
-import { useEffect } from 'react';
-import { useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet.heat';
+import { useEffect } from "react";
+import L from "leaflet";
+import "leaflet.heat";
 
 interface HeatmapLayerProps {
+    map: L.Map;
     points: [number, number, number][]; // lat, lng, intensity
 }
 
-const HeatmapLayer = ({ points }: HeatmapLayerProps) => {
-    const map = useMap();
-
+const HeatmapLayer = ({ map, points }: HeatmapLayerProps) => {
     useEffect(() => {
         if (!points.length) return;
 

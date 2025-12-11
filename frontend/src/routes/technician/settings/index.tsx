@@ -5,3 +5,4 @@ export const Route = createFileRoute("/technician/settings/")({
     component: ProfileSettings,
 });
 
+
