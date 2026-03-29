@@ -15,6 +15,8 @@ app = Celery(
         "app.tasks.sensor_monitoring",
         "app.tasks.report_generation",
         "app.tasks.content_filter",
+        "app.tasks.contribution_etl",
+        # "app.tasks.dns_refresh",  # Not needed with Cloudflare Tunnel (tunnel handles IP changes)
     ],
 )
 
@@ -52,6 +54,12 @@ app.conf.beat_schedule = {
         "task": "app.tasks.content_filter.filter_inappropriate_content",
         "schedule": crontab(minute=0),  # Run every hour at minute 0
     },
+    "sync-contributions": {
+        "task": "app.tasks.contribution_etl.sync_contributions",
+        "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
+    },
+    # "auto-refresh-dns" removed — not needed with Cloudflare Tunnel
+    # (tunnel maintains outbound connection regardless of IP changes)
 }
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """API v1 routers."""
 from fastapi import APIRouter
-from app.api.v1.routers import assets, maintenance, ingest, auth, users, geo, iot, alerts, incidents, budgets, public, notifications, reports, linked_data
+from app.api.v1.routers import assets, maintenance, ingest, auth, users, geo, iot, alerts, incidents, budgets, public, notifications, reports, linked_data, map_proxy
 
 api_router = APIRouter()
 
@@ -18,3 +18,4 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(public.router, prefix="/public", tags=["Public"])
 api_router.include_router(linked_data.router, prefix="/ld", tags=["NGSI-LD"])
+api_router.include_router(map_proxy.router, prefix="/map", tags=["Map Tiles"])

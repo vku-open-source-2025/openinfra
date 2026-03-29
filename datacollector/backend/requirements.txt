@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+motor
+dnspython
+pydantic
+python-dotenv
+geojson
+PyJWT[crypto]
+passlib[bcrypt]
+python-multipart
+slowapi
+bleach
+httpx

@@ -1,0 +1,2903 @@
+[
+  {
+    "_id": "6921c25c2be44d5a27e0d782",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T13:50:49.014Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:02:04.071000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c25c2be44d5a27e0d783",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đường ống điện",
+      "created_at": "2025-11-22T13:50:57.199Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:02:04.088000",
+    "type": "Feature",
+    "feature_code": "đường_ống_điện"
+  },
+  {
+    "_id": "6921c25c2be44d5a27e0d780",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T13:50:47.888Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:02:04.050000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c25c2be44d5a27e0d77f",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T13:50:47.395Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:02:04.022000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c25c2be44d5a27e0d781",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T13:50:48.259Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:02:04.067000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c3a22be44d5a27e0d784",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T14:05:35.959Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:07:30.223000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921c3a22be44d5a27e0d785",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T14:05:43.743Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:07:30.361000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921c5f62be44d5a27e0d78d",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:17:09.096Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:17:26.062000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c5f62be44d5a27e0d78e",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:17:10.822Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:17:26.081000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c7112be44d5a27e0d791",
+    "contributor_name": "NHan",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:21:59.737Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:22:09.757000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c7112be44d5a27e0d792",
+    "contributor_name": "NHan",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:22:00.263Z"
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:22:09.762000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c85bf442cf71ff1229ca",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:27:29.567Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2544869184494,
+        15.974846711696628
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:27:39.677000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c85bf442cf71ff1229cb",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:27:30.491Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2545030117035,
+        15.97529539265779
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:27:39.683000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c95ff442cf71ff1229ce",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:31:46.359Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.25515747070314,
+        15.97333562933767
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:31:59.818000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c95ff442cf71ff1229cf",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:31:49.255Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.25525403022768,
+        15.97442897334585
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:31:59.833000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921c962f442cf71ff1229d0",
+    "contributor_name": "Nguyễn Trường Khoa",
+    "msv": "25IT087",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T14:28:25.656Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2078003883362,
+        15.982056428793552
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:32:02.124000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921c962f442cf71ff1229d1",
+    "contributor_name": "Nguyễn Trường Khoa",
+    "msv": "25IT087",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T14:28:46.013Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21062207221986,
+        16.02026668277291
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:32:02.411000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921c962f442cf71ff1229d2",
+    "contributor_name": "Nguyễn Trường Khoa",
+    "msv": "25IT087",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T14:28:35.293Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2071352005005,
+        16.00425123650341
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:32:02.423000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921c962f442cf71ff1229d3",
+    "contributor_name": "Nguyễn Trường Khoa",
+    "msv": "25IT087",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T14:29:05.686Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.19430887699129,
+        15.992927241954954
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:32:02.424000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921c962f442cf71ff1229d4",
+    "contributor_name": "Nguyễn Trường Khoa",
+    "msv": "25IT087",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T14:30:29.246Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2076394557953,
+        16.01809595866491
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:32:02.446000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921cf8ff442cf71ff1229eb",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T14:57:39.295Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.28665733337404,
+        15.913130615866464
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:58:23.035000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921cf8ff442cf71ff1229ec",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T14:57:56.542Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.25464248657227,
+        15.977868842188224
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:58:23.041000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921cf8ff442cf71ff1229ed",
+    "contributor_name": "Hồ Sỹ Bảo Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T14:58:02.852Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.26394438743593,
+        15.978018400361835
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 14:58:23.045000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f1",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T14:59:52.075Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.25766801834108,
+        15.979379890318917
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.818000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f2",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T15:00:01.237Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.24756145477296,
+        15.972799269716226
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.820000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f3",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T14:59:50.729Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.25994253158571,
+        15.97929737603977
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.825000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f4",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T14:59:53.995Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2651138305664,
+        15.98282483110397
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.827000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f5",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T14:59:56.326Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.26135873794557,
+        15.98210284243969
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.867000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f6",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T14:59:57.274Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.26268911361694,
+        15.984206916421224
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.881000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f7",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T15:00:04.133Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.26103687286378,
+        15.965991503500774
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.940000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921cffff442cf71ff1229f8",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Trụ chữa cháy",
+      "created_at": "2025-11-22T15:00:04.923Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.26301097869874,
+        15.969044712127653
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:00:15.942000",
+    "type": "Feature",
+    "feature_code": "trụ_chữa_cháy"
+  },
+  {
+    "_id": "6921d03cf442cf71ff1229f9",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:00:54.767Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2557797431946,
+        15.983031113100878
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:01:16.022000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d03cf442cf71ff1229fa",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:01:00.480Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2586979866028,
+        15.994768208243404
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:01:16.024000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d03cf442cf71ff1229fb",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:01:07.038Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.24090957641603,
+        15.985795271335027
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:01:16.025000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d0bef442cf71ff1229fc",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:01:51.288Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.25155258178711,
+          15.974325827939847
+        ],
+        [
+          108.25341939926149,
+          15.974346457025296
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.236000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff1229fd",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:01:58.033Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.256573677063,
+          15.97563577064699
+        ],
+        [
+          108.256573677063,
+          15.97775022700552
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.239000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff1229fe",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:04.578Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.24965357780458,
+          15.97761614019259
+        ],
+        [
+          108.26098322868347,
+          15.97775022700552
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.245000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff1229ff",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:23.082Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.24882745742799,
+          15.978039029066661
+        ],
+        [
+          108.24883818626405,
+          15.981865617024104
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.253000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a00",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:26.570Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.24885964393617,
+          15.97861663193849
+        ],
+        [
+          108.25348377227785,
+          15.97858568896977
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.255000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a01",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:31.210Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.24885964393617,
+          15.97923549030809
+        ],
+        [
+          108.2535481452942,
+          15.979225176017621
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.257000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a02",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:35.905Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.24884891510011,
+          15.978987947189934
+        ],
+        [
+          108.25355887413026,
+          15.978998261492642
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.354000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a03",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:40.654Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.24995398521425,
+          15.981762475451342
+        ],
+        [
+          108.25002908706666,
+          15.978039029066661
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.360000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a04",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:45.225Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.25016856193544,
+          15.981834674557861
+        ],
+        [
+          108.2502329349518,
+          15.978059657769377
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.373000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a05",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:53.137Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.25638055801393,
+          15.978183429940934
+        ],
+        [
+          108.25649857521059,
+          15.98051445820635
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.378000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a06",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:02:49.503Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.25514674186708,
+          15.97809060081944
+        ],
+        [
+          108.26089739799501,
+          15.978142172558913
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.380000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a07",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:03:03.885Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.26089739799501,
+          15.980586657763261
+        ],
+        [
+          108.26086521148683,
+          15.978224687314443
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.382000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d0bef442cf71ff122a08",
+    "contributor_name": "Nhân",
+    "msv": "22IT198",
+    "properties": {
+      "feature_type": "Cống thoát nước",
+      "created_at": "2025-11-22T15:03:16.818Z"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          108.26109051704408,
+          15.977719283902823
+        ],
+        [
+          108.2666051387787,
+          15.977791484468339
+        ]
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:03:26.484000",
+    "type": "Feature",
+    "feature_code": "cống_thoát_nước"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a77",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Trạm điện",
+      "created_at": "2025-11-22T15:12:16.809Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.18783402442934,
+        16.06971257253549
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.742000",
+    "type": "Feature",
+    "feature_code": "trạm_điện"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a78",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:30.964Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.19201827049257,
+        16.065836120139185
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.744000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a79",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:22.251Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.18735122680665,
+        16.069929074298297
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.745000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a7b",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:35.340Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20242524147035,
+        16.065691782687068
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.839000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a7a",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:28.827Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.18844556808473,
+        16.0656505433958
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.838000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a7c",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:27.155Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.1810748577118,
+        16.069124923705647
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.841000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a7e",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:38.558Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20605158805849,
+        16.05867067020828
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.870000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a7d",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:46.084Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2098174095154,
+        16.045411330148323
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.869000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a7f",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:57.366Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20921659469606,
+        16.033780327048035
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.871000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a81",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:13:33.494Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20906639099123,
+        16.0245822802741
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.967000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a80",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:55.029Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20995688438417,
+        16.036770632027036
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.966000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a82",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:12:52.735Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2102680206299,
+        16.04194684701969
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.969000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a83",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:13:36.658Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21113705635072,
+        16.02018418537621
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.984000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48df442cf71ff122a84",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:13:53.166Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21956992149354,
+        16.00778340766768
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.997000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a85",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:13:44.478Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2075482606888,
+        16.01840017082952
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:41.999000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a86",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:13:50.302Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21713984012604,
+        16.010872072568525
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.091000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a88",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:14:50.900Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.17359685897829,
+        16.072042531508192
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.094000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a87",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:14:17.658Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.18147182464601,
+        16.068588821504406
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.093000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a89",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:15:02.280Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.16413402557374,
+        16.07818689415685
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.109000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a8a",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:14:55.968Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.1707537174225,
+        16.07383637512754
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.110000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a8b",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:14:58.720Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.16821098327638,
+        16.075496181533612
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.122000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a8c",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:15:56.408Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.15146327018739,
+        16.06915585263471
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.209000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a8d",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:15:58.560Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.1551218032837,
+        16.065300009074896
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.211000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a8e",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:15:05.106Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.16172003746034,
+        16.07976419152131
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.226000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a8f",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:01.703Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.15824389457704,
+        16.063145240418674
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.228000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a90",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:09.311Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.15908610820772,
+        16.053948549238278
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.229000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a91",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:11.230Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.16729903221132,
+        16.05668079445921
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.241000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a92",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:15.728Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.17520618438722,
+        16.05940269203324
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.327000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a93",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:12.229Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.16895127296449,
+        16.056134348414805
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.332000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a94",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:24.402Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.17056059837341,
+        16.067331037591547
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.344000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a95",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:16:28.982Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.16094756126405,
+        16.073465236396014
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.349000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a96",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T15:19:14.530Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21177005767822,
+        16.02015840493275
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.360000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921d48ef442cf71ff122a97",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T15:19:24.322Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21114778518678,
+        16.031429297157274
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:19:42.362000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921d5dcf442cf71ff122a98",
+    "contributor_name": "Den Duong",
+    "msv": "24IT062",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T15:24:59.498Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.24354885883392,
+        15.977399603859112
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 15:25:16.877000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e83",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:00:41.123Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22099149227142,
+        16.026165158227883
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.258000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e84",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:00:53.209Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22429060935974,
+        16.03295025167805
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.264000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e85",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:00:54.363Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22275102138519,
+        16.032785267341882
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.267000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e86",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:01:03.727Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22211802005769,
+        16.03752335690304
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.269000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e87",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:01:01.261Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22371125221254,
+        16.037652247863882
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.317000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e88",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:01:19.111Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22177068160585,
+        16.040766369132562
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.332000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e89",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:01:45.111Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22381854057313,
+        16.049360354997415
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.378000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e8a",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:01:52.119Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2368318421534,
+        16.053084726459172
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.394000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e8b",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:02:07.391Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23635518541677,
+        16.054912572222133
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.397000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e8c",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:02:03.687Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23569536209108,
+        16.05703649909721
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.398000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e8d",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:02:11.927Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23435962200166,
+        16.061371920480724
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.440000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e8e",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:02:31.553Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23067963123323,
+        16.07260439806045
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.442000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e8f",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:02:39.935Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23206286542842,
+        16.077789850982725
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.485000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921debb5debb888f8d53e90",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:02:45.475Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23789477348328,
+        16.08376923348781
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:03:07.518000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921dff65debb888f8d53eaa",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:06:48.445Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2021999359131,
+        16.022623000266073
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:08:22.780000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921dff65debb888f8d53eab",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:07:15.575Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.1940406560898,
+        16.02025637060018
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:08:22.787000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921dff65debb888f8d53eac",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T16:07:07.502Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.19856822490694,
+        16.020890568231135
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:08:22.789000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921dff65debb888f8d53ead",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:07:40.225Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.18401455879213,
+        16.04623104278935
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:08:22.793000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921dff65debb888f8d53eae",
+    "contributor_name": "Nguyen",
+    "msv": "23AI034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:07:32.579Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.18707764148714,
+        16.03685827822047
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:08:22.809000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb0",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:29:16.476Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22294950485231,
+        16.044308063784783
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.482000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eaf",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Trạm sạc",
+      "created_at": "2025-11-22T16:28:19.399Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22505235671998,
+        16.036719075424664
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.480000",
+    "type": "Feature",
+    "feature_code": "trạm_sạc"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb1",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:03.346Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2177245616913,
+        16.05241228923121
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.507000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb2",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:29:19.389Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22112560272218,
+        16.04631868482182
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.574000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb3",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:05.383Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22006344795228,
+        16.054505311683666
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.578000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb4",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:12.543Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21693062782289,
+        16.06063990589856
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.580000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb5",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:17.731Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22309970855714,
+        16.06084610746171
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.607000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb6",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:15.001Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21954846382143,
+        16.060877037677766
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.609000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb7",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:18.577Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22400093078615,
+        16.060866727606278
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.623000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb8",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:22.988Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22336792945863,
+        16.063691667214567
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.704000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eba",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:28.761Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2236683368683,
+        16.06601138690455
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.706000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53eb9",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:21.947Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21973085403444,
+        16.062866871474046
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.705000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ebb",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:30.265Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21992397308351,
+        16.066001077099095
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.738000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ebc",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:32.623Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22031021118165,
+        16.068588821504406
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.740000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ebd",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:35.583Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22391510009767,
+        16.068547582813693
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.742000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ebe",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:38.025Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22049260139465,
+        16.071228079926144
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.831000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ebf",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:38.707Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22110414505006,
+        16.071269318061102
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.832000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec0",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:39.457Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22270274162294,
+        16.07151674669125
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.834000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec2",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:44.795Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22347521781923,
+        16.07535185109181
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.867000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec1",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:43.131Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21998834609987,
+        16.074671434740722
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.865000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec3",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:43.725Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22054624557497,
+        16.074846693720456
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.870000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec4",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:50.087Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2138192653656,
+        16.07343430813712
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.962000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec5",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:47.133Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.22322845458986,
+        16.077609579574467
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.964000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec6",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:52.787Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.213529586792,
+        16.07012495664254
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.965000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec7",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:54.331Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20973157882692,
+        16.06930018757344
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.993000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec8",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:56.625Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20699572563173,
+        16.06609386532895
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.995000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5ae5debb888f8d53ec9",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:30:55.943Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21031093597414,
+        16.066413468900496
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:46.997000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53eca",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:08.411Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21285367012025,
+        16.07322811962156
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.088000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ecb",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:12.833Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21516036987306,
+        16.07544463495929
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.090000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ecc",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:15.419Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21607232093812,
+        16.076764223054038
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.092000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ecd",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:34.079Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.21095466613771,
+        16.08013531849402
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.122000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ece",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:24.439Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.2181751728058,
+        16.085928933044375
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.125000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ecf",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:52.501Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20120751857759,
+        16.071011579577362
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.127000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ed0",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:31:53.889Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.20111632347108,
+        16.07323842905241
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.210000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ed1",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:32:02.651Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.1916105747223,
+        16.071150758400055
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.215000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ed2",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:32:03.565Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.19186806678772,
+        16.07248068446046
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.217000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921e5af5debb888f8d53ed3",
+    "contributor_name": "Nguyen",
+    "msv": "23Ai034",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T16:32:06.700Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.1880432367325,
+        16.07132602048269
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 16:32:47.241000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921f2aa5debb888f8d54044",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn giao thông",
+      "created_at": "2025-11-22T17:27:33.143Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23329746723176,
+        15.9766878444082
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:28:10.808000",
+    "type": "Feature",
+    "feature_code": "đèn_giao_thông"
+  },
+  {
+    "_id": "6921f5695debb888f8d54045",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:38:10.329Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23145069516059,
+        15.976008747003993
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.409000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921f5695debb888f8d54046",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:38:08.906Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23181011116856,
+        15.976142834893922
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.411000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921f5695debb888f8d54047",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:38:05.426Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23214806950446,
+        15.976282079915308
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.471000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921f5695debb888f8d54048",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:37:58.258Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23273815548771,
+        15.976508997520362
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.472000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921f5695debb888f8d54049",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:38:03.033Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23243774807807,
+        15.976369752656858
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.474000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921f5695debb888f8d5404a",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:38:17.144Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23115706443788,
+        15.975862688984856
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.649000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  },
+  {
+    "_id": "6921f5695debb888f8d5404b",
+    "contributor_name": "Phan Đình Ngọc Thắng",
+    "msv": "25AI053",
+    "properties": {
+      "feature_type": "Đèn đường",
+      "created_at": "2025-11-22T17:38:18.793Z"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        108.23087811470033,
+        15.975713129200168
+      ]
+    },
+    "status": "approved",
+    "timestamp": "2025-11-22 17:39:53.652000",
+    "type": "Feature",
+    "feature_code": "đèn_đường"
+  }
+]

@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # External Services
     OSM_NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"
 
+    # VietMap Tile Proxy
+    VIETMAP_API_KEY: str = ""
+
     # Cloudflare Turnstile (Captcha)
     TURNSTILE_SECRET_KEY: str = ""
     TURNSTILE_SITE_KEY: str = ""

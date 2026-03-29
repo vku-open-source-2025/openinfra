@@ -25,8 +25,31 @@ L.Icon.Default.mergeOptions({
     shadowUrl: undefined,
 });
 
-// VietMap API key from environment
-const VIETMAP_API_KEY = import.meta.env.VITE_VIETMAP_API_KEY || "";
+// Map tile config (fetched from backend to hide API key)
+const BASE_API = import.meta.env.VITE_BASE_API_URL || "";
+let _cachedTileConfig: { tileUrl: string; attribution: string; maxZoom: number; maxNativeZoom?: number; provider: string } | null = null;
+async function fetchTileConfig() {
+    if (_cachedTileConfig) return _cachedTileConfig;
+    try {
+        const res = await fetch(`${BASE_API}/map/config`);
+        const cfg = await res.json();
+        // If tileUrl is relative, prepend the API origin so Leaflet resolves correctly
+        if (cfg.tileUrl && !cfg.tileUrl.startsWith('http')) {
+            const apiOrigin = BASE_API.replace(/\/api\/v1$/, '');
+            cfg.tileUrl = `${apiOrigin}${cfg.tileUrl}`;
+        }
+        _cachedTileConfig = cfg;
+    } catch {
+        _cachedTileConfig = {
+            tileUrl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 20,
+            maxNativeZoom: 16,
+            provider: "osm",
+        };
+    }
+    return _cachedTileConfig!;
+}
 
 const center: [number, number] = [16.047079, 108.20623];
 
@@ -250,29 +273,18 @@ const AssetMapView: React.FC = () => {
             scrollWheelZoom: true,
         });
 
-        // Add tile layer
-        const tileLayer = VIETMAP_API_KEY
-            ? L.tileLayer(
-                  `https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}@2x.png?apikey=${VIETMAP_API_KEY}`,
-                  {
-                      attribution:
-                          '&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳',
-                      maxZoom: 20,
-                  }
-              )
-            : L.tileLayer(
-                  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  {
-                      attribution:
-                          '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                      maxZoom: 20,
-                      maxNativeZoom: 16,
-                  }
-              );
-
-        tileLayer.addTo(map);
-        tileLayerRef.current = tileLayer;
+        // Add tile layer (fetched from backend)
         mapRef.current = map;
+        fetchTileConfig().then((cfg) => {
+            if (!mapRef.current) return;
+            const tileLayer = L.tileLayer(cfg.tileUrl, {
+                attribution: cfg.attribution,
+                maxZoom: cfg.maxZoom,
+                ...(cfg.maxNativeZoom ? { maxNativeZoom: cfg.maxNativeZoom } : {}),
+            });
+            tileLayer.addTo(mapRef.current);
+            tileLayerRef.current = tileLayer;
+        });
 
         // Set initial bounds
         setMapBounds(map.getBounds());

@@ -1,0 +1,50 @@
+# Cloudflare Tunnel config for OpenInfra
+# Copy file này sang ~/.cloudflared/config-openinfra.yml và thay thế:
+#   - <TUNNEL_ID>: UUID của tunnel (lấy từ `cloudflared tunnel list`)
+#   - <USERNAME>: tên user trên server
+
+tunnel: <TUNNEL_ID>
+credentials-file: /home/<USERNAME>/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # SSH access (Cloudflare Access required)
+  - hostname: ssh.openinfra.space
+    service: ssh://localhost:22
+
+  # Frontend (main domain)
+  - hostname: openinfra.space
+    service: https://localhost:443
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+
+  # API backend
+  - hostname: api.openinfra.space
+    service: https://localhost:443
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+
+  # MCP server
+  - hostname: mcp.openinfra.space
+    service: https://localhost:443
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+
+  # Contribution API (datacollector)
+  - hostname: contribapi.openinfra.space
+    service: http://localhost:8000
+    originRequest:
+      connectTimeout: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+
+  # Catch-all (trả 404 cho hostname không khớp)
+  - service: http_status:404

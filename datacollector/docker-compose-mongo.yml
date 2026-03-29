@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:latest
+    container_name: openinfra_mongo
+    ports:
+      - "127.0.0.1:27017:27017"  # Only localhost can access
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: openinfra_gis
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+    driver: local

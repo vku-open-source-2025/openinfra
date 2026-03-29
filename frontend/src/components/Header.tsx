@@ -45,7 +45,7 @@ const Header: React.FC = () => {
     }, []);
 
     return (
-        <header className="fixed z-[1001] top-0 left-0 h-20 w-full bg-white backdrop-blur-md shadow-sm">
+        <header className="fixed z-[1001] top-0 left-0 h-20 w-full bg-white shadow-sm pointer-events-auto">
             <div className="flex items-center justify-between h-full px-4 mx-auto max-w-7xl">
                 {/* Logo */}
                 <div className="flex items-center">

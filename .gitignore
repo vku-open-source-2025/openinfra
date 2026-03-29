@@ -13,12 +13,25 @@ celerybeat-schedule
 
 github/copilot-instructions.md
 
-notes/
+.notes/
 
 # MQTT data (logs, persistence, passwords)
 infra/mqtt/data/
 infra/mqtt/log/
 infra/mqtt/config/passwd
+
+# Cloudflare DDNS credentials
+infra/.env.cloudflare
+
+# Certbot SSL certificates
+infra/certbot/
+
+# Nginx temp configs
+infra/nginx/nginx-active.conf
+infra/nginx/*.bak
+
+# 3rd party submodules
+3rd_party/
 
 # Uploaded files
 backend/uploads/
