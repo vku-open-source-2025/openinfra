@@ -1,13 +1,27 @@
 """Notifications API router."""
 from fastapi import APIRouter, Query, Depends, HTTPException
-from typing import List
+from typing import List, Literal, Optional
+from pydantic import BaseModel, Field
+
 from app.domain.models.notification import Notification
 from app.domain.services.notification_service import NotificationService
-from app.api.v1.dependencies import get_notification_service
+from app.domain.services.user_service import UserService
+from app.api.v1.dependencies import get_notification_service, get_user_service
 from app.api.v1.middleware import get_current_user
 from app.domain.models.user import User
+from app.infrastructure.notifications.emergency_notifier import EmergencyNotifier
 
 router = APIRouter()
+
+
+class EmergencyAlertRequest(BaseModel):
+    """Payload for broadcasting emergency alerts to operator groups."""
+
+    title: str = Field(min_length=3, max_length=140)
+    message: str = Field(min_length=5, max_length=2000)
+    severity: Literal["low", "medium", "high", "critical"] = "high"
+    target_roles: List[str] = Field(default_factory=lambda: ["admin", "technician"])
+    metadata: Optional[dict] = None
 
 
 @router.get("", response_model=List[Notification])
@@ -59,3 +73,28 @@ async def mark_all_read(
     """Mark all notifications as read."""
     await notification_service.mark_all_as_read(str(current_user.id))
     return {"message": "All notifications marked as read"}
+
+
+@router.post("/emergency-alert")
+async def send_emergency_alert(
+    payload: EmergencyAlertRequest,
+    current_user: User = Depends(get_current_user),
+    notification_service: NotificationService = Depends(get_notification_service),
+    user_service: UserService = Depends(get_user_service),
+):
+    """Broadcast emergency alert to selected user roles."""
+    if current_user.role.value != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    notifier = EmergencyNotifier(notification_service, user_service)
+    stats = await notifier.broadcast_alert(
+        title=payload.title,
+        message=payload.message,
+        severity=payload.severity,
+        target_roles=payload.target_roles,
+        metadata=payload.metadata,
+    )
+    return {
+        "message": "Emergency alert dispatched",
+        "stats": stats,
+    }

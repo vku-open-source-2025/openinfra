@@ -1,19 +1,18 @@
 """Error handling middleware."""
 import logging
-import uuid
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.exceptions import AppException
+from app.middleware.request_id import get_or_create_request_id
 
 logger = logging.getLogger(__name__)
 
 
 async def error_handler_middleware(request: Request, call_next):
     """Global error handler middleware."""
-    request_id = str(uuid.uuid4())
-    request.state.request_id = request_id
+    request_id = get_or_create_request_id(request)
 
     # CORS headers to ensure error responses are accessible
     cors_headers = {
@@ -21,6 +20,7 @@ async def error_handler_middleware(request: Request, call_next):
         "Access-Control-Allow-Methods": "*",
         "Access-Control-Allow-Headers": "*",
         "Access-Control-Allow-Credentials": "true",
+        "X-Request-ID": request_id,
     }
 
     try:

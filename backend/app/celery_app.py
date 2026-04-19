@@ -16,6 +16,10 @@ app = Celery(
         "app.tasks.report_generation",
         "app.tasks.content_filter",
         "app.tasks.contribution_etl",
+        "app.tasks.hazard_ingest",
+        "app.tasks.event_monitoring",
+        "app.tasks.dispatch_optimization",
+        "app.tasks.vector_corpus_ingest",
         # "app.tasks.dns_refresh",  # Not needed with Cloudflare Tunnel (tunnel handles IP changes)
     ],
 )
@@ -57,6 +61,30 @@ app.conf.beat_schedule = {
     "sync-contributions": {
         "task": "app.tasks.contribution_etl.sync_contributions",
         "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
+    },
+    "ingest-nchmf-data": {
+        "task": "app.tasks.hazard_ingest.ingest_nchmf_data",
+        "schedule": crontab(minute="*/30"),  # Every 30 minutes
+    },
+    "ingest-vndms-data": {
+        "task": "app.tasks.hazard_ingest.ingest_vndms_data",
+        "schedule": crontab(minute=15, hour="*/1"),  # Hourly at minute 15
+    },
+    "ingest-hazard-feeds": {
+        "task": "app.tasks.hazard_ingest.ingest_hazard_feeds",
+        "schedule": crontab(minute=0, hour="*/2"),  # Every 2 hours
+    },
+    "monitor-active-emergency-events": {
+        "task": "app.tasks.event_monitoring.monitor_active_emergency_events",
+        "schedule": crontab(minute="*/5"),  # Every 5 minutes
+    },
+    "optimize-dispatch-orders": {
+        "task": "app.tasks.dispatch_optimization.optimize_dispatch_orders",
+        "schedule": crontab(minute="*/10"),  # Every 10 minutes
+    },
+    "ingest-vector-corpus": {
+        "task": "app.tasks.vector_corpus_ingest.ingest_vector_corpus",
+        "schedule": crontab(minute=20, hour="*/1"),  # Every hour at minute 20
     },
     # "auto-refresh-dns" removed — not needed with Cloudflare Tunnel
     # (tunnel maintains outbound connection regardless of IP changes)

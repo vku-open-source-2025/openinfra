@@ -30,7 +30,13 @@ def _normalize(s: str) -> str:
     return stripped.lower()
 # Import authentication utilities
 from auth import get_current_user, authenticate_user, create_access_token, create_refresh_token, decode_token
-from models import LoginRequest, TokenResponse, RefreshTokenRequest, ContributionInput
+from models import (
+    LoginRequest,
+    TokenResponse,
+    RefreshTokenRequest,
+    ContributionInput,
+    SOSReportInput,
+)
 
 load_dotenv()
 
@@ -200,6 +206,12 @@ class Storage:
         raise NotImplementedError
     async def get_leaderboard(self):
         raise NotImplementedError
+    async def add_sos_report(self, report):
+        raise NotImplementedError
+    async def get_sos_reports(self, status_filter: Optional[str] = None):
+        raise NotImplementedError
+    async def update_sos_status(self, report_id: str, next_status: str):
+        raise NotImplementedError
 
 class MongoStorage(Storage):
     def __init__(self, uri):
@@ -207,6 +219,7 @@ class MongoStorage(Storage):
         self.db = self.client.openinfra_gis
         self.collection = self.db.features
         self.contributions = self.db.contributions
+        self.sos_reports = self.db.sos_reports
 
     async def get_features(self):
         features = []
@@ -321,14 +334,61 @@ class MongoStorage(Storage):
             })
         return leaderboard
 
+    async def add_sos_report(self, report):
+        await self.sos_reports.insert_one(report)
+
+    async def get_sos_reports(self, status_filter: Optional[str] = None):
+        query = {}
+        if status_filter:
+            query["status"] = status_filter
+
+        reports = []
+        try:
+            cursor = self.sos_reports.find(query).sort("created_at", -1)
+            async for document in cursor:
+                document["id"] = str(document["_id"])
+                document["_id"] = str(document["_id"])
+                reports.append(document)
+            return reports
+        except Exception as e:
+            print(f"MongoDB Error while reading SOS reports: {e}")
+            return []
+
+    async def update_sos_status(self, report_id: str, next_status: str):
+        try:
+            obj_id = validate_object_id(report_id, "sos_report_id")
+            result = await self.sos_reports.update_one(
+                {"_id": obj_id},
+                {
+                    "$set": {
+                        "status": next_status,
+                        "updated_at": datetime.now(),
+                    }
+                },
+            )
+            return result.modified_count > 0
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Error updating SOS status: {e}")
+            return False
+
 class JsonStorage(Storage):
-    def __init__(self, filepath="data.json", contrib_path="contributions.json"):
+    def __init__(
+        self,
+        filepath="data.json",
+        contrib_path="contributions.json",
+        sos_path="sos_reports.json",
+    ):
         self.filepath = filepath
         self.contrib_path = contrib_path
+        self.sos_path = sos_path
         if not os.path.exists(filepath):
             with open(filepath, "w") as f: json.dump([], f)
         if not os.path.exists(contrib_path):
             with open(contrib_path, "w") as f: json.dump([], f)
+        if not os.path.exists(sos_path):
+            with open(sos_path, "w") as f: json.dump([], f)
 
     async def get_features(self):
         try:
@@ -404,6 +464,43 @@ class JsonStorage(Storage):
         
         leaderboard = [{"msv": msv, "name": data["name"], "count": data["count"]} for msv, data in stats.items()]
         return sorted(leaderboard, key=lambda x: x["count"], reverse=True)
+
+    async def get_sos_reports_raw(self):
+        try:
+            with open(self.sos_path, "r") as f:
+                return json.load(f)
+        except Exception:
+            return []
+
+    async def save_sos_reports(self, reports):
+        with open(self.sos_path, "w") as f:
+            json.dump(reports, f, indent=2, default=str)
+
+    async def add_sos_report(self, report):
+        reports = await self.get_sos_reports_raw()
+        report["id"] = str(len(reports) + 1)
+        reports.append(report)
+        await self.save_sos_reports(reports)
+
+    async def get_sos_reports(self, status_filter: Optional[str] = None):
+        reports = await self.get_sos_reports_raw()
+        if status_filter:
+            reports = [report for report in reports if report.get("status") == status_filter]
+        return sorted(reports, key=lambda r: r.get("created_at", ""), reverse=True)
+
+    async def update_sos_status(self, report_id: str, next_status: str):
+        reports = await self.get_sos_reports_raw()
+        modified = False
+        for report in reports:
+            if str(report.get("id")) == str(report_id):
+                report["status"] = next_status
+                report["updated_at"] = datetime.now().isoformat()
+                modified = True
+                break
+
+        if modified:
+            await self.save_sos_reports(reports)
+        return modified
 
 # Initialize Storage
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
@@ -520,6 +617,55 @@ async def create_contribution(contribution: ContributionInput):
         return {"status": "success", "message": "Contribution submitted"}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/sos")
+@limiter.limit("20/minute")
+async def create_sos_report(request: Request, report: SOSReportInput):
+    """Public endpoint for urgent SOS reports from contributors."""
+    try:
+        payload = report.dict()
+        payload["status"] = "pending"
+        payload["created_at"] = datetime.now()
+        payload["updated_at"] = datetime.now()
+        payload["source"] = "datacollector"
+
+        await storage.add_sos_report(payload)
+        return {
+            "status": "success",
+            "message": "SOS report submitted",
+        }
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/sos")
+async def get_sos_reports(
+    status: Optional[str] = None,
+    username: str = Depends(get_current_user),
+):
+    """Admin endpoint to list SOS reports."""
+    return await storage.get_sos_reports(status_filter=status)
+
+
+@app.post("/api/sos/{id}/ack")
+@limiter.limit("30/minute")
+async def acknowledge_sos_report(request: Request, id: str, username: str = Depends(get_current_user)):
+    """Mark SOS report as acknowledged by operator."""
+    success = await storage.update_sos_status(id, "acknowledged")
+    if not success:
+        raise HTTPException(status_code=404, detail="SOS report not found")
+    return {"status": "success"}
+
+
+@app.post("/api/sos/{id}/resolve")
+@limiter.limit("30/minute")
+async def resolve_sos_report(request: Request, id: str, username: str = Depends(get_current_user)):
+    """Mark SOS report as resolved after response completion."""
+    success = await storage.update_sos_status(id, "resolved")
+    if not success:
+        raise HTTPException(status_code=404, detail="SOS report not found")
+    return {"status": "success"}
 
 @app.get("/api/contributions")
 async def get_contributions(username: str = Depends(get_current_user)):

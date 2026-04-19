@@ -11,6 +11,7 @@ import HeatmapLayer from "./HeatmapLayer";
 import AssetLayerFilter from "./AssetLayerFilter";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { fetchTileConfig } from "../lib/tileConfig";
 
 // Disable default Leaflet marker icons to prevent showing default markers
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,30 +22,94 @@ L.Icon.Default.mergeOptions({
     shadowUrl: undefined,
 });
 
-// Map tile config (fetched from backend to hide API key)
-const BASE_API = import.meta.env.VITE_BASE_API_URL || "";
-let _cachedTileConfig: { tileUrl: string; attribution: string; maxZoom: number; maxNativeZoom?: number; provider: string } | null = null;
-async function fetchTileConfig() {
-    if (_cachedTileConfig) return _cachedTileConfig;
-    try {
-        const res = await fetch(`${BASE_API}/map/config`);
-        const cfg = await res.json();
-        // If tileUrl is relative, prepend the API origin so Leaflet resolves correctly
-        if (cfg.tileUrl && !cfg.tileUrl.startsWith('http')) {
-            const apiOrigin = BASE_API.replace(/\/api\/v1$/, '');
-            cfg.tileUrl = `${apiOrigin}${cfg.tileUrl}`;
-        }
-        _cachedTileConfig = cfg;
-    } catch {
-        _cachedTileConfig = {
-            tileUrl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 20,
-            maxNativeZoom: 16,
-            provider: "osm",
-        };
+// ---------------------------------------------------------------------------
+// Simple grid-based marker clustering (no extra library required)
+// Groups Point assets of the same feature_code that fall in the same screen
+// tile at the current zoom level.  Returns either individual assets (cluster
+// size 1) or a synthetic cluster object.
+// ---------------------------------------------------------------------------
+interface ClusterItem {
+    type: "single";
+    asset: Asset;
+}
+interface ClusterGroup {
+    type: "cluster";
+    featureCode: string;
+    count: number;
+    lat: number;
+    lng: number;
+    assets: Asset[];
+}
+type ClusterEntry = ClusterItem | ClusterGroup;
+
+/** Pixel grid cell size used for clustering (screen pixels). */
+const CLUSTER_GRID_PX = 60;
+
+function clusterAssets(
+    assets: Asset[],
+    map: L.Map,
+    zoom: number
+): ClusterEntry[] {
+    const pointAssets = assets.filter((a) => a.geometry.type === "Point");
+    // Group by feature_code then cluster within each group
+    const byCode = new Map<string, Asset[]>();
+    for (const a of pointAssets) {
+        const list = byCode.get(a.feature_code) ?? [];
+        list.push(a);
+        byCode.set(a.feature_code, list);
     }
-    return _cachedTileConfig!;
+
+    const result: ClusterEntry[] = [];
+
+    byCode.forEach((group) => {
+        if (group.length <= 1) {
+            group.forEach((a) => result.push({ type: "single", asset: a }));
+            return;
+        }
+
+        // Only cluster when zoom < 17 (enough resolution to see individual items)
+        if (zoom >= 17) {
+            group.forEach((a) => result.push({ type: "single", asset: a }));
+            return;
+        }
+
+        // Assign each asset to a grid cell using Leaflet's project()
+        const cells = new Map<string, Asset[]>();
+        for (const a of group) {
+            const coords = a.geometry.coordinates as number[];
+            const pt = map.project([coords[1], coords[0]], zoom);
+            const cx = Math.floor(pt.x / CLUSTER_GRID_PX);
+            const cy = Math.floor(pt.y / CLUSTER_GRID_PX);
+            const key = `${cx}:${cy}`;
+            const list = cells.get(key) ?? [];
+            list.push(a);
+            cells.set(key, list);
+        }
+
+        cells.forEach((cellAssets) => {
+            if (cellAssets.length === 1) {
+                result.push({ type: "single", asset: cellAssets[0] });
+            } else {
+                // Centroid
+                let sumLat = 0, sumLng = 0;
+                cellAssets.forEach((a) => {
+                    const c = a.geometry.coordinates as number[];
+                    sumLng += c[0];
+                    sumLat += c[1];
+                });
+                result.push({
+                    type: "cluster",
+                    featureCode: cellAssets[0].feature_code,
+                    count: cellAssets.length,
+                    lat: sumLat / cellAssets.length,
+                    lng: sumLng / cellAssets.length,
+                    assets: cellAssets,
+                });
+            }
+        });
+    });
+
+    return result;
 }
 
 interface MapProps {
@@ -140,6 +205,7 @@ const MapComponent: React.FC<MapProps> = ({
     const routePolylineRef = useRef<L.Polyline | null>(null);
     const tileLayerRef = useRef<L.TileLayer | null>(null);
     const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
+    const [mapZoom, setMapZoom] = useState<number>(16);
     const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
 
     // Prepare heatmap data
@@ -218,10 +284,12 @@ const MapComponent: React.FC<MapProps> = ({
 
         // Set initial bounds
         setMapBounds(map.getBounds());
+        setMapZoom(map.getZoom());
 
         // Listen to map events for bounds updates
         const updateBounds = () => {
             setMapBounds(map.getBounds());
+            setMapZoom(map.getZoom());
         };
 
         map.on("moveend", updateBounds);
@@ -292,8 +360,53 @@ const MapComponent: React.FC<MapProps> = ({
         markerRefs.current = {};
         polylineRefs.current = {};
 
-        // Add Point markers
-        visibleAssets.forEach((asset) => {
+        // Cluster Point assets by category, then render
+        const clusters = clusterAssets(visibleAssets, map, mapZoom);
+
+        clusters.forEach((entry) => {
+            if (entry.type === "cluster") {
+                // Render a cluster bubble
+                const color = getColorForFeatureCode(entry.featureCode);
+                const icon = L.divIcon({
+                    html: `<div style="
+                        background:${color};
+                        color:#fff;
+                        border-radius:50%;
+                        width:36px;height:36px;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;font-weight:700;
+                        border:2px solid rgba(255,255,255,0.8);
+                        box-shadow:0 2px 6px rgba(0,0,0,0.35);
+                        cursor:pointer;
+                    ">${entry.count}</div>`,
+                    className: "",
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18],
+                });
+                const popupLines = entry.assets
+                    .slice(0, 6)
+                    .map(
+                        (a) =>
+                            `<div style="font-size:11px;padding:1px 0">${a.feature_type}</div>`
+                    )
+                    .join("");
+                const more =
+                    entry.assets.length > 6
+                        ? `<div style="font-size:11px;color:#888">… và ${entry.assets.length - 6} cái nữa</div>`
+                        : "";
+                const clusterKey = `cluster:${entry.featureCode}:${entry.lat.toFixed(6)}:${entry.lng.toFixed(6)}`;
+                const marker = L.marker([entry.lat, entry.lng], { icon })
+                    .addTo(map)
+                    .bindPopup(
+                        `<div style="min-width:160px"><div style="font-weight:700;margin-bottom:4px">${entry.featureCode} (${entry.count})</div>${popupLines}${more}</div>`,
+                        { className: "custom-popup" }
+                    );
+                markerRefs.current[clusterKey] = marker;
+                return;
+            }
+
+            // Single asset
+            const asset = entry.asset;
             if (asset.geometry.type === "Point") {
                 const coords = asset.geometry.coordinates as number[];
                 const position: [number, number] = [coords[1], coords[0]];
@@ -369,16 +482,13 @@ const MapComponent: React.FC<MapProps> = ({
                         className: "custom-popup",
                     })
                     .on("click", () => {
-                        console.log("LineString clicked:", asset);
-                        console.log("Geometry type:", asset.geometry.type);
-                        console.log("Coordinates:", asset.geometry.coordinates);
                         onAssetSelect(asset);
                     });
 
                 polylineRefs.current[assetId] = polyline;
             }
         });
-    }, [visibleAssets, mapMode, selectedAsset, onAssetSelect]);
+    }, [visibleAssets, mapMode, mapZoom, selectedAsset, onAssetSelect]);
 
     // Render route polyline
     useEffect(() => {

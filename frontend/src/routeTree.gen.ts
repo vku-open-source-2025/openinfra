@@ -23,6 +23,7 @@ import { Route as PublicReportRouteImport } from './routes/public/report'
 import { Route as AssetIdRouteImport } from './routes/asset.$id'
 import { Route as AdminMapRouteImport } from './routes/admin/map'
 import { Route as AdminIngestRouteImport } from './routes/admin/ingest'
+import { Route as AdminEmergencyCenterRouteImport } from './routes/admin/emergency-center'
 import { Route as TechnicianSettingsIndexRouteImport } from './routes/technician/settings/index'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin/users/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
@@ -116,6 +117,11 @@ const AdminMapRoute = AdminMapRouteImport.update({
 const AdminIngestRoute = AdminIngestRouteImport.update({
   id: '/ingest',
   path: '/ingest',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmergencyCenterRoute = AdminEmergencyCenterRouteImport.update({
+  id: '/emergency-center',
+  path: '/emergency-center',
   getParentRoute: () => AdminRoute,
 } as any)
 const TechnicianSettingsIndexRoute = TechnicianSettingsIndexRouteImport.update({
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/register': typeof RegisterRoute
   '/technician': typeof TechnicianRouteWithChildren
+  '/admin/emergency-center': typeof AdminEmergencyCenterRoute
   '/admin/ingest': typeof AdminIngestRoute
   '/admin/map': typeof AdminMapRoute
   '/asset/$id': typeof AssetIdRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/register': typeof RegisterRoute
+  '/admin/emergency-center': typeof AdminEmergencyCenterRoute
   '/admin/ingest': typeof AdminIngestRoute
   '/admin/map': typeof AdminMapRoute
   '/asset/$id': typeof AssetIdRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/register': typeof RegisterRoute
   '/technician': typeof TechnicianRouteWithChildren
+  '/admin/emergency-center': typeof AdminEmergencyCenterRoute
   '/admin/ingest': typeof AdminIngestRoute
   '/admin/map': typeof AdminMapRoute
   '/asset/$id': typeof AssetIdRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/register'
     | '/technician'
+    | '/admin/emergency-center'
     | '/admin/ingest'
     | '/admin/map'
     | '/asset/$id'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/map'
     | '/register'
+    | '/admin/emergency-center'
     | '/admin/ingest'
     | '/admin/map'
     | '/asset/$id'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/map'
     | '/register'
     | '/technician'
+    | '/admin/emergency-center'
     | '/admin/ingest'
     | '/admin/map'
     | '/asset/$id'
@@ -592,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/ingest'
       fullPath: '/admin/ingest'
       preLoaderRoute: typeof AdminIngestRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/emergency-center': {
+      id: '/admin/emergency-center'
+      path: '/emergency-center'
+      fullPath: '/admin/emergency-center'
+      preLoaderRoute: typeof AdminEmergencyCenterRouteImport
       parentRoute: typeof AdminRoute
     }
     '/technician/settings/': {
@@ -766,6 +785,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminEmergencyCenterRoute: typeof AdminEmergencyCenterRoute
   AdminIngestRoute: typeof AdminIngestRoute
   AdminMapRoute: typeof AdminMapRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -791,6 +811,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminEmergencyCenterRoute: AdminEmergencyCenterRoute,
   AdminIngestRoute: AdminIngestRoute,
   AdminMapRoute: AdminMapRoute,
   AdminIndexRoute: AdminIndexRoute,

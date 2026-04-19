@@ -2,6 +2,20 @@
 
 > Hướng dẫn triển khai toàn bộ hệ thống OpenInfra trên server cá nhân với Cloudflare Tunnel (không cần port forwarding, không cần public IP).
 
+## Bước 0: Gọi DevOps Subagent Trước Khi Deploy
+
+Trước khi chạy deploy production, bắt buộc gọi DevOps subagent để kiểm tra rủi ro cấu hình và thứ tự triển khai an toàn.
+
+- Subagent profile: `.github/subagents/devops/devops-cloudflare-tunnel.agent.md`
+- Hướng dẫn gọi: `.github/subagents/deployment/call-devops-agent.md`
+
+Áp dụng bắt buộc trong các trường hợp:
+
+- Deploy production theo `infra/deploy.sh`
+- Có thay đổi ở `infra/nginx/nginx.conf`
+- Có thay đổi ở `infra/cloudflared/config-openinfra.example.yml`
+- Thêm service mới vào `infra/docker-compose.yml` (đặc biệt từ `3rd_party/sosconn/`)
+
 ## Kiến trúc triển khai
 
 ```

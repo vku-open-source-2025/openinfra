@@ -109,7 +109,7 @@ const PublicMap: React.FC = () => {
         <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900">
             <Header />
 
-            <main className="flex-1 flex flex-col relative pt-20 h-full z-0">
+            <main className="flex-1 flex flex-col relative pt-20 z-0">
                 {/* Alert Feed Overlay */}
                 {alerts.length > 0 && (
                     <div className="absolute top-24 right-8 z-50 w-80 pointer-events-none">
@@ -131,7 +131,7 @@ const PublicMap: React.FC = () => {
                 )}
 
                 {/* Fullscreen Map */}
-                <div className="flex-1 h-full w-full relative">
+                <div className="flex-1 w-full relative overflow-hidden">
                     <MapComponent
                         assets={displayAssets}
                         onAssetSelect={handleAssetSelect}

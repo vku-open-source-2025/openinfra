@@ -47,11 +47,19 @@ export const publicApi = {
   },
 
   /**
-   * Get a public incident by ID (only if public_visible is true)
+   * Get a public incident by ID or incident number (only if public_visible is true)
    * GET /public/incidents/{incident_id}
    */
-  getPublicIncident: async (incidentId: string): Promise<Incident> => {
-    const response = await httpClient.get<Incident>(`/public/incidents/${incidentId}`);
+  getPublicIncident: async (incidentRef: string): Promise<Incident> => {
+    const response = await httpClient.get<Incident>(`/public/incidents/${encodeURIComponent(incidentRef.trim())}`);
+    return response.data;
+  },
+
+  /**
+   * Lookup a public incident by either ID or incident number.
+   */
+  lookupPublicIncident: async (reference: string): Promise<Incident> => {
+    const response = await httpClient.get<Incident>(`/public/incidents/${encodeURIComponent(reference.trim())}`);
     return response.data;
   },
 

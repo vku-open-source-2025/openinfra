@@ -8,6 +8,12 @@ export type IncidentStatus =
     | "resolved"
     | "closed";
 export type IncidentSeverity = "low" | "medium" | "high" | "critical";
+export type IncidentCategory =
+    | "damage"
+    | "malfunction"
+    | "safety_hazard"
+    | "vandalism"
+    | "other";
 export type ReporterType = "citizen" | "technician" | "admin" | "manager";
 
 export interface IncidentLocation {
@@ -47,6 +53,7 @@ export interface Incident {
   incident_code?: string;
   title: string;
   description: string;
+    category?: IncidentCategory;
   severity: IncidentSeverity;
   status: IncidentStatus;
   asset_id?: string;
@@ -78,9 +85,10 @@ export interface Incident {
 export interface IncidentCreateRequest {
     title: string;
     description: string;
+    category?: IncidentCategory;
     severity: IncidentSeverity;
     asset_id?: string;
-    location: IncidentLocation;
+    location?: IncidentLocation;
 }
 
 export interface IncidentUpdateRequest {

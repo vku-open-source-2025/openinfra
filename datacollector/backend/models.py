@@ -42,3 +42,40 @@ class ContributionInput(BaseModel):
         # Prevent XSS by removing HTML tags
         import bleach
         return bleach.clean(v, tags=[], strip=True)
+
+
+class SOSReportInput(BaseModel):
+    """SOS report payload for emergency intake in datacollector."""
+
+    contributor_name: constr(min_length=1, max_length=100, strip_whitespace=True)
+    msv: constr(min_length=1, max_length=20, strip_whitespace=True)
+    unit: Optional[str] = "VKU"
+    emergency_type: constr(min_length=2, max_length=50, strip_whitespace=True)
+    severity: constr(min_length=3, max_length=20, strip_whitespace=True)
+    message: constr(min_length=5, max_length=2000, strip_whitespace=True)
+    district: Optional[constr(max_length=120, strip_whitespace=True)] = None
+    ward: Optional[constr(max_length=120, strip_whitespace=True)] = None
+    contact_phone: Optional[constr(max_length=30, strip_whitespace=True)] = None
+    geometry: Optional[dict] = None
+
+    @validator("severity")
+    def validate_severity(cls, v):
+        allowed = {"low", "medium", "high", "critical"}
+        normalized = v.lower()
+        if normalized not in allowed:
+            raise ValueError("Severity must be one of: low, medium, high, critical")
+        return normalized
+
+    @validator("contributor_name", "msv", "unit", "emergency_type", "message", pre=True)
+    def sanitize_text_fields(cls, v):
+        if v is None:
+            return v
+        import bleach
+
+        return bleach.clean(str(v), tags=[], strip=True)
+
+    @validator("geometry")
+    def validate_geometry_size(cls, v):
+        if v and len(str(v)) > 5000:
+            raise ValueError("Geometry payload too large (max 5KB)")
+        return v

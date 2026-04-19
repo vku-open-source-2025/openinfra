@@ -89,6 +89,12 @@ const Sidebar: React.FC<SidebarProps> = () => {
             badge: 0, // Could be dynamic from state
         },
         {
+            id: "emergency",
+            label: "Điều hành khẩn cấp",
+            icon: AlertTriangle,
+            path: "/admin/emergency-center",
+        },
+        {
             id: "alerts",
             label: "Cảnh báo",
             icon: Activity,

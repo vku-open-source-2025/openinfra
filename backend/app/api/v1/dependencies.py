@@ -65,6 +65,177 @@ async def get_asset_service():
     return AssetService(repository, audit_service, maintenance_repo, incident_repo)
 
 
+async def get_emergency_repository():
+    """Get emergency repository instance."""
+    from app.infrastructure.database.repositories.mongo_emergency_repository import (
+        MongoEmergencyRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    return MongoEmergencyRepository(db)
+
+
+async def get_emergency_service():
+    """Get emergency service instance."""
+    from app.domain.services.emergency_service import EmergencyService
+
+    repository = await get_emergency_repository()
+    return EmergencyService(repository)
+
+
+async def get_eop_plan_repository():
+    """Get EOP plan repository instance."""
+    from app.infrastructure.database.repositories.mongo_eop_plan_repository import (
+        MongoEOPPlanRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    return MongoEOPPlanRepository(db)
+
+
+async def get_dispatch_order_repository():
+    """Get dispatch order repository instance."""
+    from app.infrastructure.database.repositories.mongo_dispatch_order_repository import (
+        MongoDispatchOrderRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    return MongoDispatchOrderRepository(db)
+
+
+async def get_resource_unit_repository():
+    """Get resource unit repository instance."""
+    from app.infrastructure.database.repositories.mongo_resource_unit_repository import (
+        MongoResourceUnitRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    return MongoResourceUnitRepository(db)
+
+
+async def get_sitrep_repository():
+    """Get sitrep repository instance."""
+    from app.infrastructure.database.repositories.mongo_sitrep_repository import (
+        MongoSitrepRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    return MongoSitrepRepository(db)
+
+
+async def get_eop_service():
+    """Get EOP service instance."""
+    from app.domain.services.eop_service import EOPService
+
+    repository = await get_eop_plan_repository()
+    emergency_repository = await get_emergency_repository()
+    gemini_service = await get_gemini_service()
+    ag05_context_service = await get_ag05_context_service()
+    return EOPService(
+        repository,
+        emergency_repository,
+        gemini_service,
+        ag05_context_service,
+    )
+
+
+async def get_dispatch_service():
+    """Get dispatch service instance."""
+    from app.domain.services.dispatch_service import DispatchService
+
+    repository = await get_dispatch_order_repository()
+    return DispatchService(repository)
+
+
+async def get_resource_service():
+    """Get resource service instance."""
+    from app.domain.services.resource_service import ResourceService
+
+    repository = await get_resource_unit_repository()
+    return ResourceService(repository)
+
+
+async def get_sitrep_service():
+    """Get sitrep service instance."""
+    from app.domain.services.sitrep_service import SitrepService
+
+    repository = await get_sitrep_repository()
+    return SitrepService(repository)
+
+
+async def get_hazard_layer_repository():
+    """Get hazard layer repository instance."""
+    from app.infrastructure.database.repositories.mongo_hazard_layer_repository import (
+        MongoHazardLayerRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    repository = MongoHazardLayerRepository(db)
+    await repository.ensure_indexes()
+    return repository
+
+
+async def get_hazard_layer_service():
+    """Get hazard layer service instance."""
+    from app.domain.services.hazard_layer_service import HazardLayerService
+
+    repository = await get_hazard_layer_repository()
+    return HazardLayerService(repository)
+
+
+async def get_geofence_repository():
+    """Get geofence repository instance."""
+    from app.infrastructure.database.repositories.mongo_geofence_repository import (
+        MongoGeofenceRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    repository = MongoGeofenceRepository(db)
+    await repository.ensure_indexes()
+    return repository
+
+
+async def get_geofence_service():
+    """Get geofence service instance."""
+    from app.domain.services.geofence_service import GeofenceService
+    from app.infrastructure.notifications.emergency_notifier import EmergencyNotifier
+
+    geofence_repository = await get_geofence_repository()
+    notification_service = await get_notification_service()
+    user_service = await get_user_service()
+    notifier = EmergencyNotifier(notification_service, user_service)
+    return GeofenceService(geofence_repository, notifier)
+
+
+async def get_after_action_report_repository():
+    """Get after-action report repository instance."""
+    from app.infrastructure.database.repositories.mongo_after_action_report_repository import (
+        MongoAfterActionReportRepository,
+    )
+
+    db: AsyncIOMotorDatabase = await get_database()
+    repository = MongoAfterActionReportRepository(db)
+    await repository.ensure_indexes()
+    return repository
+
+
+async def get_after_action_report_service():
+    """Get after-action report service instance."""
+    from app.domain.services.after_action_report_service import AfterActionReportService
+
+    report_repository = await get_after_action_report_repository()
+    emergency_repository = await get_emergency_repository()
+    dispatch_repository = await get_dispatch_order_repository()
+    sitrep_repository = await get_sitrep_repository()
+
+    return AfterActionReportService(
+        after_action_repository=report_repository,
+        emergency_repository=emergency_repository,
+        dispatch_repository=dispatch_repository,
+        sitrep_repository=sitrep_repository,
+    )
+
+
 async def get_storage_service():
     """Get storage service instance."""
     return LocalStorageService()
@@ -148,6 +319,13 @@ async def get_gemini_service():
     from app.infrastructure.external.gemini_service import GeminiService
 
     return GeminiService()
+
+
+async def get_ag05_context_service():
+    """Get AG05 vector corpus context retrieval service instance."""
+    from app.infrastructure.external.ag05_context_service import AG05ContextService
+
+    return AG05ContextService()
 
 
 async def get_duplicate_detection_service():

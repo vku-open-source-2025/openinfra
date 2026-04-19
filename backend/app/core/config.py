@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     DUPLICATE_LOCATION_RADIUS_METERS: float = 50.0
     GEMINI_MAX_IMAGES_PER_INCIDENT: int = 5
 
+    # SOSConn / LLM service bridge
+    SOSCONN_LLM_BASE_URL: str = "http://llm-service:8000"
+    SOSCONN_LLM_TIMEOUT_SECONDS: float = 6.0
+
     class Config:
         env_file = ".env"
 

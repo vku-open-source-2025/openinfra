@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongo:
     env_file: .env
@@ -121,12 +119,17 @@ services:
       - CSV_IMPORT_URL=${CSV_IMPORT_URL}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - VIETMAP_API_KEY=${VITE_VIETMAP_API_KEY}
+      - SOSCONN_LLM_BASE_URL=${SOSCONN_LLM_BASE_URL:-http://llm-service:8000}
+      - SOSCONN_LLM_TIMEOUT_SECONDS=${SOSCONN_LLM_TIMEOUT_SECONDS:-6}
+      - COPILOT_TOKEN_FILE=/root/.config/github-copilot/token
     depends_on:
       - mongo
       - redis
+      - llm-service
     volumes:
       - ../backend:/app
       - ../3rd_party:/app/3rd_party
+      - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
     networks:
       - app_network
 
@@ -198,6 +201,26 @@ services:
     networks:
       - app_network
 
+  llm-service:
+    env_file: .env
+    build: ../3rd_party/sosconn/llm-service
+    ports:
+      - "${LLM_SERVICE_PORT:-8014}:8000"
+    environment:
+      - GITHUB_COPILOT_API_KEY=${GITHUB_COPILOT_API_KEY}
+      - GITHUB_COPILOT_API_KEY_FILE=/root/.config/github-copilot/token
+      - GITHUB_COPILOT_AUTH_DIR=/root/.config/github-copilot
+      - GITHUB_COPILOT_BASE_URL=${GITHUB_COPILOT_BASE_URL:-https://models.inference.ai.azure.com}
+      - GITHUB_COPILOT_CHAT_MODEL=${GITHUB_COPILOT_CHAT_MODEL:-gpt-4.1}
+      - GITHUB_COPILOT_EMBEDDING_MODEL=${GITHUB_COPILOT_EMBEDDING_MODEL:-text-embedding-3-small}
+    volumes:
+      - ../3rd_party/sosconn/llm-service/app:/app/app
+      - llm_vector_data:/app/data/vector_dbs
+      - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
+    networks:
+      - app_network
+    restart: unless-stopped
+
   # MCP Server - Model Context Protocol for AI assistants
   mcp-server:
     build: ../mcp-server
@@ -225,6 +248,7 @@ services:
       - backend
       - frontend
       - mcp-server
+      - llm-service
     networks:
       - app_network
     restart: unless-stopped
@@ -244,6 +268,7 @@ volumes:
   zookeeper_data:
   zookeeper_log:
   kafka_data:
+  llm_vector_data:
 
 networks:
   app_network:

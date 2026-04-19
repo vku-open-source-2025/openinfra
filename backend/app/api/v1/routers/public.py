@@ -1,6 +1,7 @@
 """Public API router (no authentication required)."""
 from fastapi import APIRouter, Query, HTTPException, Depends, UploadFile, File, Header, Request
 from typing import Optional, List
+from bson import ObjectId
 from app.domain.models.asset import Asset
 from app.domain.models.incident import Incident, IncidentCreate
 from app.domain.services.asset_service import AssetService
@@ -9,6 +10,7 @@ from app.infrastructure.storage.storage_service import StorageService
 from app.api.v1.dependencies import get_asset_service, get_incident_service, get_storage_service
 from app.infrastructure.services.qr_service import QRCodeService
 from app.infrastructure.services.turnstile_service import turnstile_service
+from app.core.exceptions import NotFoundError
 from app.core.config import settings
 from pydantic import BaseModel
 
@@ -99,8 +101,24 @@ async def get_public_incident(
     incident_id: str,
     incident_service: IncidentService = Depends(get_incident_service)
 ):
-    """Get public incident information."""
-    incident = await incident_service.get_incident_by_id(incident_id)
+    """Get public incident information by ID or incident number."""
+    incident_ref = incident_id.strip()
+    if not incident_ref:
+        raise HTTPException(status_code=400, detail="Incident reference is required")
+
+    incident: Optional[Incident] = None
+
+    if ObjectId.is_valid(incident_ref):
+        try:
+            incident = await incident_service.get_incident_by_id(incident_ref)
+        except NotFoundError:
+            incident = None
+
+    if incident is None:
+        try:
+            incident = await incident_service.get_incident_by_number(incident_ref.upper())
+        except NotFoundError as exc:
+            raise HTTPException(status_code=404, detail="Incident not found") from exc
 
     if not incident.public_visible:
         raise HTTPException(status_code=403, detail="Incident is not publicly visible")

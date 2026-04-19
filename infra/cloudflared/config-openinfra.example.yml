@@ -29,6 +29,24 @@ ingress:
       keepAliveConnections: 100
       keepAliveTimeout: 90s
 
+  # Emergency command center
+  - hostname: emergency.openinfra.space
+    service: https://localhost:443
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+
+  # SOSConn LLM service (proxied by nginx)
+  - hostname: sosconn.openinfra.space
+    service: https://localhost:443
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+      keepAliveConnections: 100
+      keepAliveTimeout: 90s
+
   # MCP server
   - hostname: mcp.openinfra.space
     service: https://localhost:443

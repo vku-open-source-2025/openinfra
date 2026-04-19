@@ -135,6 +135,13 @@ class IncidentService:
             raise NotFoundError("Incident", incident_id)
         return incident
 
+    async def get_incident_by_number(self, incident_number: str) -> Incident:
+        """Get incident by incident number."""
+        incident = await self.repository.find_by_number(incident_number)
+        if not incident:
+            raise NotFoundError("Incident", incident_number)
+        return incident
+
     async def acknowledge_incident(
         self,
         incident_id: str,

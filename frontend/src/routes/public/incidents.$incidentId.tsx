@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { publicApi } from '../../api/public';
 import type { Incident } from '../../types/incident';
@@ -29,7 +29,16 @@ function IncidentStatusPage() {
     }, [incidentId]);
 
     if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
-    if (!incident) return <div className="p-8 text-center text-red-500">Không tìm thấy báo cáo</div>;
+    if (!incident) {
+        return (
+            <div className="p-8 text-center space-y-3">
+                <p className="text-red-500">Không tìm thấy báo cáo. Vui lòng kiểm tra lại mã báo cáo hoặc ID.</p>
+                <Link to="/public/report" className="text-blue-600 hover:underline">
+                    Báo sự cố mới
+                </Link>
+            </div>
+        );
+    }
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -61,7 +70,7 @@ function IncidentStatusPage() {
                 {getStatusIcon(incident.status)}
                 <div>
                     <h1 className="text-2xl font-bold">{getStatusLabel(incident.status)}</h1>
-                    <p className="text-slate-500">Mã báo cáo #{incident.incident_code || incident.id.substring(0, 8)}</p>
+                    <p className="text-slate-500">Mã báo cáo #{incident.incident_number || incident.incident_code || incident.id.substring(0, 8)}</p>
                 </div>
             </div>
 
@@ -99,7 +108,12 @@ function IncidentStatusPage() {
                 </div>
             )}
 
-            <Button variant="outline" onClick={() => window.location.reload()}>Làm mới trạng thái</Button>
+            <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={() => window.location.reload()}>Làm mới trạng thái</Button>
+                <Link to="/public/report" className="inline-flex items-center rounded-md border border-slate-300 px-4 text-sm hover:bg-slate-50">
+                    Báo cáo mới
+                </Link>
+            </div>
         </div>
     );
 }

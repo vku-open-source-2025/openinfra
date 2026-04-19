@@ -3,7 +3,10 @@ import asyncio
 import logging
 import hashlib
 from typing import List, Optional
-import numpy as np
+try:
+    import numpy as np
+except Exception:  # pragma: no cover - optional dependency fallback
+    np = None
 from google import genai
 from google.genai import types
 from app.core.config import settings
@@ -300,22 +303,65 @@ class GeminiService:
             results.append(embedding)
         return results
 
+    async def generate_text_completion(
+        self,
+        prompt: str,
+        model: Optional[str] = None,
+    ) -> Optional[str]:
+        """Generate plain text completion from Gemini chat-capable model."""
+        if not prompt or not prompt.strip():
+            return None
+
+        try:
+            client = self._get_client()
+        except ValueError as exc:
+            logger.warning("Gemini text completion unavailable: %s", exc)
+            return None
+
+        target_model = model or settings.GEMINI_CHAT_MODEL
+
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.models.generate_content(
+                    model=target_model,
+                    contents=prompt,
+                ),
+            )
+            if response and response.text:
+                return response.text.strip()
+        except Exception as exc:
+            logger.error("Error generating Gemini text completion: %s", exc)
+            return None
+
+        return None
+
     @staticmethod
     def _cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
         """Calculate cosine similarity between two vectors."""
         try:
-            v1 = np.array(vec1)
-            v2 = np.array(vec2)
-            
-            dot_product = np.dot(v1, v2)
-            norm1 = np.linalg.norm(v1)
-            norm2 = np.linalg.norm(v2)
-            
+            if np is not None:
+                v1 = np.array(vec1)
+                v2 = np.array(vec2)
+
+                dot_product = np.dot(v1, v2)
+                norm1 = np.linalg.norm(v1)
+                norm2 = np.linalg.norm(v2)
+
+                if norm1 == 0 or norm2 == 0:
+                    return 0.0
+
+                similarity = dot_product / (norm1 * norm2)
+                return float(np.clip(similarity, -1.0, 1.0))
+
+            dot_product = sum(a * b for a, b in zip(vec1, vec2))
+            norm1 = sum(a * a for a in vec1) ** 0.5
+            norm2 = sum(b * b for b in vec2) ** 0.5
             if norm1 == 0 or norm2 == 0:
                 return 0.0
-            
             similarity = dot_product / (norm1 * norm2)
-            return float(np.clip(similarity, -1.0, 1.0))
+            return float(max(-1.0, min(1.0, similarity)))
         except Exception as e:
             logger.error(f"Error calculating cosine similarity: {e}")
             return 0.0

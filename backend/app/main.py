@@ -12,6 +12,7 @@ from app.infrastructure.cache.redis_cache import cache
 from app.api.v1.routers import api_router
 from app.middleware.error_handler import error_handler_middleware
 from app.middleware.logging_middleware import LoggingMiddleware
+from app.middleware.request_context_middleware import RequestContextMiddleware
 
 # Setup logging
 logger = setup_logging()
@@ -63,8 +64,9 @@ app.add_middleware(
 )
 
 # Custom middleware
-app.middleware("http")(error_handler_middleware)
+app.add_middleware(RequestContextMiddleware)
 app.add_middleware(LoggingMiddleware)
+app.middleware("http")(error_handler_middleware)
 
 # API routes
 app.include_router(api_router, prefix="/api/v1")

@@ -200,6 +200,7 @@ class IncidentUpdate(BaseModel):
     assigned_to: Optional[str] = None
     resolution_notes: Optional[str] = None
     resolution_type: Optional[ResolutionType] = None
+    photos: Optional[List[str]] = None
 
 
 class IncidentCommentRequest(BaseModel):

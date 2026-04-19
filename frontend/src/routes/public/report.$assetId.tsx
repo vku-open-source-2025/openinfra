@@ -85,7 +85,10 @@ function ReportIncidentPage() {
                 await publicApi.uploadPhotos(incident.id, photos);
             }
 
-            navigate({ to: '/public/incidents/$incidentId', params: { incidentId: incident.id } });
+            navigate({
+                to: '/public/incidents/$incidentId',
+                params: { incidentId: incident.incident_number || incident.id }
+            });
         } catch (error) {
             console.error('Failed to report incident', error);
             alert('Gửi báo cáo thất bại. Vui lòng thử lại.');

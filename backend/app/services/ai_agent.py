@@ -1,5 +1,5 @@
 """
-AI Agent Service using LangChain and Google Gemini
+AI Agent Service using GitHub Copilot (OpenAI-compatible) or Google Gemini
 Provides intelligent querying of infrastructure data and API assistance
 With real API calling tools
 """
@@ -8,16 +8,14 @@ import json
 import asyncio
 import logging
 import httpx
-from google import genai
-from google.genai import types
 from typing import AsyncGenerator, Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.config import settings
+from app.infrastructure.external.ag05_context_service import AG05ContextService
 
 logger = logging.getLogger(__name__)
 
@@ -86,91 +84,209 @@ API_ENDPOINTS = {
 }
 
 
-class GeminiLiveLLM:
-    """LLM wrapper for Live API (WebSocket streaming) - requires Live API compatible model."""
-    def __init__(self, api_key: str, model: str, system_instruction: str = None):
-        self.client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
-        self.model = model
-        self.config = {"response_modalities": ["TEXT"]}
-        if system_instruction:
-            self.config["system_instruction"] = system_instruction
+class CopilotStreamLLM:
+    """LLM wrapper for GitHub Copilot API (OpenAI-compatible) with async streaming."""
 
-    async def astream(self, messages: List[Any]):
-        # Construct prompt from messages
-        full_prompt = ""
+    COPILOT_API_URL = "https://api.githubcopilot.com"
+    TOKEN_FILE = "/root/.config/github-copilot/token"
+    DEFAULT_MODEL = "gpt-4o"
+
+    def __init__(self, model: str = DEFAULT_MODEL, system_instruction: str = None):
+        self.model = model
+        self.system_instruction = system_instruction
+        self._token: Optional[str] = None
+
+    def _get_token(self) -> Optional[str]:
+        """Read GitHub Copilot token from the mounted auth file."""
+        if self._token:
+            return self._token
+        token = os.getenv("GITHUB_COPILOT_API_KEY", "").strip()
+        if not token:
+            try:
+                path = os.getenv("COPILOT_TOKEN_FILE", self.TOKEN_FILE)
+                with open(path, "r") as f:
+                    token = f.read().strip()
+            except Exception:
+                pass
+        self._token = token or None
+        return self._token
+
+    def _make_client(self):
+        from openai import AsyncOpenAI
+        token = self._get_token()
+        if not token:
+            return None, None
+        client = AsyncOpenAI(
+            api_key=token,
+            base_url=self.COPILOT_API_URL,
+            default_headers={
+                "Editor-Version": "vscode/1.85.0",
+                "Copilot-Integration-Id": "vscode-chat",
+            },
+        )
+        return client, token
+
+    def _build_oai_messages(self, messages: List[Any]) -> List[Dict]:
+        oai_messages = []
+        # Collect system content: base instruction + any SystemMessages (e.g. AG05 snippets)
+        system_parts = []
+        if self.system_instruction:
+            system_parts.append(self.system_instruction)
+        for msg in messages:
+            if isinstance(msg, SystemMessage):
+                system_parts.append(msg.content)
+        if system_parts:
+            oai_messages.append({"role": "system", "content": "\n\n---\n\n".join(system_parts)})
         for msg in messages:
             if isinstance(msg, SystemMessage):
                 continue
-            role = "User" if isinstance(msg, HumanMessage) else "Model"
-            full_prompt += f"{role}: {msg.content}\n\n"
-            
-        async with self.client.aio.live.connect(model=self.model, config=self.config) as session:
-            await session.send(input=full_prompt, end_of_turn=True)
-            async for response in session.receive():
-                if response.text:
-                    yield AIMessage(content=response.text)
+            elif isinstance(msg, HumanMessage):
+                oai_messages.append({"role": "user", "content": msg.content})
+            elif isinstance(msg, AIMessage):
+                oai_messages.append({"role": "assistant", "content": msg.content})
+        return oai_messages
+
+    async def astream(self, messages: List[Any]):
+        client, token = self._make_client()
+        if not client:
+            yield AIMessage(content="[Copilot token not found]")
+            return
+
+        oai_messages = self._build_oai_messages(messages)
+
+        stream = await client.chat.completions.create(
+            model=self.model,
+            messages=oai_messages,
+            stream=True,
+            temperature=0.7,
+        )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield AIMessage(content=delta)
+
+    async def astream_with_tools(self, messages: List[Any], tools: List[Dict], tool_executor, on_tool_call=None):
+        """Run agentic tool-calling loop then stream final response.
+
+        Args:
+            messages: LangChain message list
+            tools: OpenAI tool schema list
+            tool_executor: async callable(name, args_dict) -> str
+            on_tool_call: optional async callable(name, args) called before execution (for progress events)
+        """
+        client, token = self._make_client()
+        if not client:
+            yield AIMessage(content="[Copilot token not found]")
+            return
+
+        oai_messages = self._build_oai_messages(messages)
+
+        # Agentic loop (max 8 rounds to avoid runaway)
+        for _round in range(8):
+            response = await client.chat.completions.create(
+                model=self.model,
+                messages=oai_messages,
+                tools=tools,
+                tool_choice="auto",
+                temperature=0.7,
+            )
+            choice = response.choices[0]
+            msg = choice.message
+
+            # No tool calls — we have the final non-streaming answer; re-request as stream
+            if not msg.tool_calls:
+                break
+
+            # Append assistant message (with tool_calls) to history
+            oai_messages.append({
+                "role": "assistant",
+                "content": msg.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.function.name, "arguments": tc.function.arguments}
+                    }
+                    for tc in msg.tool_calls
+                ],
+            })
+
+            # Execute each tool call
+            for tc in msg.tool_calls:
+                func_name = tc.function.name
+                try:
+                    func_args = json.loads(tc.function.arguments)
+                except Exception:
+                    func_args = {}
+
+                if on_tool_call:
+                    await on_tool_call(func_name, func_args)
+
+                try:
+                    result = await tool_executor(func_name, func_args)
+                except Exception as exc:
+                    result = f"Error executing {func_name}: {exc}"
+
+                oai_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": str(result),
+                })
+
+        # Stream final response
+        stream = await client.chat.completions.create(
+            model=self.model,
+            messages=oai_messages,
+            stream=True,
+            temperature=0.7,
+        )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield AIMessage(content=delta)
 
 
 class GeminiStreamLLM:
     """LLM wrapper for regular generateContent API with streaming - works with all models."""
     def __init__(self, api_key: str, model: str, system_instruction: str = None):
+        from langchain_google_genai import ChatGoogleGenerativeAI
         self.model = model
         self.system_instruction = system_instruction
-        # Use LangChain's ChatGoogleGenerativeAI for proper async streaming support
         self.llm = ChatGoogleGenerativeAI(
             model=model,
             google_api_key=api_key,
             temperature=0.7,
             streaming=True,
         )
-        # Set system instruction if provided
-        if system_instruction:
-            # LangChain handles system instructions via messages
-            self.system_message = SystemMessage(content=system_instruction)
-        else:
-            self.system_message = None
+        self.system_message = SystemMessage(content=system_instruction) if system_instruction else None
 
     async def astream(self, messages: List[Any]):
-        # Prepare messages for LangChain
         langchain_messages = []
-        
-        # Add system instruction if provided
         if self.system_message:
             langchain_messages.append(self.system_message)
-        
-        # Convert existing messages
         for msg in messages:
             if isinstance(msg, SystemMessage):
-                # Skip if we already have a system message
                 continue
-            elif isinstance(msg, HumanMessage):
-                langchain_messages.append(msg)
-            elif isinstance(msg, AIMessage):
+            elif isinstance(msg, (HumanMessage, AIMessage)):
                 langchain_messages.append(msg)
             else:
-                # Convert unknown message types to HumanMessage
                 langchain_messages.append(HumanMessage(content=str(msg.content)))
-        
-        # Stream using LangChain's async streaming
         async for chunk in self.llm.astream(langchain_messages):
             yield chunk
 
 
 class AIAgentService:
     """AI Agent for infrastructure data querying and API assistance with real API calling"""
-    
-    def __init__(self, db: AsyncIOMotorDatabase):
+
+    def __init__(
+        self,
+        db: AsyncIOMotorDatabase,
+        ag05_context_service: Optional[AG05ContextService] = None,
+    ):
         self.db = db
-        self.api_key = os.getenv("GEMINI_API_KEY")
         self.http_client = httpx.AsyncClient(timeout=30.0)
-        
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY not set, AI agent will not work")
-            self.llm = None
-            return
-            
-        # LLM initialized after system prompt
-        
+        self.ag05_context_service = ag05_context_service or AG05ContextService()
+
         self.system_prompt = """You are the OpenInfra AI Assistant - an intelligent helper for the OpenInfra smart infrastructure management system.
 
 ## Your Capabilities
@@ -189,7 +305,7 @@ When users ask about MCP (Model Context Protocol), provide this information:
 
 **Supported Clients:**
 - Claude Desktop
-- GitHub Copilot (VS Code)  
+- GitHub Copilot (VS Code)
 - Cursor
 - Any MCP 2.0+ compatible client
 
@@ -242,28 +358,31 @@ When user requests to TEST/CALL an API:
 
 ALWAYS respond in the SAME LANGUAGE the user uses. If they write in Vietnamese, respond in Vietnamese. If English, respond in English."""
 
-        # Choose LLM implementation based on USE_LIVE flag
-        # Live API: Uses WebSocket (bidiGenerateContent) - requires Live API compatible model
-        # Non-Live: Uses regular generateContentStream API - works with all models
-        if settings.GEMINI_CHAT_MODEL_USE_LIVE:
-            # Use Live API with Live API compatible model (gemini-2.0-flash)
-            model = settings.GEMINI_CHAT_MODEL_LIVE
-            self.llm = GeminiLiveLLM(
-                api_key=self.api_key,
-                model=model,
-                system_instruction=self.system_prompt
-            )
-            logger.info(f"Using Live API with model: {model}")
-        else:
-            # Use regular streaming API with stable model (gemini-2.5-flash)
+        # Provider selection: prefer Gemini if key set, else fall back to Copilot
+        gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+        if gemini_key:
             model = settings.GEMINI_CHAT_MODEL_STABLE
             self.llm = GeminiStreamLLM(
-                api_key=self.api_key,
+                api_key=gemini_key,
                 model=model,
-                system_instruction=self.system_prompt
+                system_instruction=self.system_prompt,
             )
-            logger.info(f"Using regular streaming API with model: {model}")
-    
+            logger.info(f"AI Agent using Gemini model: {model}")
+        else:
+            # Fall back to GitHub Copilot (OpenAI-compatible)
+            copilot_llm = CopilotStreamLLM(
+                model="gpt-4o",
+                system_instruction=self.system_prompt,
+            )
+            token = copilot_llm._get_token()
+            if token:
+                self.llm = copilot_llm
+                logger.info("AI Agent using GitHub Copilot (gpt-4o)")
+            else:
+                logger.warning("No AI provider configured (GEMINI_API_KEY or Copilot token missing)")
+                self.llm = None
+
+
     async def _call_real_api(self, endpoint_key: str, params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Actually call a real API endpoint"""
         if endpoint_key not in API_ENDPOINTS:
@@ -309,104 +428,6 @@ ALWAYS respond in the SAME LANGUAGE the user uses. If they write in Vietnamese, 
                 "error": str(e),
                 "url": url
             }
-    
-    def _get_tools(self):
-        """Create tools for the agent"""
-        
-        async def list_available_apis() -> str:
-            """Liệt kê tất cả API endpoints có sẵn trong hệ thống OpenInfra.
-            Sử dụng tool này để biết có những API nào có thể gọi."""
-            result = []
-            for key, endpoint in API_ENDPOINTS.items():
-                params_desc = ", ".join([
-                    f"{name}: {info['description']}" 
-                    for name, info in endpoint.get("params", {}).items()
-                ])
-                result.append(f"- **{key}**: {endpoint['method']} {endpoint['path']}\n  Mô tả: {endpoint['description']}\n  Params: {params_desc if params_desc else 'Không có'}")
-            return "\n\n".join(result)
-        
-        async def call_api(endpoint_key: str, skip: int = 0, limit: int = 10, 
-                          feature_type: str = None, feature_code: str = None,
-                          sensor_type: str = None, status: str = None, 
-                          severity: str = None, asset_id: str = None) -> str:
-            """Gọi một API endpoint thực sự và trả về kết quả.
-            
-            Args:
-                endpoint_key: Tên của API endpoint (vd: opendata_assets, opendata_feature_types, v1_sensors)
-                skip: Số bản ghi bỏ qua (mặc định 0)
-                limit: Số bản ghi tối đa trả về (mặc định 10)
-                feature_type: Lọc theo loại tài sản
-                feature_code: Lọc theo mã tài sản
-                sensor_type: Lọc theo loại cảm biến
-                status: Lọc theo trạng thái
-                severity: Lọc theo mức độ nghiêm trọng
-                asset_id: ID của tài sản (cho API chi tiết)
-            
-            Returns:
-                Kết quả JSON từ API
-            """
-            params = {
-                "skip": skip,
-                "limit": limit,
-                "feature_type": feature_type,
-                "feature_code": feature_code,
-                "sensor_type": sensor_type,
-                "status": status,
-                "severity": severity,
-                "asset_id": asset_id
-            }
-            # Remove None values
-            params = {k: v for k, v in params.items() if v is not None}
-            
-            result = await self._call_real_api(endpoint_key, params)
-            
-            # Format result for LLM
-            if result.get("success"):
-                data = result.get("data", {})
-                # Truncate data if too large
-                data_str = json.dumps(data, ensure_ascii=False, indent=2, default=str)
-                if len(data_str) > 3000:
-                    data_str = data_str[:3000] + "\n... (đã cắt bớt)"
-                
-                return f"""✅ API gọi thành công!
-URL: {result.get('url')}
-Status: {result.get('status_code')}
-
-Kết quả:
-```json
-{data_str}
-```
-
-API_CARD_DATA:
-endpoint_key: {endpoint_key}
-url: {result.get('url')}
-params_used: {json.dumps(params, ensure_ascii=False)}"""
-            else:
-                return f"❌ Lỗi khi gọi API: {result.get('error')}\nURL: {result.get('url')}"
-        
-        # Create sync wrappers for tools
-        def sync_list_apis() -> str:
-            """Liệt kê tất cả API endpoints có sẵn trong hệ thống OpenInfra."""
-            return asyncio.get_event_loop().run_until_complete(list_available_apis())
-        
-        def sync_call_api(endpoint_key: str, skip: int = 0, limit: int = 10,
-                         feature_type: str = None, feature_code: str = None,
-                         sensor_type: str = None, status: str = None,
-                         severity: str = None, asset_id: str = None) -> str:
-            """Gọi một API endpoint thực sự và trả về kết quả."""
-            return asyncio.get_event_loop().run_until_complete(
-                call_api(endpoint_key, skip, limit, feature_type, feature_code,
-                        sensor_type, status, severity, asset_id)
-            )
-        
-        # Store async versions for direct use
-        self._async_list_apis = list_available_apis
-        self._async_call_api = call_api
-        
-        return [
-            tool(sync_list_apis),
-            tool(sync_call_api)
-        ]
     
     async def _query_assets(self, feature_type: str = None, limit: int = 5) -> List[Dict]:
         """Query assets from database"""
@@ -520,12 +541,6 @@ console.log(data);'''
         query_lower = query.lower()
         context_data = {}
         
-        # Check for API testing requests - let the agent handle this
-        if any(word in query_lower for word in ["test api", "thử api", "gọi api", "call api", "feature-type", "feature type"]):
-            context_data["is_api_test"] = True
-            context_data["available_apis"] = await self._async_list_apis()
-            return context_data
-        
         # Check for statistics/overview requests
         if any(word in query_lower for word in ["thống kê", "tổng quan", "overview", "statistics", "bao nhiêu", "số lượng"]):
             context_data["stats"] = await self._get_stats()
@@ -567,170 +582,268 @@ console.log(data);'''
                 context_data["api_example"] = self._generate_code_example("/assets", "GET")
         
         return context_data
+
+    async def _retrieve_ag05_snippets(
+        self,
+        query: str,
+        max_snippets: int = 3,
+    ) -> List[Dict[str, str]]:
+        """Retrieve AG05 corpus snippets; return empty on any upstream issue."""
+        if not self.ag05_context_service:
+            return []
+
+        query = (query or "").strip()
+        if not query:
+            return []
+
+        try:
+            return await self.ag05_context_service.retrieve_snippets(
+                query,
+                max_snippets=max_snippets,
+            )
+        except Exception as exc:
+            logger.warning("AG05 retrieval failed for query '%s': %s", query, exc)
+            return []
+
+    @staticmethod
+    def _format_ag05_snippets(snippets: List[Dict[str, str]]) -> str:
+        """Format AG05 snippets with source IDs for chat context."""
+        lines = []
+        for snippet in snippets:
+            source_id = str(snippet.get("source_id") or "AG05").strip()
+            text = str(snippet.get("text") or "").strip()
+            if text:
+                lines.append(f"[{source_id}] {text}")
+        return "\n".join(lines)
     
+    # OpenAI function-calling tool schemas
+    OPENAI_TOOLS = [
+        {
+            "type": "function",
+            "function": {
+                "name": "list_available_apis",
+                "description": "Liệt kê tất cả API endpoints có sẵn trong hệ thống OpenInfra. Gọi tool này trước khi gọi call_api để biết endpoint nào tồn tại.",
+                "parameters": {"type": "object", "properties": {}, "required": []},
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "call_api",
+                "description": "Gọi một API endpoint thực sự và trả về dữ liệu JSON. Dùng list_available_apis trước để biết endpoint_key hợp lệ.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "endpoint_key": {
+                            "type": "string",
+                            "description": "Tên endpoint key (vd: opendata_assets, opendata_feature_types, v1_sensors, v1_incidents)",
+                        },
+                        "skip": {"type": "integer", "default": 0, "description": "Số bản ghi bỏ qua"},
+                        "limit": {"type": "integer", "default": 10, "description": "Số bản ghi tối đa"},
+                        "feature_type": {"type": "string", "description": "Lọc theo loại tài sản"},
+                        "feature_code": {"type": "string", "description": "Lọc theo mã tài sản"},
+                        "sensor_type": {"type": "string", "description": "Lọc theo loại cảm biến"},
+                        "status": {"type": "string", "description": "Lọc theo trạng thái"},
+                        "severity": {"type": "string", "description": "Lọc theo mức độ"},
+                        "asset_id": {"type": "string", "description": "ID tài sản"},
+                    },
+                    "required": ["endpoint_key"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_system_stats",
+                "description": "Lấy thống kê tổng quan hệ thống: tổng số tài sản, cảm biến, sự cố từ database.",
+                "parameters": {"type": "object", "properties": {}, "required": []},
+            },
+        },
+    ]
+
+    async def _execute_tool(self, name: str, args: Dict) -> str:
+        """Execute a named tool and return string result."""
+        if name == "list_available_apis":
+            result = []
+            for key, endpoint in API_ENDPOINTS.items():
+                params_desc = ", ".join([
+                    f"{n}: {info['description']}"
+                    for n, info in endpoint.get("params", {}).items()
+                ])
+                result.append(
+                    f"- **{key}**: {endpoint['method']} {endpoint['path']}\n"
+                    f"  Mô tả: {endpoint['description']}\n"
+                    f"  Params: {params_desc or 'Không có'}"
+                )
+            return "\n\n".join(result)
+
+        elif name == "call_api":
+            endpoint_key = args.pop("endpoint_key", None)
+            if not endpoint_key:
+                return "Thiếu endpoint_key"
+            api_result = await self._call_real_api(endpoint_key, args or {})
+            if api_result.get("success"):
+                data = api_result.get("data", {})
+                data_str = json.dumps(data, ensure_ascii=False, indent=2, default=str)
+                if len(data_str) > 4000:
+                    data_str = data_str[:4000] + "\n... (đã cắt bớt)"
+                endpoint_info = API_ENDPOINTS.get(endpoint_key, {})
+                card = json.dumps({
+                    "endpoint": endpoint_info.get("path", ""),
+                    "method": endpoint_info.get("method", "GET"),
+                    "description": endpoint_info.get("description", ""),
+                    "url": api_result.get("url"),
+                    "status": api_result.get("status_code"),
+                }, ensure_ascii=False)
+                return (
+                    f"✅ API gọi thành công!\n"
+                    f"URL: {api_result.get('url')}\n"
+                    f"Status: {api_result.get('status_code')}\n\n"
+                    f"Kết quả:\n```json\n{data_str}\n```\n\n"
+                    f"API_CARD_DATA: {card}"
+                )
+            else:
+                return f"❌ Lỗi: {api_result.get('error')}\nURL: {api_result.get('url')}"
+
+        elif name == "get_system_stats":
+            stats = await self._get_stats()
+            return json.dumps(stats, ensure_ascii=False, indent=2, default=str)
+
+        return f"Unknown tool: {name}"
+
     async def stream_response(
-        self, 
-        query: str, 
+        self,
+        query: str,
         chat_history: Optional[List[Dict[str, str]]] = None,
         asset_context: Optional[Dict[str, Any]] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
-        """Stream response from the agent"""
-        
+        """Stream response from the agent using real tool calling."""
+
         if not self.llm:
-            yield {"type": "error", "content": "AI agent not configured. Please set GEMINI_API_KEY."}
+            yield {"type": "error", "content": "AI agent not configured. Please set GEMINI_API_KEY or mount Copilot token."}
             yield {"type": "done"}
             return
-        
-        try:
-            # Check if this is an API test request
-            query_lower = query.lower()
-            is_api_test = any(word in query_lower for word in ["test api", "thử api", "gọi api", "call api", "feature-type", "feature type"])
-            
-            if is_api_test:
-                # Use tool calling for API tests
-                yield {"type": "tool_start", "tool": "analyzing_api_request", "input": query}
-                
-                # Determine which API to call based on query
-                endpoint_key = None
-                params = {}
-                
-                if "feature-type" in query_lower or "feature type" in query_lower or "loại" in query_lower:
-                    endpoint_key = "opendata_feature_types"
-                elif "sensor" in query_lower or "cảm biến" in query_lower:
-                    endpoint_key = "v1_sensors"
-                    params = {"limit": 10}
-                elif "incident" in query_lower or "sự cố" in query_lower:
-                    endpoint_key = "v1_incidents"
-                    params = {"limit": 10}
-                else:
-                    endpoint_key = "opendata_assets"
-                    params = {"limit": 5}
-                
-                yield {"type": "tool_end", "output": f"Đang gọi API: {endpoint_key}"}
-                
-                # Call the API
-                yield {"type": "tool_start", "tool": "call_api", "input": endpoint_key}
-                api_result = await self._call_real_api(endpoint_key, params)
-                yield {"type": "tool_end", "output": f"API response received"}
-                
-                # Format response
-                if api_result.get("success"):
-                    data = api_result.get("data", {})
-                    endpoint_info = API_ENDPOINTS.get(endpoint_key, {})
-                    
-                    # Create summary
-                    summary = f"✅ **Đã gọi API thành công!**\n\n"
-                    summary += f"**Endpoint:** `{endpoint_info.get('path', '')}`\n"
-                    summary += f"**URL:** `{api_result.get('url')}`\n\n"
-                    
-                    # Analyze data
-                    if isinstance(data, dict):
-                        if "features" in data:
-                            summary += f"📊 **Kết quả:** {len(data['features'])} features\n"
-                            if "totalCount" in data:
-                                summary += f"📈 **Tổng số:** {data['totalCount']}\n"
-                        elif "itemListElement" in data:
-                            items = data["itemListElement"]
-                            summary += f"📊 **Số loại tài sản:** {len(items)}\n\n"
-                            summary += "| Loại | Mã | Số lượng |\n|------|-----|----------|\n"
-                            for item in items[:10]:
-                                summary += f"| {item.get('feature_type', 'N/A')} | {item.get('feature_code', 'N/A')} | {item.get('count', 0)} |\n"
-                    
-                    # Add API card data
-                    summary += f"\n\n---\n\n💡 **Bạn có thể chỉnh sửa params và gọi lại API:**\n\n"
-                    summary += f"```api_card\n"
-                    summary += json.dumps({
-                        "endpoint": endpoint_info.get("path", ""),
-                        "method": endpoint_info.get("method", "GET"),
-                        "description": endpoint_info.get("description", ""),
-                        "params": endpoint_info.get("params", {}),
-                        "last_result": {
-                            "url": api_result.get("url"),
-                            "status": api_result.get("status_code"),
-                            "data_preview": str(data)[:500] + "..." if len(str(data)) > 500 else data
-                        }
-                    }, ensure_ascii=False, indent=2)
-                    summary += "\n```"
-                    
-                    yield {"type": "token", "content": summary}
-                    yield {"type": "final", "content": summary}
-                else:
-                    error_msg = f"❌ **Lỗi khi gọi API:**\n\n{api_result.get('error')}\n\nURL: {api_result.get('url')}"
-                    yield {"type": "token", "content": error_msg}
-                    yield {"type": "final", "content": error_msg}
-                
-                yield {"type": "done"}
-                return
-            
-            # Regular query handling
-            yield {"type": "tool_start", "tool": "analyze_query", "input": query}
-            context_data = await self._analyze_query(query)
-            yield {"type": "tool_end", "output": f"Found {len(context_data)} relevant data sources"}
-            
-            # Build context message
-            context_parts = []
-            
-            # Add asset context if provided (user selected an asset)
-            if asset_context:
-                asset_info = f"""🎯 **Asset Context (User Selected Asset):**
-- Asset ID: {asset_context.get('asset_id', 'N/A')}
-- Feature Type: {asset_context.get('feature_type', 'N/A')}
-- Feature Code: {asset_context.get('feature_code', 'N/A')}
-- Geometry Type: {asset_context.get('geometry', {}).get('type', 'N/A') if asset_context.get('geometry') else 'N/A'}
 
-**Important:** The user is asking about THIS SPECIFIC ASSET. When answering questions, focus on this asset. You can use the asset_id to query detailed information about this asset using the call_api tool with asset_id parameter."""
-                context_parts.append(asset_info)
-            
-            if "stats" in context_data:
-                context_parts.append(f"📊 Thống kê hệ thống:\n{json.dumps(context_data['stats'], indent=2, ensure_ascii=False)}")
-            
-            if "assets" in context_data:
-                context_parts.append(f"🏗️ Tài sản mẫu:\n{json.dumps(context_data['assets'], indent=2, ensure_ascii=False, default=str)}")
-            
-            if "sensors" in context_data:
-                context_parts.append(f"📡 Cảm biến mẫu:\n{json.dumps(context_data['sensors'], indent=2, ensure_ascii=False, default=str)}")
-            
-            if "api_example" in context_data:
-                context_parts.append(f"💻 Code example:\n{context_data['api_example']}")
-            
-            if "available_apis" in context_data:
-                context_parts.append(f"🔌 API có sẵn:\n{context_data['available_apis']}")
-            
-            context_message = "\n\n".join(context_parts) if context_parts else "Không tìm thấy dữ liệu liên quan."
-            
-            # Build messages (system message is handled by LLM wrapper)
+        try:
+            # Build messages
             messages = []
-            
+
+            # Add asset context if provided
+            if asset_context:
+                asset_info = (
+                    f"🎯 **Asset đang được chọn:**\n"
+                    f"- ID: {asset_context.get('asset_id', 'N/A')}\n"
+                    f"- Loại: {asset_context.get('feature_type', 'N/A')}\n"
+                    f"- Mã: {asset_context.get('feature_code', 'N/A')}\n"
+                    f"- Geometry: {asset_context.get('geometry', {}).get('type', 'N/A') if asset_context.get('geometry') else 'N/A'}\n\n"
+                    f"Người dùng đang hỏi về asset này. Dùng asset_id để tra thêm thông tin qua call_api."
+                )
+                messages.append(SystemMessage(content=asset_info))
+
+            retrieval_query = query
+            if asset_context:
+                retrieval_query = (
+                    f"{query}\nAsset context: "
+                    f"{json.dumps(asset_context, ensure_ascii=False, default=str)}"
+                )
+
+            yield {"type": "tool_start", "tool": "retrieve_ag05_context", "input": query}
+            ag05_snippets = await self._retrieve_ag05_snippets(retrieval_query, max_snippets=3)
+            yield {
+                "type": "tool_end",
+                "output": f"Retrieved {len(ag05_snippets)} AG05 snippets",
+            }
+
+            ag05_context_message = self._format_ag05_snippets(ag05_snippets)
+            if ag05_context_message:
+                messages.append(
+                    SystemMessage(
+                        content=(
+                            "AG05 vector corpus snippets (source IDs included). "
+                            "Prefer these facts when relevant:\n"
+                            f"{ag05_context_message}"
+                        )
+                    )
+                )
+
             # Add chat history
             if chat_history:
-                for msg in chat_history[-10:]:  # Last 10 messages
+                for msg in chat_history[-10:]:
                     if msg["role"] == "user":
                         messages.append(HumanMessage(content=msg["content"]))
                     else:
                         messages.append(AIMessage(content=msg["content"]))
-            
-            # Add current query with context
-            user_message = f"""Câu hỏi: {query}
 
-Dữ liệu context từ database:
-{context_message}
+            messages.append(HumanMessage(content=query))
 
-Hãy trả lời dựa trên dữ liệu trên. Nếu người dùng hỏi về API, hãy cung cấp code examples."""
-            
-            messages.append(HumanMessage(content=user_message))
-            
-            # Stream response
-            full_response = ""
-            async for chunk in self.llm.astream(messages):
-                if chunk.content:
-                    full_response += chunk.content
-                    yield {"type": "token", "content": chunk.content}
-            
-            yield {"type": "final", "content": full_response}
-            yield {"type": "done"}
-            
+            # Use tool-calling path for Copilot, plain streaming for Gemini
+            if isinstance(self.llm, CopilotStreamLLM):
+                async def on_tool_call(name, args):
+                    yield_queue_item = {"type": "tool_start", "tool": name, "input": str(args)}
+                    # Can't yield from callback directly; use a list to collect
+                    pass
+
+                full_response = ""
+                pending_tool_events = []
+
+                async def on_tool_call_cb(name, args):
+                    pending_tool_events.append({"type": "tool_start", "tool": name, "input": str(args)})
+
+                async def stream_gen():
+                    nonlocal full_response
+                    async for chunk in self.llm.astream_with_tools(
+                        messages, self.OPENAI_TOOLS, self._execute_tool, on_tool_call=on_tool_call_cb
+                    ):
+                        # Flush any pending tool events first
+                        while pending_tool_events:
+                            yield pending_tool_events.pop(0)
+                        if chunk.content:
+                            full_response += chunk.content
+                            yield {"type": "token", "content": chunk.content}
+                    yield {"type": "final", "content": full_response}
+                    yield {"type": "done"}
+
+                async for event in stream_gen():
+                    yield event
+
+            else:
+                # Gemini path: pre-fetch context then stream
+                yield {"type": "tool_start", "tool": "analyze_query", "input": query}
+                context_data = await self._analyze_query(query)
+                yield {"type": "tool_end", "output": f"Found {len(context_data)} relevant data sources"}
+
+                context_parts = []
+                if ag05_context_message:
+                    context_parts.append(f"📚 AG05 snippets:\n{ag05_context_message}")
+                if "stats" in context_data:
+                    context_parts.append(f"📊 Thống kê:\n{json.dumps(context_data['stats'], indent=2, ensure_ascii=False)}")
+                if "assets" in context_data:
+                    context_parts.append(f"🏗️ Tài sản mẫu:\n{json.dumps(context_data['assets'], indent=2, ensure_ascii=False, default=str)}")
+                if "sensors" in context_data:
+                    context_parts.append(f"📡 Cảm biến:\n{json.dumps(context_data['sensors'], indent=2, ensure_ascii=False, default=str)}")
+                if "api_example" in context_data:
+                    context_parts.append(f"💻 Code:\n{context_data['api_example']}")
+                if "available_apis" in context_data:
+                    context_parts.append(f"🔌 APIs:\n{context_data['available_apis']}")
+
+                context_message = "\n\n".join(context_parts) if context_parts else "Không có dữ liệu context."
+
+                user_message = f"Câu hỏi: {query}\n\nContext:\n{context_message}\n\nHãy trả lời dựa trên dữ liệu trên."
+                # Replace last human message with enriched version
+                if messages and isinstance(messages[-1], HumanMessage):
+                    messages[-1] = HumanMessage(content=user_message)
+
+                full_response = ""
+                async for chunk in self.llm.astream(messages):
+                    if chunk.content:
+                        full_response += chunk.content
+                        yield {"type": "token", "content": chunk.content}
+
+                yield {"type": "final", "content": full_response}
+                yield {"type": "done"}
+
         except Exception as e:
-            logger.error(f"Agent error: {e}")
+            logger.error(f"Agent error: {e}", exc_info=True)
             yield {"type": "error", "content": f"Lỗi: {str(e)}"}
             yield {"type": "done"}
     
@@ -738,7 +851,7 @@ Hãy trả lời dựa trên dữ liệu trên. Nếu người dùng hỏi về 
         """Non-streaming query"""
         
         if not self.llm:
-            return "AI agent not configured. Please set GEMINI_API_KEY."
+            return "AI agent not configured. Please set GEMINI_API_KEY or mount Copilot token."
         
         try:
             # Collect all chunks

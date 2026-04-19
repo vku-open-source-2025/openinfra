@@ -8,7 +8,7 @@ import { Textarea } from "../../components/ui/textarea"
 import { Select } from "../../components/ui/select"
 import { Button } from "../../components/ui/button"
 import { Turnstile } from "../../components/Turnstile"
-import type { IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
+import type { IncidentCategory, IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ""
 
@@ -17,6 +17,7 @@ const PublicIncidentReport: React.FC = () => {
   const [formData, setFormData] = useState<Partial<IncidentCreateRequest>>({
     title: "",
     description: "",
+    category: "other",
     severity: "medium",
     location: {
       address: "",
@@ -27,12 +28,17 @@ const PublicIncidentReport: React.FC = () => {
     },
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [lookupReference, setLookupReference] = useState("")
+  const [lookupError, setLookupError] = useState("")
   const [turnstileToken, setTurnstileToken] = useState<string>("")
 
   const createMutation = useMutation({
     mutationFn: (data: IncidentCreateRequest) => publicApi.createAnonymousIncident(data, turnstileToken),
     onSuccess: (incident) => {
-      navigate({ to: `/public/incidents/${incident.id}` })
+      navigate({
+        to: "/public/incidents/$incidentId",
+        params: { incidentId: incident.incident_number || incident.id },
+      })
     },
     onError: (error: any) => {
       if (error.response?.data?.detail) {
@@ -40,6 +46,32 @@ const PublicIncidentReport: React.FC = () => {
       }
     },
   })
+
+  const lookupMutation = useMutation({
+    mutationFn: (reference: string) => publicApi.lookupPublicIncident(reference),
+    onSuccess: (incident) => {
+      setLookupError("")
+      navigate({
+        to: "/public/incidents/$incidentId",
+        params: { incidentId: incident.incident_number || incident.id },
+      })
+    },
+    onError: () => {
+      setLookupError("Không tìm thấy báo cáo. Vui lòng kiểm tra lại mã báo cáo hoặc ID.")
+    },
+  })
+
+  const handleLookupSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const reference = lookupReference.trim()
+    if (!reference) {
+      setLookupError("Vui lòng nhập mã báo cáo hoặc ID")
+      return
+    }
+
+    setLookupError("")
+    lookupMutation.mutate(reference)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,6 +85,10 @@ const PublicIncidentReport: React.FC = () => {
       setErrors({ description: "Mô tả là bắt buộc" })
       return
     }
+    if (!formData.category) {
+      setErrors({ category: "Loại sự cố là bắt buộc" })
+      return
+    }
     if (!formData.location?.address?.trim()) {
       setErrors({ address: "Địa chỉ là bắt buộc" })
       return
@@ -62,7 +98,24 @@ const PublicIncidentReport: React.FC = () => {
       return
     }
 
-    createMutation.mutate(formData as IncidentCreateRequest)
+    const submitData: IncidentCreateRequest = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      category: formData.category,
+      severity: formData.severity || "medium",
+      location: {
+        address: formData.location?.address?.trim(),
+        geometry: {
+          type: "Point",
+          coordinates: [
+            formData.location?.coordinates?.longitude || 0,
+            formData.location?.coordinates?.latitude || 0,
+          ],
+        },
+      },
+    }
+
+    createMutation.mutate(submitData)
   }
 
   return (
@@ -72,6 +125,22 @@ const PublicIncidentReport: React.FC = () => {
         <p className="text-slate-600 mb-8">
           Hãy giúp chúng tôi cải thiện hạ tầng bằng cách báo các vấn đề bạn gặp phải.
         </p>
+
+        <div id="lookup-status" className="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <h2 className="text-base font-semibold text-slate-900 mb-1">Tra cứu trạng thái báo cáo</h2>
+          <p className="text-sm text-slate-600 mb-3">Nhập mã báo cáo (ví dụ: INC-2026-ABC123) hoặc ID báo cáo.</p>
+          <form onSubmit={handleLookupSubmit} className="flex flex-col sm:flex-row gap-3">
+            <Input
+              value={lookupReference}
+              onChange={(e) => setLookupReference(e.target.value)}
+              placeholder="INC-2026-ABC123 hoặc 67f..."
+            />
+            <Button type="submit" variant="outline" disabled={lookupMutation.isPending}>
+              {lookupMutation.isPending ? "Đang tra cứu..." : "Tra cứu"}
+            </Button>
+          </form>
+          {lookupError && <p className="mt-2 text-sm text-red-600">{lookupError}</p>}
+        </div>
 
         <Form onSubmit={handleSubmit}>
           <FormField>
@@ -93,6 +162,21 @@ const PublicIncidentReport: React.FC = () => {
               rows={5}
             />
             {errors.description && <FormError>{errors.description}</FormError>}
+          </FormField>
+
+          <FormField>
+            <FormLabel required>Loại sự cố</FormLabel>
+            <Select
+              value={formData.category || "other"}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value as IncidentCategory })}
+            >
+              <option value="malfunction">Không hoạt động / Hỏng</option>
+              <option value="damage">Hư hỏng vật lý</option>
+              <option value="safety_hazard">Nguy hiểm an toàn</option>
+              <option value="vandalism">Phá hoại</option>
+              <option value="other">Khác</option>
+            </Select>
+            {errors.category && <FormError>{errors.category}</FormError>}
           </FormField>
 
           <FormField>

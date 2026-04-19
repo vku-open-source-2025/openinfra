@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { LogIn } from "lucide-react";
+import { CircleAlert, LogIn, Siren } from "lucide-react";
 
 interface NavigationItem {
     label: string;
@@ -10,6 +10,8 @@ interface NavigationItem {
     search?: Record<string, unknown>;
     isButton?: boolean;
     isLogin?: boolean;
+    isEmergency?: boolean;
+    isCitizen?: boolean;
 }
 
 const navigationItems: NavigationItem[] = [
@@ -20,6 +22,16 @@ const navigationItems: NavigationItem[] = [
     {
         label: "Tài liệu API",
         to: "/docs",
+    },
+    {
+        label: "Báo sự cố người dân",
+        to: "/public/report",
+        isCitizen: true,
+    },
+    {
+        label: "Điều hành khẩn cấp",
+        to: "/admin/emergency-center",
+        isEmergency: true,
     },
     {
         label: "Đăng nhập",
@@ -120,6 +132,34 @@ const Header: React.FC = () => {
                                     className="ml-8 text-base text-[#6C7580] max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-[#4FACFE] transition-colors flex items-center gap-1.5"
                                 >
                                     <LogIn className="w-4 h-4" />
+                                    {item.label}
+                                </Link>
+                            );
+                        }
+
+                        if (item.isEmergency) {
+                            return (
+                                <Link
+                                    key={item.to}
+                                    to={item.to}
+                                    onClick={closeMobileMenu}
+                                    className="ml-8 text-base text-red-500 max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-red-600 transition-colors flex items-center gap-1.5 font-medium"
+                                >
+                                    <Siren className="w-4 h-4" />
+                                    {item.label}
+                                </Link>
+                            );
+                        }
+
+                        if (item.isCitizen) {
+                            return (
+                                <Link
+                                    key={item.to}
+                                    to={item.to}
+                                    onClick={closeMobileMenu}
+                                    className="ml-8 text-base text-amber-600 max-lg:text-lg max-lg:ml-2 max-lg:my-2 hover:text-amber-700 transition-colors flex items-center gap-1.5 font-medium"
+                                >
+                                    <CircleAlert className="w-4 h-4" />
                                     {item.label}
                                 </Link>
                             );

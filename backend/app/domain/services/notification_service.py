@@ -61,6 +61,27 @@ class NotificationService:
         )
         return notification
 
+    async def create_notification_with_delivery_status(
+        self,
+        notification_data: NotificationCreate,
+    ) -> tuple[Notification, bool]:
+        """Create a notification and report whether any channel was sent."""
+        notification = await self.create_notification(notification_data)
+
+        # Reload from repository to pick up persisted delivery status updates.
+        resolved_notification = notification
+        if notification.id:
+            latest = await self.repository.find_by_id(str(notification.id))
+            if latest is not None:
+                resolved_notification = latest
+
+        successful_statuses = {DeliveryStatus.SENT, DeliveryStatus.DELIVERED}
+        delivered = any(
+            channel.status in successful_statuses
+            for channel in resolved_notification.channels
+        )
+        return notification, delivered
+
     async def _send_notification(self, notification: Notification):
         """Send notification via all configured channels."""
         # Get user preferences if user repository available

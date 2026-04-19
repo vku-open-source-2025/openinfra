@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { getAssets, getAssetId, type Asset } from "../api";
+import { emergencyApi } from "../api/emergency";
 import MapComponent from "../components/Map";
 import AssetTable from "../components/AssetTable";
 import MaintenanceLogList from "../components/MaintenanceLog";
@@ -35,6 +36,26 @@ const Dashboard: React.FC = () => {
     } = useQuery({
         queryKey: ["assets"],
         queryFn: getAssets,
+    });
+
+    const {
+        data: sosconnStatus,
+        isLoading: isSosconnStatusLoading,
+    } = useQuery({
+        queryKey: ["sosconn-status"],
+        queryFn: emergencyApi.getSosconnStatus,
+        refetchInterval: 30000,
+        retry: 1,
+    });
+
+    const { data: sosconnActiveEvents = [] } = useQuery({
+        queryKey: ["sosconn-active-events"],
+        queryFn: async () => {
+            const events = await emergencyApi.list({ limit: 200, status: "active" });
+            return events.filter((event) => event.source === "sosconn");
+        },
+        refetchInterval: 45000,
+        retry: 1,
     });
 
     const { assetsWithStatus, alerts } = useIoT(initialAssets);
@@ -96,6 +117,16 @@ const Dashboard: React.FC = () => {
     const operationalRate = assetCount > 0 
         ? (((assetCount - activeAlerts) / assetCount) * 100).toFixed(1) 
         : "0.0";
+
+    const sosconnHealthLabel = isSosconnStatusLoading
+        ? "Đang kiểm tra"
+        : sosconnStatus?.reachable && sosconnStatus?.configured
+          ? "Online"
+          : "Offline";
+
+    const sosconnCheckedAt = sosconnStatus?.checked_at
+        ? new Date(sosconnStatus.checked_at).toLocaleTimeString("vi-VN")
+        : "--:--:--";
 
     return (
         <div className="flex flex-col h-full bg-slate-50 font-sans text-slate-900">
@@ -173,7 +204,7 @@ const Dashboard: React.FC = () => {
                     ) : (
                         <>
                             {/* Stats Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                                 <StatsCard
                                     title="Tổng tài sản"
                                     value={assetCount}
@@ -206,6 +237,36 @@ const Dashboard: React.FC = () => {
                                     trend="0.5%"
                                     trendUp={true}
                                 />
+                                <StatsCard
+                                    title="SOSConn / Copilot"
+                                    value={sosconnHealthLabel}
+                                    icon={Radio}
+                                    color="bg-cyan-500"
+                                />
+                            </div>
+
+                            <div className="mb-8 rounded-xl border border-cyan-200 bg-cyan-50/70 p-4">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-semibold text-cyan-900">SOSConn Integration</p>
+                                        <p className="text-xs text-cyan-800">
+                                            Trạng thái: {sosconnHealthLabel} • Provider: {sosconnStatus?.provider || "github-copilot"}
+                                            {sosconnStatus?.model ? ` • Model: ${sosconnStatus.model}` : ""}
+                                        </p>
+                                        <p className="text-xs text-cyan-700 mt-1">
+                                            Active SOSConn events: {sosconnActiveEvents.length} • Last check: {sosconnCheckedAt}
+                                        </p>
+                                        {sosconnStatus?.detail ? (
+                                            <p className="text-xs text-red-700 mt-1">Chi tiet ket noi: {sosconnStatus.detail}</p>
+                                        ) : null}
+                                    </div>
+                                    <Link
+                                        to="/admin/emergency-center"
+                                        className="px-3 py-2 rounded-lg border border-cyan-300 bg-white text-cyan-800 text-sm font-medium hover:bg-cyan-100"
+                                    >
+                                        Mo SOSConn Command Center
+                                    </Link>
+                                </div>
                             </div>
 
                             {/* Main Content Grid */}
