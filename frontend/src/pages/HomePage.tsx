@@ -422,12 +422,6 @@ const HomePage = () => {
                                         Bản đồ thiên tai
                                         <ArrowRight className="w-4 h-4 ml-2" />
                                     </Link>
-                                    <Link
-                                        to="/public/report"
-                                        className="inline-flex items-center justify-center px-6 py-3 border border-slate-300 text-slate-700 rounded-full hover:border-amber-400 hover:text-amber-600 transition-colors"
-                                    >
-                                        Báo sự cố / Tra cứu
-                                    </Link>
                                 </div>
                             </div>
                             <div className="bg-white rounded-2xl border border-amber-100 shadow-xl p-6 space-y-4">

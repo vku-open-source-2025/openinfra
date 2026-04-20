@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Crosshair } from "lucide-react";
 import { publicApi } from "../api/public";
 import { Form, FormField, FormLabel, FormError } from "./ui/form";
 import { Input } from "./ui/input";
@@ -22,12 +23,19 @@ interface Props {
     onSuccess?: (incident: { id: string; incident_number?: string }) => void;
     /** Shown only when embedded outside of the /public/report page */
     hideLookup?: boolean;
+    /** Called when user clicks "Pick on map". Parent should switch to map-pick
+     *  mode and (eventually) call back with new coords via `defaultCoordinates`. */
+    onPickOnMap?: () => void;
+    /** Whether the form is currently in pick-on-map mode (disables the button) */
+    isPickingOnMap?: boolean;
 }
 
 const IncidentReportForm: React.FC<Props> = ({
     defaultCoordinates,
     onSuccess,
     hideLookup,
+    onPickOnMap,
+    isPickingOnMap,
 }) => {
     const [formData, setFormData] = useState<Partial<IncidentCreateRequest>>({
         title: "",
@@ -42,6 +50,22 @@ const IncidentReportForm: React.FC<Props> = ({
             },
         },
     });
+
+    // When the parent updates `defaultCoordinates` (e.g. user picked a point
+    // on the map), sync them into the form.
+    useEffect(() => {
+        if (!defaultCoordinates) return;
+        setFormData((prev) => ({
+            ...prev,
+            location: {
+                ...prev.location!,
+                coordinates: {
+                    latitude: defaultCoordinates.latitude,
+                    longitude: defaultCoordinates.longitude,
+                },
+            },
+        }));
+    }, [defaultCoordinates?.latitude, defaultCoordinates?.longitude]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [turnstileToken, setTurnstileToken] = useState("");
     const [submitted, setSubmitted] = useState<{
@@ -203,49 +227,72 @@ const IncidentReportForm: React.FC<Props> = ({
                 {errors.address && <FormError>{errors.address}</FormError>}
             </FormField>
 
-            <div className="grid grid-cols-2 gap-3">
-                <FormField>
-                    <FormLabel>Vĩ độ</FormLabel>
-                    <Input
-                        type="number"
-                        step="any"
-                        value={formData.location?.coordinates?.latitude || ""}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                location: {
-                                    ...formData.location!,
-                                    coordinates: {
-                                        ...formData.location!.coordinates!,
-                                        latitude: parseFloat(e.target.value) || 0,
+            <div>
+                <div className="flex items-center justify-between mb-1.5">
+                    <FormLabel>Toạ độ</FormLabel>
+                    {onPickOnMap && (
+                        <button
+                            type="button"
+                            onClick={onPickOnMap}
+                            disabled={isPickingOnMap}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+                                isPickingOnMap
+                                    ? "bg-blue-600 text-white cursor-default"
+                                    : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                            }`}
+                        >
+                            <Crosshair size={12} />
+                            {isPickingOnMap ? "Đang chọn… click trên bản đồ" : "Chọn trên bản đồ"}
+                        </button>
+                    )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <FormField>
+                        <FormLabel>Vĩ độ</FormLabel>
+                        <Input
+                            type="number"
+                            step="any"
+                            value={formData.location?.coordinates?.latitude || ""}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    location: {
+                                        ...formData.location!,
+                                        coordinates: {
+                                            ...formData.location!.coordinates!,
+                                            latitude: parseFloat(e.target.value) || 0,
+                                        },
                                     },
-                                },
-                            })
-                        }
-                        placeholder="16.0471"
-                    />
-                </FormField>
-                <FormField>
-                    <FormLabel>Kinh độ</FormLabel>
-                    <Input
-                        type="number"
-                        step="any"
-                        value={formData.location?.coordinates?.longitude || ""}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                location: {
-                                    ...formData.location!,
-                                    coordinates: {
-                                        ...formData.location!.coordinates!,
-                                        longitude: parseFloat(e.target.value) || 0,
+                                })
+                            }
+                            placeholder="16.0471"
+                        />
+                    </FormField>
+                    <FormField>
+                        <FormLabel>Kinh độ</FormLabel>
+                        <Input
+                            type="number"
+                            step="any"
+                            value={formData.location?.coordinates?.longitude || ""}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    location: {
+                                        ...formData.location!,
+                                        coordinates: {
+                                            ...formData.location!.coordinates!,
+                                            longitude: parseFloat(e.target.value) || 0,
+                                        },
                                     },
-                                },
-                            })
-                        }
-                        placeholder="108.2062"
-                    />
-                </FormField>
+                                })
+                            }
+                            placeholder="108.2062"
+                        />
+                    </FormField>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                    Có thể nhập tay hoặc dùng "Chọn trên bản đồ".
+                </p>
             </div>
 
             {errors.submit && <FormError>{errors.submit}</FormError>}

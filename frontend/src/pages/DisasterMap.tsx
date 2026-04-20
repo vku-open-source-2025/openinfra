@@ -171,6 +171,11 @@ const DisasterMap: React.FC = () => {
     const [filterSeverity, setFilterSeverity] = useState<string>("all");
     const [filterType, setFilterType] = useState<string>("all");
     const [showReportModal, setShowReportModal] = useState(false);
+    const [isPickingOnMap, setIsPickingOnMap] = useState(false);
+    const [pickedCoords, setPickedCoords] = useState<
+        { latitude: number; longitude: number } | undefined
+    >(undefined);
+    const pickedMarkerRef = React.useRef<L.Marker | null>(null);
 
     const {
         data: vndmsHazards = [],
@@ -246,6 +251,75 @@ const DisasterMap: React.FC = () => {
 
     const criticalCount = vndmsHazards.filter((h) => h.severity === "high").length;
     const totalCount = filteredVndms.length + storedHazards.length;
+
+    // ── Pick-on-map handlers ─────────────────────────────────────────────────
+    const placePickedMarker = useCallback(
+        (lat: number, lng: number) => {
+            if (!leafletMap) return;
+            if (pickedMarkerRef.current) {
+                pickedMarkerRef.current.setLatLng([lat, lng]);
+            } else {
+                const icon = L.divIcon({
+                    className: "",
+                    html: `<div style="
+                        width:32px;height:32px;border-radius:50% 50% 50% 0;
+                        background:#f59e0b;
+                        transform:rotate(-45deg);
+                        border:3px solid white;
+                        box-shadow:0 2px 6px rgba(0,0,0,0.4);
+                        display:flex;align-items:center;justify-content:center;
+                        ">
+                          <span style="transform:rotate(45deg);font-size:14px">📍</span>
+                        </div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                });
+                pickedMarkerRef.current = L.marker([lat, lng], { icon }).addTo(
+                    leafletMap
+                );
+            }
+        },
+        [leafletMap]
+    );
+
+    const startPickOnMap = useCallback(() => {
+        setIsPickingOnMap(true);
+        setShowReportModal(false); // hide modal so user can see/click the map
+    }, []);
+
+    // Map click listener — only active while picking
+    React.useEffect(() => {
+        if (!leafletMap || !isPickingOnMap) return;
+
+        // Change cursor to crosshair
+        const container = leafletMap.getContainer();
+        const prevCursor = container.style.cursor;
+        container.style.cursor = "crosshair";
+
+        const handler = (e: L.LeafletMouseEvent) => {
+            const { lat, lng } = e.latlng;
+            setPickedCoords({ latitude: lat, longitude: lng });
+            placePickedMarker(lat, lng);
+            setIsPickingOnMap(false);
+            setShowReportModal(true); // reopen the modal
+        };
+        leafletMap.on("click", handler);
+        return () => {
+            leafletMap.off("click", handler);
+            container.style.cursor = prevCursor;
+        };
+    }, [leafletMap, isPickingOnMap, placePickedMarker]);
+
+    // Cleanup picked marker when modal closed without submitting
+    const handleCloseReportModal = useCallback(() => {
+        setShowReportModal(false);
+        setIsPickingOnMap(false);
+        if (pickedMarkerRef.current && leafletMap) {
+            leafletMap.removeLayer(pickedMarkerRef.current);
+            pickedMarkerRef.current = null;
+        }
+        setPickedCoords(undefined);
+    }, [leafletMap]);
 
     return (
         <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900">
@@ -416,11 +490,27 @@ const DisasterMap: React.FC = () => {
                 </div>
             </div>
 
+            {/* ── Pick-on-map banner ── */}
+            {isPickingOnMap && (
+                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[1500] bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                    📍 Click vào vị trí trên bản đồ để chọn
+                    <button
+                        onClick={() => {
+                            setIsPickingOnMap(false);
+                            setShowReportModal(true);
+                        }}
+                        className="ml-2 text-white/80 hover:text-white text-xs underline"
+                    >
+                        Huỷ
+                    </button>
+                </div>
+            )}
+
             {/* ── Report modal ── */}
             {showReportModal && (
                 <div
                     className="fixed inset-0 z-[2000] bg-black/50 flex items-center justify-center p-4"
-                    onClick={() => setShowReportModal(false)}
+                    onClick={handleCloseReportModal}
                 >
                     <div
                         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
@@ -441,14 +531,19 @@ const DisasterMap: React.FC = () => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => setShowReportModal(false)}
+                                onClick={handleCloseReportModal}
                                 className="p-1 hover:bg-white/60 rounded transition-colors"
                             >
                                 <X size={18} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-5">
-                            <IncidentReportForm hideLookup />
+                            <IncidentReportForm
+                                hideLookup
+                                defaultCoordinates={pickedCoords}
+                                onPickOnMap={startPickOnMap}
+                                isPickingOnMap={isPickingOnMap}
+                            />
                         </div>
                     </div>
                 </div>
