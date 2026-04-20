@@ -62,17 +62,9 @@ app.conf.beat_schedule = {
         "task": "app.tasks.contribution_etl.sync_contributions",
         "schedule": crontab(minute=0, hour="*/6"),  # Every 6 hours
     },
-    "ingest-nchmf-data": {
-        "task": "app.tasks.hazard_ingest.ingest_nchmf_data",
-        "schedule": crontab(minute="*/30"),  # Every 30 minutes
-    },
-    "ingest-vndms-data": {
-        "task": "app.tasks.hazard_ingest.ingest_vndms_data",
-        "schedule": crontab(minute=15, hour="*/1"),  # Hourly at minute 15
-    },
-    "ingest-hazard-feeds": {
-        "task": "app.tasks.hazard_ingest.ingest_hazard_feeds",
-        "schedule": crontab(minute=0, hour="*/2"),  # Every 2 hours
+    "crawl-and-update-hazard-feeds": {
+        "task": "app.tasks.hazard_ingest.crawl_and_update_hazard_layers",
+        "schedule": crontab(minute="*/15"),  # Every 15 minutes
     },
     "monitor-active-emergency-events": {
         "task": "app.tasks.event_monitoring.monitor_active_emergency_events",

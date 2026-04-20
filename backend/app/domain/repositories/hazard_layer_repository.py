@@ -71,6 +71,16 @@ class HazardLayerRepository(ABC):
         pass
 
     @abstractmethod
+    async def list_recent(
+        self,
+        window_start: datetime,
+        limit: int = 50,
+        active_only: bool = True,
+    ) -> List[HazardLayer]:
+        """List recent hazards detected after ``window_start``."""
+        pass
+
+    @abstractmethod
     async def deactivate_expired(self, cutoff: Optional[datetime] = None) -> int:
         """Deactivate expired hazards and return updated count."""
         pass

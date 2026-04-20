@@ -3,10 +3,37 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 
 import pytest
 
 from app.infrastructure.notifications.emergency_notifier import EmergencyNotifier
+
+
+LEGACY_NOTIFIER_KEYS = {"total", "attempted", "sent", "failed", "fallback_used"}
+
+
+def assert_legacy_notifier_contract(
+    stats: dict,
+    *,
+    total: int,
+    attempted: int,
+    sent: int,
+    failed: int,
+    fallback_used: int,
+):
+    assert LEGACY_NOTIFIER_KEYS.issubset(stats.keys())
+    assert stats["total"] == total
+    assert stats["attempted"] == attempted
+    assert stats["sent"] == sent
+    assert stats["failed"] == failed
+    assert stats["fallback_used"] == fallback_used
+
+    channel_attempts = sum(
+        channel_stats["attempts"]
+        for channel_stats in stats["delivery_summary"]["channels"].values()
+    )
+    assert stats["delivery_summary"]["total_attempts"] == channel_attempts
 
 
 @dataclass
@@ -83,11 +110,14 @@ async def test_broadcast_alert_uses_ordered_fallback_and_aggregates_stats():
         metadata={"hazard_id": "hz-001"},
     )
 
-    assert stats["total"] == 4
-    assert stats["attempted"] == 4
-    assert stats["sent"] == 3
-    assert stats["failed"] == 1
-    assert stats["fallback_used"] == 2
+    assert_legacy_notifier_contract(
+        stats,
+        total=4,
+        attempted=4,
+        sent=3,
+        failed=1,
+        fallback_used=2,
+    )
     summary = stats["delivery_summary"]
     assert summary["total_attempts"] == 9
     assert summary["total_success"] == 3
@@ -143,11 +173,14 @@ async def test_broadcast_alert_dry_run_skips_delivery_calls():
         dry_run=True,
     )
 
-    assert stats["total"] == 2
-    assert stats["attempted"] == 2
-    assert stats["sent"] == 0
-    assert stats["failed"] == 0
-    assert stats["fallback_used"] == 0
+    assert_legacy_notifier_contract(
+        stats,
+        total=2,
+        attempted=2,
+        sent=0,
+        failed=0,
+        fallback_used=0,
+    )
     assert stats["delivery_summary"]["total_attempts"] == 0
     assert stats["delivery_summary"]["total_success"] == 0
     assert stats["delivery_summary"]["total_failure"] == 0
@@ -188,11 +221,14 @@ async def test_broadcast_alert_falls_back_to_legacy_create_notification():
     )
 
     assert notification_service.calls == [("u1", "push")]
-    assert stats["total"] == 1
-    assert stats["attempted"] == 1
-    assert stats["sent"] == 1
-    assert stats["failed"] == 0
-    assert stats["fallback_used"] == 0
+    assert_legacy_notifier_contract(
+        stats,
+        total=1,
+        attempted=1,
+        sent=1,
+        failed=0,
+        fallback_used=0,
+    )
     assert stats["delivery_summary"]["total_attempts"] == 1
     assert stats["delivery_summary"]["total_success"] == 1
     assert stats["delivery_summary"]["total_failure"] == 0
@@ -215,3 +251,58 @@ async def test_broadcast_alert_falls_back_to_legacy_create_notification():
     assert user_result["status"] == "sent"
     assert [item["channel"] for item in user_result["attempts"]] == ["push"]
     assert [item["status"] for item in user_result["attempts"]] == ["sent"]
+
+
+@pytest.mark.asyncio
+async def test_broadcast_alert_logs_request_event_context_with_structured_summary(caplog):
+    class FailingNotificationService:
+        async def create_notification_with_delivery_status(self, notification_data):
+            raise RuntimeError("delivery transport error")
+
+    user_service = FakeUserService(
+        {
+            "admin": [FakeUser("u1")],
+        }
+    )
+    notification_service = FailingNotificationService()
+
+    notifier = EmergencyNotifier(notification_service, user_service)
+    with caplog.at_level(logging.INFO, logger="app.infrastructure.notifications.emergency_notifier"):
+        stats = await notifier.broadcast_alert(
+            title="Flood Alert",
+            message="Water level exceeded threshold",
+            target_roles=["admin"],
+            metadata={"request_id": "req-123", "event_id": "evt-456"},
+        )
+
+    assert_legacy_notifier_contract(
+        stats,
+        total=1,
+        attempted=1,
+        sent=0,
+        failed=1,
+        fallback_used=0,
+    )
+
+    warning_messages = [
+        record.getMessage() for record in caplog.records if record.levelno == logging.WARNING
+    ]
+    assert warning_messages
+    assert any(
+        "request_id=req-123" in message and "event_id=evt-456" in message
+        for message in warning_messages
+    )
+
+    info_records = [record for record in caplog.records if record.levelno == logging.INFO]
+    assert info_records
+    assert any(
+        "request_id=req-123" in record.getMessage() and "event_id=evt-456" in record.getMessage()
+        for record in info_records
+    )
+    assert any("delivery_summary=" in record.getMessage() for record in info_records)
+    assert any(getattr(record, "request_id", None) == "req-123" for record in caplog.records)
+    assert any(getattr(record, "event_id", None) == "evt-456" for record in caplog.records)
+    assert any(
+        getattr(record, "delivery_summary", None) == stats["delivery_summary"]
+        for record in info_records
+    )

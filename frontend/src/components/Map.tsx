@@ -120,6 +120,7 @@ interface MapProps {
     selectedAsset?: Asset | null;
     className?: string;
     enableGeoSearches?: boolean;
+    onMapReady?: (map: L.Map) => void;
 }
 
 const toLatLng = (coord: number[]): [number, number] => [coord[1], coord[0]];
@@ -194,6 +195,7 @@ const MapComponent: React.FC<MapProps> = ({
     routePoints,
     selectedAsset,
     className,
+    onMapReady,
     // Not using onFilterByShape/enableGeoSearches yet - keep props for future features
 }) => {
     const [mapMode, setMapMode] = useState<"markers" | "heatmap">("markers");
@@ -285,6 +287,9 @@ const MapComponent: React.FC<MapProps> = ({
         // Set initial bounds
         setMapBounds(map.getBounds());
         setMapZoom(map.getZoom());
+
+        // Notify parent that map is ready
+        onMapReady?.(map);
 
         // Listen to map events for bounds updates
         const updateBounds = () => {

@@ -16,7 +16,7 @@ from app.domain.models.user import User, UserRole, UserStatus
 
 
 @pytest.fixture(scope="function", autouse=True)
-async def setup_test_db():
+def setup_test_db():
     """Override global DB fixture for pure unit tests."""
     yield
 
@@ -128,6 +128,54 @@ async def test_get_stream_current_user_rejects_invalid_token(monkeypatch):
     user_service.get_user_by_id.assert_not_awaited()
 
 
+@pytest.mark.asyncio
+async def test_get_stream_current_user_rejects_invalid_token_type(monkeypatch):
+    user_service = SimpleNamespace(get_user_by_id=AsyncMock())
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="refresh-token")
+
+    monkeypatch.setattr(
+        emergency_stream,
+        "decode_token",
+        lambda token: {"type": "refresh", "sub": "u-3"} if token == "refresh-token" else None,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await emergency_stream.get_stream_current_user(
+            request=_build_request(),
+            credentials=credentials,
+            user_service=user_service,
+        )
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Invalid token type"
+    user_service.get_user_by_id.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_stream_current_user_rejects_inactive_user(monkeypatch):
+    inactive_user = _build_active_user("u-4")
+    inactive_user.status = UserStatus.INACTIVE
+    user_service = SimpleNamespace(get_user_by_id=AsyncMock(return_value=inactive_user))
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="access-token")
+
+    monkeypatch.setattr(
+        emergency_stream,
+        "decode_token",
+        lambda token: {"type": "access", "sub": "u-4"} if token == "access-token" else None,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await emergency_stream.get_stream_current_user(
+            request=_build_request(),
+            credentials=credentials,
+            user_service=user_service,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "User account is inactive"
+    user_service.get_user_by_id.assert_awaited_once_with("u-4")
+
+
 class _FakeCursor:
     def __init__(self, docs):
         self._docs = docs
@@ -203,5 +251,33 @@ async def test_stream_emits_changed_items_with_id_derived_from__id(monkeypatch):
     assert payload["count"] == 1
     assert payload["items"][0]["_id"] == "haz-1"
     assert payload["items"][0]["id"] == "haz-1"
+
+    await stream.aclose()
+
+
+@pytest.mark.asyncio
+async def test_stream_does_not_emit_update_when_no_changed_documents_before_disconnect(monkeypatch):
+    base_time = datetime.utcnow() - timedelta(seconds=10)
+    collection = _FakeCollection(
+        latest_updated_at=base_time,
+        changed_docs=[],
+    )
+
+    monkeypatch.setattr(emergency_stream, "POLL_INTERVAL_SECONDS", 0.0)
+    monkeypatch.setattr(emergency_stream, "HEARTBEAT_INTERVAL_SECONDS", 9999.0)
+    monkeypatch.setattr(emergency_stream, "LOOP_SLEEP_SECONDS", 0.0)
+
+    stream = emergency_stream._stream_collection_updates(
+        request=_FakeRequest(),
+        collection=collection,
+        stream_name="events",
+    )
+
+    connected_event = await anext(stream)
+    connected_payload = _decode_sse_data(connected_event)
+    assert connected_payload["stream"] == "events"
+
+    with pytest.raises(StopAsyncIteration):
+        await anext(stream)
 
     await stream.aclose()

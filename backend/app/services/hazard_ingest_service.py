@@ -155,7 +155,12 @@ class HazardIngestService:
             return False
 
         parsed = urlparse(candidate)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        if parsed.scheme.lower() not in {"http", "https"}:
+            return False
+
+        # Require a resolvable host. Values like "http://:80/path" expose a netloc
+        # but do not contain a usable hostname for outbound checks.
+        if not parsed.netloc or not parsed.hostname:
             return False
 
         try:
@@ -324,13 +329,16 @@ class HazardIngestService:
         configured_feeds = sum(1 for feed in feeds.values() if feed["configured"])
         all_configured = configured_feeds == total_feeds
 
-        all_reachable = all(
-            feed["last_check"].get("reachable") is True
-            for feed in feeds.values()
-            if feed["configured"]
-        )
-
-        ready = all_configured and all_reachable
+        if check_reachability:
+            all_reachable = all(
+                feed["last_check"].get("reachable") is True
+                for feed in feeds.values()
+                if feed["configured"]
+            )
+            ready = all_configured and all_reachable
+        else:
+            # Readiness requires an explicit live reachability check in this call.
+            ready = False
 
         if ready:
             overall_status = "ready"

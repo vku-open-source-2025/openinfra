@@ -24,8 +24,8 @@ const navigationItems: NavigationItem[] = [
         to: "/docs",
     },
     {
-        label: "Báo sự cố người dân",
-        to: "/public/report",
+        label: "Bản đồ thiên tai",
+        to: "/disaster",
         isCitizen: true,
     },
     {

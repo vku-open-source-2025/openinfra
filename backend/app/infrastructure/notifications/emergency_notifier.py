@@ -24,6 +24,28 @@ class EmergencyNotifier:
         self.user_service = user_service
         self.last_user_attempts: Dict[str, Dict[str, Any]] = {}
 
+    @staticmethod
+    def _build_log_context(metadata_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Build optional request-scoped logging context."""
+        context: Dict[str, Any] = {}
+        request_id = metadata_payload.get("request_id")
+        event_id = metadata_payload.get("event_id")
+        if request_id is not None:
+            context["request_id"] = request_id
+        if event_id is not None:
+            context["event_id"] = event_id
+        return context
+
+    @staticmethod
+    def _format_log_context_suffix(log_context: Dict[str, Any]) -> str:
+        """Render optional request/event fields into a compact log suffix."""
+        parts: List[str] = []
+        if "request_id" in log_context:
+            parts.append(f"request_id={log_context['request_id']}")
+        if "event_id" in log_context:
+            parts.append(f"event_id={log_context['event_id']}")
+        return f" {' '.join(parts)}" if parts else ""
+
     async def _collect_recipient_ids(self, target_roles: List[str]) -> Set[str]:
         """Collect unique active user IDs by role."""
         recipient_ids: Set[str] = set()
@@ -52,8 +74,8 @@ class EmergencyNotifier:
         roles = target_roles or ["admin", "technician"]
         recipients = await self._collect_recipient_ids(roles)
         metadata_payload = metadata or {}
-        request_id = metadata_payload.get("request_id")
-        event_id = metadata_payload.get("event_id")
+        log_context = self._build_log_context(metadata_payload)
+        log_context_suffix = self._format_log_context_suffix(log_context)
 
         fallback_channels = [
             NotificationChannel.PUSH,
@@ -134,13 +156,18 @@ class EmergencyNotifier:
                         await self.notification_service.create_notification(payload)
                         attempt_delivered = True
                 except Exception as exc:
+                    warning_context = {
+                        **log_context,
+                        "user_id": user_id,
+                        "channel": channel.value,
+                    }
                     logger.warning(
-                        "Emergency delivery failed user=%s channel=%s request_id=%s event_id=%s err=%s",
+                        "Emergency delivery failed user=%s channel=%s err=%s%s",
                         user_id,
                         channel.value,
-                        request_id,
-                        event_id,
                         exc,
+                        log_context_suffix,
+                        extra=warning_context,
                     )
                     attempt_delivered = False
                     attempt_info["error"] = str(exc)
@@ -180,13 +207,20 @@ class EmergencyNotifier:
             }
 
         self.last_user_attempts = user_attempts
+        info_context = {
+            **log_context,
+            "delivery_summary": delivery_summary,
+        }
         logger.info(
-            "Emergency alert summary request_id=%s event_id=%s users=%s sent=%s failed=%s attempts=%s",
-            request_id,
-            event_id,
+            "Emergency alert summary users=%s sent=%s failed=%s attempts=%s fallback_used=%s "
+            "delivery_summary=%s%s",
             stats["attempted"],
             stats["sent"],
             stats["failed"],
             delivery_summary["total_attempts"],
+            stats["fallback_used"],
+            delivery_summary,
+            log_context_suffix,
+            extra=info_context,
         )
         return stats

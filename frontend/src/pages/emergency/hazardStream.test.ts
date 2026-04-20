@@ -52,6 +52,67 @@ describe('parseHazardStreamPayload', () => {
     });
   });
 
+  it.each(['hazards', 'data', 'payload'] as const)(
+    'handles envelope with %s array',
+    (field) => {
+      const payload = parseHazardStreamPayload(
+        JSON.stringify({
+          [field]: [buildHazard({ id: `haz-${field}`, hazard_id: `HZ-${field.toUpperCase()}` })],
+        })
+      );
+
+      expect(payload).toEqual({
+        snapshot: [
+          expect.objectContaining({
+            id: `haz-${field}`,
+            hazard_id: `HZ-${field.toUpperCase()}`,
+            is_active: true,
+          }),
+        ],
+      });
+    }
+  );
+
+  it.each(['hazard', 'data', 'payload'] as const)(
+    'handles envelope with %s object as delta',
+    (field) => {
+      const payload = parseHazardStreamPayload(
+        JSON.stringify({
+          [field]: buildHazard({ id: `delta-${field}`, hazard_id: `DELTA-${field.toUpperCase()}` }),
+        })
+      );
+
+      expect(payload).toEqual({
+        delta: expect.objectContaining({
+          id: `delta-${field}`,
+          hazard_id: `DELTA-${field.toUpperCase()}`,
+          is_active: true,
+        }),
+      });
+    }
+  );
+
+  it('keeps valid snapshot entries when mixed with invalid entries', () => {
+    const payload = parseHazardStreamPayload(
+      JSON.stringify({
+        hazards: [
+          buildHazard({ id: 'haz-valid-1', hazard_id: 'HZ-VALID-1' }),
+          { hazard_id: 'HZ-INVALID-MISSING-ID' },
+          buildHazard({ id: 'haz-valid-2', hazard_id: 'HZ-VALID-2' }),
+          { id: 'haz-invalid-active', hazard_id: 'HZ-INVALID-ACTIVE', title: 'bad', is_active: 'yes' },
+          null,
+        ],
+      })
+    );
+
+    expect(payload).toEqual({
+      snapshot: [
+        expect.objectContaining({ id: 'haz-valid-1', hazard_id: 'HZ-VALID-1' }),
+        expect.objectContaining({ id: 'haz-valid-2', hazard_id: 'HZ-VALID-2' }),
+      ],
+    });
+  });
+
   it('normalizes _id to id', () => {
     const payload = parseHazardStreamPayload(
       JSON.stringify(buildHazard({ id: undefined, _id: 'mongo-id-1', hazard_id: 'HZ-003' }))

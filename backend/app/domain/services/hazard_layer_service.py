@@ -158,6 +158,20 @@ class HazardLayerService:
         """List active hazards inside polygon."""
         return await self.repository.list_in_polygon(polygon=polygon, limit=limit)
 
+    async def list_recent_hazards(
+        self,
+        window_hours: int = 24,
+        limit: int = 50,
+        active_only: bool = True,
+    ) -> List[HazardLayer]:
+        """List hazards detected within a recent time window."""
+        cutoff = datetime.utcnow() - timedelta(hours=max(window_hours, 1))
+        return await self.repository.list_recent(
+            window_start=cutoff,
+            limit=limit,
+            active_only=active_only,
+        )
+
     async def deactivate_expired(self) -> int:
         """Deactivate expired hazards."""
         return await self.repository.deactivate_expired(datetime.utcnow())

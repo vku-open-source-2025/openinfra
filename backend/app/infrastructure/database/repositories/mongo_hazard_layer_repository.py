@@ -36,6 +36,10 @@ class MongoHazardLayerRepository(HazardLayerRepository):
             name="idx_hazard_active_updated",
         )
         await self.collection.create_index(
+            [("is_active", ASCENDING), ("detected_at", DESCENDING)],
+            name="idx_hazard_active_detected_at",
+        )
+        await self.collection.create_index(
             [("event_type", ASCENDING), ("severity", ASCENDING)],
             name="idx_hazard_event_severity",
         )
@@ -222,6 +226,30 @@ class MongoHazardLayerRepository(HazardLayerRepository):
         }
 
         cursor = self.collection.find(query).limit(limit)
+        hazards: List[HazardLayer] = []
+        async for doc in cursor:
+            doc = convert_objectid_to_str(doc)
+            hazards.append(HazardLayer(**doc))
+
+        return hazards
+
+    async def list_recent(
+        self,
+        window_start: datetime,
+        limit: int = 50,
+        active_only: bool = True,
+    ) -> List[HazardLayer]:
+        """List hazards detected after ``window_start`` sorted newest first."""
+        query = {"detected_at": {"$gte": window_start}}
+        if active_only:
+            query["is_active"] = True
+
+        cursor = (
+            self.collection.find(query)
+            .sort([("detected_at", DESCENDING), ("updated_at", DESCENDING)])
+            .limit(limit)
+        )
+
         hazards: List[HazardLayer] = []
         async for doc in cursor:
             doc = convert_objectid_to_str(doc)

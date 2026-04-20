@@ -149,6 +149,13 @@ class _FakeDb:
         (
             {
                 "metadata": "invalid-metadata",
+                "_contrib_sos_id": "CONTRIB-004",
+            },
+            "CONTRIB-004",
+        ),
+        (
+            {
+                "metadata": "invalid-metadata",
                 "_contrib_sos_id": None,
             },
             None,
@@ -198,8 +205,9 @@ async def test_get_sos_timeline_counts_sla_breaches_by_event_id(monkeypatch: pyt
         },
     ]
     sla_rows = [
-        {"_id": "evt-001", "count": 2},
         {"_id": "evt-002", "count": 1},
+        {"_id": "evt-999", "count": 999},
+        {"_id": "evt-001", "count": 2},
         {"_id": None, "count": 99},
     ]
 

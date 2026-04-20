@@ -398,35 +398,36 @@ const HomePage = () => {
                         <div className="grid md:grid-cols-2 gap-12 items-center">
                             <div className="space-y-6">
                                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
-                                    <MapPin className="w-4 h-4" />
+                                    <ShieldAlert className="w-4 h-4" />
                                     Dành cho người dân
                                 </div>
                                 <h2 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
-                                    Báo sự cố và theo dõi tiến độ
+                                    Bản đồ cảnh báo thiên tai
                                     <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent"> theo thời gian thực</span>
                                 </h2>
                                 <p className="text-lg text-slate-600 leading-relaxed">
-                                    Người dân có thể gửi báo cáo sự cố hạ tầng ngay trên web, nhận mã báo cáo và tra cứu tiến độ xử lý mà không cần tài khoản.
+                                    Theo dõi mưa, gió, lũ, mực nước và động đất trên toàn quốc từ dữ liệu VNDMS chính thức. Báo sự cố ngay tại bản đồ để chính quyền xử lý kịp thời.
                                 </p>
                                 <div className="grid sm:grid-cols-3 gap-3 text-sm">
-                                    <div className="rounded-lg border border-amber-200 bg-white p-3 text-slate-700">1. Điền thông tin sự cố</div>
-                                    <div className="rounded-lg border border-amber-200 bg-white p-3 text-slate-700">2. Nhận mã báo cáo</div>
-                                    <div className="rounded-lg border border-amber-200 bg-white p-3 text-slate-700">3. Tra cứu trạng thái xử lý</div>
+                                    <div className="rounded-lg border border-amber-200 bg-white p-3 text-slate-700">🌊 Cảnh báo lũ, bão, động đất</div>
+                                    <div className="rounded-lg border border-amber-200 bg-white p-3 text-slate-700">📍 Lọc theo khu vực, mức độ</div>
+                                    <div className="rounded-lg border border-amber-200 bg-white p-3 text-slate-700">📢 Báo sự cố trực tiếp trên bản đồ</div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
                                     <Link
-                                        to="/public/report"
+                                        to="/disaster"
                                         className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
                                     >
-                                        Báo sự cố ngay
+                                        <ShieldAlert className="w-4 h-4 mr-2" />
+                                        Bản đồ thiên tai
                                         <ArrowRight className="w-4 h-4 ml-2" />
                                     </Link>
-                                    <a
-                                        href="/public/report#lookup-status"
+                                    <Link
+                                        to="/public/report"
                                         className="inline-flex items-center justify-center px-6 py-3 border border-slate-300 text-slate-700 rounded-full hover:border-amber-400 hover:text-amber-600 transition-colors"
                                     >
-                                        Tra cứu tiến độ
-                                    </a>
+                                        Báo sự cố / Tra cứu
+                                    </Link>
                                 </div>
                             </div>
                             <div className="bg-white rounded-2xl border border-amber-100 shadow-xl p-6 space-y-4">

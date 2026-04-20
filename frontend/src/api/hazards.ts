@@ -1,16 +1,33 @@
 import { httpClient } from '../lib/httpClient';
+import { filterHazardsInLastHours } from '../lib/recentHazards';
 import type { Hazard, HazardListParams } from '../types/hazard';
 
-export const hazardsApi = {
-  list: async (params?: HazardListParams): Promise<Hazard[]> => {
-    const { is_active, ...rest } = params ?? {};
-    const queryParams = {
-      ...rest,
-      active_only: is_active,
-    };
+export interface RecentHazardListParams extends HazardListParams {
+  hours?: number;
+}
 
-    const response = await httpClient.get<Hazard[]>('/hazards', { params: queryParams });
-    return response.data;
+async function listHazards(params?: HazardListParams): Promise<Hazard[]> {
+  const { is_active, ...rest } = params ?? {};
+  const queryParams = {
+    ...rest,
+    active_only: is_active,
+  };
+
+  const response = await httpClient.get<Hazard[]>('/hazards', { params: queryParams });
+  return response.data;
+}
+
+export const hazardsApi = {
+  list: listHazards,
+
+  listRecent: async (params?: RecentHazardListParams): Promise<Hazard[]> => {
+    const { hours = 24, ...listParams } = params ?? {};
+    const hazards = await listHazards({
+      is_active: true,
+      limit: 200,
+      ...listParams,
+    });
+    return filterHazardsInLastHours(hazards, hours);
   },
 
   nearby: async (params: {

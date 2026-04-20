@@ -5,7 +5,15 @@ import { getAssets, getAssetId, type Asset } from "../api";
 import MapComponent from "../components/Map";
 import MaintenanceLogList from "../components/MaintenanceLog";
 import { useIoT } from "../hooks/useIoT";
-import { AlertTriangle, X, ExternalLink, MessageCircle } from "lucide-react";
+import {
+    AlertTriangle,
+    Clock3,
+    ExternalLink,
+    Layers,
+    MapPin,
+    MessageCircle,
+    X,
+} from "lucide-react";
 import Header from "../components/Header";
 import QRCodeModal from "../components/QRCodeModal";
 import NFCWriteModal from "../components/NFCWriteModal";
@@ -13,12 +21,91 @@ import ReportModal from "../components/ReportModal";
 import IoTSensorChart from "../components/IoTSensorChart";
 import { Button } from "@/components/ui/button";
 import AIChatWidget from "../components/AIChatWidget";
+import HazardMarkersLayer from "../components/HazardMarkersLayer";
+import VndmsHazardLayer, { useVndmsHazards, VndmsLegend } from "../components/VndmsHazardLayer";
+import { hazardsApi } from "../api/hazards";
+import type { Hazard } from "../types/hazard";
+import { getHazardTimestampMs } from "../lib/recentHazards";
+import L from "leaflet";
 
 // Extended Asset type with status added by useIoT hook
 type AssetWithStatus = Asset & {
     status?: "Online" | "Offline";
     lastPing?: string;
 };
+
+const RECENT_HAZARD_WINDOW_HOURS = 24;
+
+const HAZARD_SEVERITY_LABEL: Record<string, string> = {
+    low: "Thấp",
+    medium: "Trung bình",
+    high: "Cao",
+    critical: "Nghiêm trọng",
+};
+
+const HAZARD_SEVERITY_BADGE: Record<string, string> = {
+    low: "bg-green-100 text-green-700",
+    medium: "bg-amber-100 text-amber-700",
+    high: "bg-red-100 text-red-700",
+    critical: "bg-purple-100 text-purple-700",
+};
+
+const HAZARD_EVENT_LABEL: Record<string, string> = {
+    flood: "Lũ lụt",
+    storm: "Bão",
+    landslide: "Sạt lở",
+    fire: "Cháy",
+    earthquake: "Động đất",
+    outage: "Mất điện",
+    pollution: "Ô nhiễm",
+    drought: "Hạn hán",
+    traffic: "Giao thông",
+    epidemic: "Dịch bệnh",
+    infrastructure_failure: "Sự cố hạ tầng",
+    other: "Khác",
+};
+
+const HAZARD_SOURCE_LABEL: Record<string, string> = {
+    manual: "Nội bộ",
+    iot: "IoT",
+    vndms: "VNDMS",
+    nchmf: "NCHMF",
+    other: "Khác",
+};
+
+function formatHazardTime(hazard: Hazard): string {
+    const timestampMs = getHazardTimestampMs(hazard);
+    if (timestampMs === null) {
+        return "Không rõ thời gian";
+    }
+
+    return new Date(timestampMs).toLocaleString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+    });
+}
+
+function formatHazardLocation(hazard: Hazard): string {
+    const parts = [hazard.ward, hazard.district].filter(
+        (part): part is string => typeof part === "string" && part.trim().length > 0
+    );
+    if (parts.length === 0) {
+        return "Không rõ vị trí";
+    }
+    return parts.join(", ");
+}
+
+function canFocusHazardOnMap(hazard: Hazard): boolean {
+    return (
+        hazard.geometry?.type === "Point" &&
+        Array.isArray(hazard.geometry.coordinates) &&
+        hazard.geometry.coordinates.length >= 2 &&
+        typeof hazard.geometry.coordinates[0] === "number" &&
+        typeof hazard.geometry.coordinates[1] === "number"
+    );
+}
 
 const PublicMap: React.FC = () => {
     const navigate = useNavigate();
@@ -45,6 +132,34 @@ const PublicMap: React.FC = () => {
     const [showReportModal, setShowReportModal] = useState(false);
     const [openChatbot, setOpenChatbot] = useState(false);
     const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(null);
+
+    // Hazard layer state
+    const [showHazardLayer, setShowHazardLayer] = useState(false);
+    const [leafletMap, setLeafletMap] = useState<L.Map | null>(null);
+    const [focusedHazardId, setFocusedHazardId] = useState<string | null>(null);
+    const [hazardFocusNonce, setHazardFocusNonce] = useState(0);
+    // Our own stored hazards (e.g. manual / IoT-based)
+    const { data: hazards = [] } = useQuery({
+        queryKey: ["hazards", "active"],
+        queryFn: () => hazardsApi.list({ is_active: true }),
+        staleTime: 60 * 1000,
+        enabled: showHazardLayer,
+    });
+    const {
+        data: recentHazards = [],
+        isLoading: isRecentHazardsLoading,
+    } = useQuery({
+        queryKey: ["hazards", "recent", RECENT_HAZARD_WINDOW_HOURS],
+        queryFn: () => hazardsApi.listRecent({
+            hours: RECENT_HAZARD_WINDOW_HOURS,
+            is_active: true,
+            limit: 200,
+        }),
+        staleTime: 60 * 1000,
+        refetchInterval: 2 * 60 * 1000,
+    });
+    // Live VNDMS national-scale hazards (realtime weather + disaster)
+    const { data: vndmsHazards = [] } = useVndmsHazards(showHazardLayer);
 
     // Use filtered assets if available, otherwise use live IoT assets
     const displayAssets = useMemo(() => {
@@ -84,6 +199,21 @@ const PublicMap: React.FC = () => {
         setSelectedAsset(null);
         // Update URL without causing re-render
         window.history.replaceState({}, "", window.location.pathname);
+    };
+
+    const handleFocusHazard = (hazard: Hazard) => {
+        if (!leafletMap || !canFocusHazardOnMap(hazard)) {
+            return;
+        }
+
+        const [lng, lat] = hazard.geometry.coordinates as number[];
+        setShowHazardLayer(true);
+        setFocusedHazardId(hazard.id);
+        setHazardFocusNonce((value) => value + 1);
+        leafletMap.flyTo([lat, lng], Math.max(leafletMap.getZoom(), 13), {
+            animate: true,
+            duration: 1.1,
+        });
     };
 
     if (isLoading)
@@ -140,7 +270,173 @@ const PublicMap: React.FC = () => {
                         selectedAsset={selectedAsset}
                         className="h-full w-full"
                         enableGeoSearches={true}
+                        onMapReady={setLeafletMap}
                     />
+                    {/* Hazard layer overlay */}
+                    {showHazardLayer && leafletMap && hazards.length > 0 && (
+                        <HazardMarkersLayer
+                            map={leafletMap}
+                            hazards={hazards}
+                            focusedHazardId={focusedHazardId}
+                            focusNonce={hazardFocusNonce}
+                        />
+                    )}
+                    {showHazardLayer && leafletMap && vndmsHazards.length > 0 && (
+                        <VndmsHazardLayer map={leafletMap} hazards={vndmsHazards} />
+                    )}
+                    {/* Hazard legend */}
+                    {showHazardLayer && (
+                        <div className="absolute bottom-44 left-4 z-[1000] sm:bottom-36">
+                            <VndmsLegend />
+                        </div>
+                    )}
+                    {/* Hazard layer toggle button */}
+                    <button
+                        onClick={() => setShowHazardLayer((v) => !v)}
+                        title={showHazardLayer ? "Ẩn lớp thiên tai" : "Hiện lớp thiên tai"}
+                        className={`absolute bottom-44 left-4 z-[1000] flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg border text-sm font-medium transition-colors sm:bottom-36 ${
+                            showHazardLayer
+                                ? "bg-red-600 border-red-700 text-white hover:bg-red-700"
+                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                        }`}
+                    >
+                        <Layers size={16} />
+                        <span>Thiên tai</span>
+                        {showHazardLayer && (hazards.length + vndmsHazards.length) > 0 && (
+                            <span className="bg-white text-red-600 text-xs font-bold rounded-full px-1.5 py-0.5 leading-none">
+                                {hazards.length + vndmsHazards.length}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Recent hazards bottom panel */}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] px-3 pb-3 sm:px-4 sm:pb-4">
+                        <section className="pointer-events-auto rounded-xl border border-slate-200 bg-white/95 shadow-xl backdrop-blur supports-[backdrop-filter]:bg-white/80">
+                            <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2 sm:px-4">
+                                <div className="flex items-center gap-2">
+                                    <AlertTriangle size={14} className="text-amber-600" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-800">
+                                            Thiên tai 24h gần nhất
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {recentHazards.length} sự kiện
+                                        </p>
+                                    </div>
+                                </div>
+                                {isRecentHazardsLoading && (
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+                                )}
+                            </div>
+
+                            <div className="px-2 pb-2 pt-2 sm:px-3">
+                                {isRecentHazardsLoading ? (
+                                    <p className="px-2 py-3 text-xs text-slate-500">
+                                        Đang tải dữ liệu thiên tai...
+                                    </p>
+                                ) : recentHazards.length === 0 ? (
+                                    <p className="px-2 py-3 text-xs text-slate-500">
+                                        Không có sự kiện thiên tai nào trong 24 giờ qua.
+                                    </p>
+                                ) : (
+                                    <ul className="flex gap-2 overflow-x-auto pb-1">
+                                        {recentHazards.map((hazard) => {
+                                            const severityClass =
+                                                HAZARD_SEVERITY_BADGE[
+                                                    hazard.severity
+                                                ] ?? "bg-slate-100 text-slate-700";
+                                            const severityLabel =
+                                                HAZARD_SEVERITY_LABEL[
+                                                    hazard.severity
+                                                ] ?? hazard.severity;
+                                            const typeLabel =
+                                                HAZARD_EVENT_LABEL[
+                                                    hazard.event_type
+                                                ] ?? hazard.event_type;
+                                            const sourceLabel =
+                                                HAZARD_SOURCE_LABEL[
+                                                    hazard.source
+                                                ] ?? hazard.source;
+                                            const canFocus =
+                                                canFocusHazardOnMap(hazard);
+                                            const isFocused =
+                                                focusedHazardId === hazard.id;
+
+                                            return (
+                                                <li
+                                                    key={hazard.id}
+                                                    className="max-w-[280px] min-w-[220px] sm:min-w-[250px]"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        disabled={!canFocus}
+                                                        onClick={() =>
+                                                            handleFocusHazard(
+                                                                hazard
+                                                            )
+                                                        }
+                                                        className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+                                                            isFocused
+                                                                ? "border-blue-400 bg-blue-50"
+                                                                : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/40"
+                                                        } ${
+                                                            canFocus
+                                                                ? "cursor-pointer"
+                                                                : "cursor-not-allowed opacity-70"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span
+                                                                className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${severityClass}`}
+                                                            >
+                                                                {severityLabel}
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                                                                <Clock3
+                                                                    size={11}
+                                                                />
+                                                                {formatHazardTime(
+                                                                    hazard
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                                                            {hazard.title ||
+                                                                "Cảnh báo thiên tai"}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {typeLabel}
+                                                        </p>
+                                                        <p className="mt-1 truncate text-xs text-slate-600">
+                                                            {formatHazardLocation(
+                                                                hazard
+                                                            )}
+                                                            {" - "}
+                                                            {sourceLabel}
+                                                        </p>
+                                                        <p
+                                                            className={`mt-1 inline-flex items-center gap-1 text-[11px] font-medium ${
+                                                                canFocus
+                                                                    ? "text-blue-600"
+                                                                    : "text-slate-400"
+                                                            }`}
+                                                        >
+                                                            <MapPin
+                                                                size={11}
+                                                            />
+                                                            {canFocus
+                                                                ? "Xem vị trí trên bản đồ"
+                                                                : "Chưa có tọa độ điểm"}
+                                                        </p>
+                                                    </button>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
+                        </section>
+                    </div>
                 </div>
 
                 {/* Asset Info Modal */}

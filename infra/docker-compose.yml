@@ -8,6 +8,7 @@ services:
       - mongo_data:/data/db
     networks:
       - app_network
+    restart: unless-stopped
 
   mongo-express:
     image: mongo-express:latest
@@ -37,6 +38,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
 
   # ==================== Kafka for IoT ====================
   zookeeper:
@@ -49,6 +51,7 @@ services:
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
       - zookeeper_log:/var/lib/zookeeper/log
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -68,6 +71,7 @@ services:
       - app_network
     volumes:
       - kafka_data:/var/lib/kafka/data
+    restart: unless-stopped
 
   # IoT Producer - receives HTTP from ESP8266, publishes to Kafka
   # Also bridges MQTT messages to Kafka
@@ -90,6 +94,7 @@ services:
       - kafka
     networks:
       - app_network
+    restart: unless-stopped
 
   # IoT Consumer - consumes from Kafka, stores in MongoDB
   iot-consumer:
@@ -106,10 +111,21 @@ services:
       - kafka
     networks:
       - app_network
+    restart: unless-stopped
 
   backend:
     env_file: .env
     build: ../backend
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
     ports:
       - "${BACKEND_PORT}:8000"
     environment:
@@ -132,6 +148,7 @@ services:
       - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
     networks:
       - app_network
+    restart: unless-stopped
 
   celery-worker:
     env_file: .env
@@ -163,6 +180,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - app_network
+    restart: unless-stopped
 
   celery-beat:
     env_file: .env
@@ -182,6 +200,7 @@ services:
       - ../3rd_party:/app/3rd_party
     networks:
       - app_network
+    restart: unless-stopped
 
   frontend:
     env_file: .env

@@ -27,7 +27,8 @@ This checklist is for validating SOSConn integration readiness on OpenInfra.
 
 ## Scheduled Ingestion
 
-- [ ] Celery beat schedules `ingest_nchmf_data`, `ingest_vndms_data`, and `ingest_hazard_feeds`.
+- [ ] Celery beat schedules `crawl-and-update-hazard-feeds` (15-minute cadence).
+- [ ] Legacy/manual tasks `ingest_nchmf_data`, `ingest_vndms_data`, and `ingest_hazard_feeds` remain callable and route through the shared crawl/update runner.
 - [ ] Celery logs do not show repeated ingest failures.
 - [ ] Hazard ingestion produces non-zero records in normal operation.
 

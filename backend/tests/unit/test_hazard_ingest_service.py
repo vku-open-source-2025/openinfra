@@ -84,6 +84,48 @@ async def test_ingest_status_reports_invalid_url_when_present_but_malformed(monk
 
 
 @pytest.mark.asyncio
+async def test_ingest_status_marks_non_http_url_as_invalid_without_probing(monkeypatch):
+    """Non-http URLs should be rejected as invalid before any HTTP probe."""
+    monkeypatch.setenv("NCHMF_FEED_URL", "ftp://nchmf.example.com/feed")
+    monkeypatch.setenv("VNDMS_FEED_URL", "https://vndms.example.com/feed")
+    calls = []
+
+    class ProbeCaptureAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def head(self, url):
+            calls.append(("HEAD", url))
+            return _FakeResponse(200)
+
+        async def get(self, url):
+            calls.append(("GET", url))
+            return _FakeResponse(200)
+
+    monkeypatch.setattr("app.services.hazard_ingest_service.httpx.AsyncClient", ProbeCaptureAsyncClient)
+
+    service = HazardIngestService()
+    status = await service.get_ingest_status(check_reachability=True)
+
+    assert status["feeds"]["nchmf"]["url_present"] is True
+    assert status["feeds"]["nchmf"]["configured"] is False
+    assert status["feeds"]["nchmf"]["last_check"]["status"] == "invalid_url"
+    assert status["feeds"]["nchmf"]["last_check"]["checked"] is False
+    assert "http/https" in status["feeds"]["nchmf"]["last_check"]["error"]
+
+    assert status["feeds"]["vndms"]["configured"] is True
+    assert status["feeds"]["vndms"]["last_check"]["status"] == "reachable"
+    assert calls == [("HEAD", "https://vndms.example.com/feed")]
+    assert status["overall"]["status"] == "degraded"
+
+
+@pytest.mark.asyncio
 async def test_ingest_status_reachability_true_reports_ready(monkeypatch):
     """Reachability checks should mark service ready when both feeds are reachable."""
     monkeypatch.setenv("NCHMF_FEED_URL", "https://nchmf.example.com/feed")
@@ -119,6 +161,45 @@ async def test_ingest_status_reachability_true_reports_ready(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ingest_status_not_checked_does_not_report_ready_from_cached_reachability(monkeypatch):
+    """Cached probe results must not mark readiness when checks are disabled."""
+    monkeypatch.setenv("NCHMF_FEED_URL", "https://nchmf.example.com/feed")
+    monkeypatch.setenv("VNDMS_FEED_URL", "https://vndms.example.com/feed")
+
+    class ReachableAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def head(self, url):
+            return _FakeResponse(200)
+
+        async def get(self, url):
+            return _FakeResponse(200)
+
+    monkeypatch.setattr("app.services.hazard_ingest_service.httpx.AsyncClient", ReachableAsyncClient)
+
+    service = HazardIngestService()
+
+    checked_status = await service.get_ingest_status(check_reachability=True)
+    assert checked_status["overall"]["status"] == "ready"
+    assert checked_status["overall"]["ready"] is True
+
+    skipped_status = await service.get_ingest_status(check_reachability=False)
+
+    assert skipped_status["feeds"]["nchmf"]["last_check"]["checked"] is True
+    assert skipped_status["feeds"]["vndms"]["last_check"]["checked"] is True
+    assert skipped_status["overall"]["reachability_checked"] is False
+    assert skipped_status["overall"]["status"] == "configured"
+    assert skipped_status["overall"]["ready"] is False
+
+
+@pytest.mark.asyncio
 async def test_timeout_override_is_applied_to_reachability_checks(monkeypatch):
     """Request timeout override should be used for all feed probes."""
     monkeypatch.setenv("NCHMF_FEED_URL", "https://nchmf.example.com/feed")
@@ -149,6 +230,41 @@ async def test_timeout_override_is_applied_to_reachability_checks(monkeypatch):
     assert captured_timeouts == [3.5, 3.5]
     assert status["feeds"]["nchmf"]["last_check"]["timeout_seconds"] == 3.5
     assert status["feeds"]["vndms"]["last_check"]["timeout_seconds"] == 3.5
+
+
+@pytest.mark.asyncio
+async def test_invalid_timeout_env_falls_back_to_default_timeout(monkeypatch):
+    """Invalid timeout from env should fall back to default 20 seconds."""
+    monkeypatch.setenv("NCHMF_FEED_URL", "https://nchmf.example.com/feed")
+    monkeypatch.setenv("VNDMS_FEED_URL", "https://vndms.example.com/feed")
+    monkeypatch.setenv("HAZARD_FEED_TIMEOUT", "not-a-number")
+    captured_timeouts = []
+
+    class TimeoutCaptureAsyncClient:
+        def __init__(self, *args, **kwargs):
+            captured_timeouts.append(kwargs.get("timeout"))
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def head(self, url):
+            return _FakeResponse(200)
+
+        async def get(self, url):
+            return _FakeResponse(200)
+
+    monkeypatch.setattr("app.services.hazard_ingest_service.httpx.AsyncClient", TimeoutCaptureAsyncClient)
+
+    service = HazardIngestService()
+    status = await service.get_ingest_status(check_reachability=True)
+
+    assert service.feed_timeout_seconds == 20.0
+    assert captured_timeouts == [20.0, 20.0]
+    assert status["feeds"]["nchmf"]["last_check"]["timeout_seconds"] == 20.0
+    assert status["feeds"]["vndms"]["last_check"]["timeout_seconds"] == 20.0
 
 
 @pytest.mark.asyncio

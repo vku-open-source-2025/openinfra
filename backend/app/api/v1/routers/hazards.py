@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -70,6 +71,124 @@ class HazardIngestStatusResponse(BaseModel):
     overall: OverallIngestStatus
 
 
+class RecentHazardItem(BaseModel):
+    """Compact hazard payload for recent-disaster list rendering."""
+
+    id: str
+    title: str
+    name: str
+    severity: str
+    level: Optional[float] = None
+    source: str
+    occurred_at: datetime
+    published_at: Optional[datetime] = None
+    location_summary: Optional[str] = None
+    coordinates: Optional[List[float]] = None
+
+
+def _parse_optional_datetime(value: Any) -> Optional[datetime]:
+    """Parse optional datetime values from metadata fields."""
+    if isinstance(value, datetime):
+        return value
+
+    if isinstance(value, str) and value.strip():
+        try:
+            return datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    return None
+
+
+def _extract_coordinates(geometry: Optional[Dict[str, Any]]) -> Optional[List[float]]:
+    """Extract point coordinates [lng, lat] when available."""
+    if not isinstance(geometry, dict):
+        return None
+
+    geometry_type = str(geometry.get("type") or "").lower()
+    raw_coordinates = geometry.get("coordinates")
+    if geometry_type != "point" or not isinstance(raw_coordinates, list) or len(raw_coordinates) < 2:
+        return None
+
+    try:
+        return [float(raw_coordinates[0]), float(raw_coordinates[1])]
+    except (TypeError, ValueError):
+        return None
+
+
+def _extract_location_summary(hazard: HazardLayer) -> Optional[str]:
+    """Build location summary from explicit fields first, then metadata."""
+    location_parts = [
+        part.strip()
+        for part in [hazard.ward, hazard.district]
+        if isinstance(part, str) and part.strip()
+    ]
+    if location_parts:
+        return ", ".join(location_parts)
+
+    metadata = hazard.metadata if isinstance(hazard.metadata, dict) else {}
+
+    for key in ("location_summary", "location_name", "address", "area"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    location = metadata.get("location")
+    if isinstance(location, dict):
+        for key in ("name", "address", "district", "ward"):
+            value = location.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+
+    return None
+
+
+def _extract_level(hazard: HazardLayer) -> Optional[float]:
+    """Extract hazard level from intensity or metadata hints."""
+    if hazard.intensity_level is not None:
+        return float(hazard.intensity_level)
+
+    metadata = hazard.metadata if isinstance(hazard.metadata, dict) else {}
+    for key in ("level", "warning_level", "intensity"):
+        value = metadata.get(key)
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str) and value.strip():
+            try:
+                return float(value)
+            except ValueError:
+                continue
+
+    return None
+
+
+def _to_recent_hazard_item(hazard: HazardLayer) -> RecentHazardItem:
+    """Map hazard entity to compact recent list payload."""
+    metadata = hazard.metadata if isinstance(hazard.metadata, dict) else {}
+    hazard_id = str(hazard.id or hazard.hazard_id)
+    published_at = None
+    for key in ("published_at", "issued_at", "timestamp"):
+        published_at = _parse_optional_datetime(metadata.get(key))
+        if published_at is not None:
+            break
+
+    severity = hazard.severity.value if hasattr(hazard.severity, "value") else str(hazard.severity)
+    source = hazard.source.value if hasattr(hazard.source, "value") else str(hazard.source)
+
+    return RecentHazardItem(
+        id=hazard_id,
+        title=hazard.title,
+        name=hazard.title,
+        severity=severity,
+        level=_extract_level(hazard),
+        source=source,
+        occurred_at=hazard.detected_at,
+        published_at=published_at,
+        location_summary=_extract_location_summary(hazard),
+        coordinates=_extract_coordinates(hazard.geometry),
+    )
+
+
 def _ensure_operator(user: User):
     """Allow only admin and technician users for write operations."""
     if user.role not in {UserRole.ADMIN, UserRole.TECHNICIAN}:
@@ -102,6 +221,22 @@ async def list_hazards(
         district=district,
         ward=ward,
     )
+
+
+@router.get("/recent", response_model=List[RecentHazardItem])
+async def list_recent_hazards(
+    hours: int = Query(default=24, ge=1, le=168),
+    limit: int = Query(default=50, ge=1, le=200),
+    active_only: bool = Query(default=True),
+    service: HazardLayerService = Depends(get_hazard_layer_service),
+):
+    """List hazards from a recent configurable time window (default: 24h)."""
+    hazards = await service.list_recent_hazards(
+        window_hours=hours,
+        limit=limit,
+        active_only=active_only,
+    )
+    return [_to_recent_hazard_item(hazard) for hazard in hazards]
 
 
 @router.get("/geo/near", response_model=List[HazardLayer])
