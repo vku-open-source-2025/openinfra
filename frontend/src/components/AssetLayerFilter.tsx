@@ -43,7 +43,7 @@ interface AssetLayerFilterProps {
 
 const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterChange }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set());
+    const [selectedLayers, setSelectedLayers] = useState<Set<string> | null>(null);
 
     // Get all unique feature codes from assets
     const availableFeatureCodes = useMemo(() => {
@@ -56,29 +56,28 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
         return Array.from(codes).sort();
     }, [assets]);
 
-    // Initialize with all layers selected
-    useEffect(() => {
-        if (selectedLayers.size === 0 && availableFeatureCodes.length > 0) {
-            setSelectedLayers(new Set(availableFeatureCodes));
-        }
-    }, [availableFeatureCodes, selectedLayers.size]);
+    const effectiveSelectedLayers = useMemo(
+        () => selectedLayers ?? new Set(availableFeatureCodes),
+        [selectedLayers, availableFeatureCodes]
+    );
 
     // Filter assets based on selected layers
     useEffect(() => {
-        if (selectedLayers.size === 0) {
+        if (effectiveSelectedLayers.size === 0) {
             onFilterChange([]);
             return;
         }
 
         const filtered = assets.filter(asset =>
-            selectedLayers.has(asset.feature_code)
+            effectiveSelectedLayers.has(asset.feature_code)
         );
         onFilterChange(filtered);
-    }, [selectedLayers, assets, onFilterChange]);
+    }, [effectiveSelectedLayers, assets, onFilterChange]);
 
     const toggleLayer = (featureCode: string) => {
         setSelectedLayers(prev => {
-            const newSet = new Set(prev);
+            const baseSet = prev ?? new Set(availableFeatureCodes);
+            const newSet = new Set(baseSet);
             if (newSet.has(featureCode)) {
                 newSet.delete(featureCode);
             } else {
@@ -111,9 +110,9 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
                 <span className="text-sm font-medium text-slate-700 hidden sm:inline">
                     Lớp dữ liệu
                 </span>
-                {selectedLayers.size < availableFeatureCodes.length && (
+                {effectiveSelectedLayers.size < availableFeatureCodes.length && (
                     <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">
-                        {selectedLayers.size}/{availableFeatureCodes.length}
+                        {effectiveSelectedLayers.size}/{availableFeatureCodes.length}
                     </span>
                 )}
             </button>
@@ -159,7 +158,7 @@ const AssetLayerFilter: React.FC<AssetLayerFilterProps> = ({ assets, onFilterCha
                                     const IconComponent = featureCodeIcons[featureCode] || Activity;
                                     const color = featureCodeColors[featureCode] || '#94a3b8';
                                     const label = featureCodeLabels[featureCode] || featureCode;
-                                    const isSelected = selectedLayers.has(featureCode);
+                                    const isSelected = effectiveSelectedLayers.has(featureCode);
                                     const count = getAssetCount(featureCode);
 
                                     return (

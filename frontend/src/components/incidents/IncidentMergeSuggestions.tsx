@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { incidentsApi } from "../../api/incidents"
+import type { MergeSuggestion } from "../../api/incidents"
 import { Button } from "../ui/button"
 import { Badge } from "../ui/badge"
 import { Skeleton } from "../ui/skeleton"
@@ -62,7 +63,7 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
     )
   }
 
-  const pendingSuggestions = suggestions?.filter((s: any) => s.status === "pending") || []
+  const pendingSuggestions = suggestions?.filter((s: MergeSuggestion) => s.status === "pending") ?? []
 
   if (!canManage || pendingSuggestions.length === 0) {
     return null
@@ -86,7 +87,7 @@ export const IncidentMergeSuggestions: React.FC<IncidentMergeSuggestionsProps> =
         </Button>
       </div>
 
-      {pendingSuggestions.map((suggestion: any) => {
+      {pendingSuggestions.map((suggestion) => {
         const similarity = Math.round(suggestion.similarity_score * 100)
         const isRecurrence = suggestion.match_reasons?.includes("possible_recurrence")
         

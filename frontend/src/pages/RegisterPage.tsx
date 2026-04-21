@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from '@tanstack/react-router';
+import { isAxiosError } from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { authApi } from '../api/auth';
 import { Button } from '../components/ui/button';
@@ -29,8 +30,12 @@ export function RegisterPage() {
       const response = await authApi.register(formData);
       login(response.access_token, response.refresh_token, response.user);
       navigate({ to: '/admin' });
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
+    } catch (err: unknown) {
+      if (isAxiosError<{ detail?: string }>(err)) {
+        setError(err.response?.data?.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
+      } else {
+        setError('Đăng ký thất bại. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }

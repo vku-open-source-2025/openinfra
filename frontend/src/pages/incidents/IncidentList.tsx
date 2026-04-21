@@ -10,6 +10,7 @@ import { Skeleton } from "../../components/ui/skeleton";
 import { Button } from "../../components/ui/button";
 import { Plus, AlertTriangle } from "lucide-react";
 import type { Incident } from "../../types/incident";
+import type { IncidentListParams } from "../../api/incidents";
 
 type MainTab = "all" | "spam_risk" | "useful" | "duplicates";
 
@@ -29,7 +30,7 @@ const IncidentList: React.FC = () => {
 
     // Build query params based on selected tabs
     const getQueryParams = () => {
-        const params: any = {
+        const params: IncidentListParams = {
             skip: 0,
             limit: fetchLimit,
             severity: severity || undefined,
@@ -164,8 +165,8 @@ const IncidentList: React.FC = () => {
                             title: `Ticket chính #${primaryId.slice(-8)}`,
                             description: "Ticket này có thể đã bị xóa hoặc không có trong danh sách hiện tại",
                             severity: duplicate.severity,
-                            status: "resolved" as any,
-                            reporter_type: "citizen" as any,
+                            status: "resolved",
+                            reporter_type: "citizen",
                             upvotes: 0,
                             comments: [],
                             created_at: duplicate.created_at,

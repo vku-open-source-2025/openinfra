@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useSensorData } from '../hooks/useIoT';
 import type { IoTAlert } from '../hooks/useIoT';
 
@@ -175,10 +175,9 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
     const [selectedMetric] = useState<string>('water_level');
 
     // Process readings for chart - handle both new and legacy formats
-    const chartData = useMemo(() => {
-        if (!data?.readings || data.readings.length === 0) return [];
-        
-        return data.readings
+    const chartData = !data?.readings || data.readings.length === 0
+        ? []
+        : data.readings
             .filter(r => {
                 // Check for value in new format or readings object in legacy format
                 if (r.value !== undefined && r.value !== null) return true;
@@ -192,16 +191,12 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
                 // Prefer direct value, fallback to readings object
                 value: r.value ?? r.readings?.[selectedMetric] ?? r.readings?.water_level ?? 0
             }));
-    }, [data?.readings, selectedMetric]);
 
     // Get latest reading
-    const latestReading = useMemo(() => {
-        if (!data?.readings?.length) return null;
-        return data.readings[0];
-    }, [data?.readings]);
+    const latestReading = data?.readings?.length ? data.readings[0] : null;
 
     // Get thresholds from sensor - handle both formats
-    const thresholds = useMemo(() => {
+    const thresholds = (() => {
         if (!data?.sensors?.length) return undefined;
         const sensor = data.sensors[0];
         // New format
@@ -216,10 +211,10 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
             return sensor.config.thresholds;
         }
         return undefined;
-    }, [data?.sensors]);
+    })();
 
     // Get sensor info
-    const sensorInfo = useMemo(() => {
+    const sensorInfo = (() => {
         if (!data?.sensors?.length) return null;
         const sensor = data.sensors[0];
         return {
@@ -228,7 +223,7 @@ export default function IoTSensorChart({ assetId, assetName }: IoTSensorChartPro
             unit: sensor.measurement_unit || 'm',
             status: sensor.status
         };
-    }, [data?.sensors]);
+    })();
 
     // Determine status based on thresholds
     const getValueStatus = (value: number | undefined | null): 'normal' | 'warning' | 'critical' => {

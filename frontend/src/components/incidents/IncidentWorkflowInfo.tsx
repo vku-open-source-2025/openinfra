@@ -3,13 +3,10 @@ import { Button } from "../ui/button";
 import {
     X,
     HelpCircle,
-    ArrowRight,
     CheckCircle,
     AlertTriangle,
     XCircle,
     Archive,
-    Clock,
-    User,
     Wrench,
     ShieldCheck,
 } from "lucide-react";
@@ -103,10 +100,6 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
     // If rejected, show rejected status instead of normal workflow
     const displayStatus = isRejected ? 'rejected' : currentStatus;
 
-    const currentStepIndex = workflowSteps.findIndex(
-        (s) => s.status === displayStatus
-    );
-
     return (
         <>
             <Button
@@ -164,8 +157,6 @@ export const IncidentWorkflowInfo: React.FC<IncidentWorkflowInfoProps> = ({
                                         step.status === displayStatus;
                                     const currentFilteredIndex = filteredSteps.findIndex(s => s.status === displayStatus);
                                     const isPastStep = index < currentFilteredIndex;
-                                    const isFutureStep =
-                                        index > currentFilteredIndex;
 
                                     return (
                                         <div

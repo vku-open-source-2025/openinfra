@@ -30,11 +30,6 @@ describe('Incidents Module', () => {
       return;
     }
 
-    // Look for filter controls
-    const filters = screen.queryByText(/filter|status|priority/i) ||
-                    document.querySelector('select') ||
-                    screen.queryByRole('button', { name: /filter/i });
-
     // Filters may or may not be visible
     // Just check that page loaded
     await waitFor(() => {
@@ -63,14 +58,14 @@ describe('Incidents Module', () => {
     await waitFor(() => document.body, { timeout: 5000 });
 
     // Check for report form elements
-    const form = await waitFor(() => {
+    await waitFor(() => {
       const f = document.querySelector('form');
       expect(f).toBeTruthy();
       return f;
     }, { timeout: 5000 });
 
     // Check for required fields - look for textarea directly (more reliable)
-    const descriptionField = await waitFor(() => {
+    await waitFor(() => {
       const field = document.querySelector('textarea[placeholder*="details"]') ||
                     document.querySelector('textarea');
       expect(field).toBeTruthy();

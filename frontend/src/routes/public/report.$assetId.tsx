@@ -6,8 +6,9 @@ import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
 import { Turnstile } from '../../components/Turnstile';
+import type { IncidentCategory, IncidentSeverity } from '../../types/incident';
 
-import { Loader2, Camera, Upload } from 'lucide-react';
+import { Loader2, Camera } from 'lucide-react';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
@@ -24,7 +25,14 @@ function ReportIncidentPage() {
     const [photos, setPhotos] = useState<File[]>([]);
     const [turnstileToken, setTurnstileToken] = useState<string>("");
     const [captchaError, setCaptchaError] = useState<string>("");
-    const [incidentData, setIncidentData] = useState({
+    const [incidentData, setIncidentData] = useState<{
+        title: string;
+        description: string;
+        severity: IncidentSeverity;
+        category: IncidentCategory;
+        reporter_name: string;
+        reporter_contact: string;
+    }>({
         title: 'Báo cáo sự cố',
         description: '',
         severity: 'medium',
@@ -69,7 +77,8 @@ function ReportIncidentPage() {
             const incident = await publicApi.createAnonymousIncident({
                 title: incidentData.title,
                 description: `${incidentData.description}\n\nReporter: ${incidentData.reporter_name} (${incidentData.reporter_contact})`,
-                severity: incidentData.severity as any,
+                severity: incidentData.severity,
+                category: incidentData.category,
                 asset_id: assetId,
                 location: asset?.location ? {
                     address: asset.location.address,
@@ -115,7 +124,12 @@ function ReportIncidentPage() {
                         id="category"
                         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
                         value={incidentData.category}
-                        onChange={(e) => setIncidentData(prev => ({ ...prev, category: e.target.value }))}
+                        onChange={(e) =>
+                            setIncidentData((prev) => ({
+                                ...prev,
+                                category: e.target.value as IncidentCategory,
+                            }))
+                        }
                     >
                         <option value="" disabled>Chọn loại sự cố</option>
                         <option value="malfunction">Không hoạt động / Hỏng</option>

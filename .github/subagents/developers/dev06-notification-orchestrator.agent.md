@@ -14,7 +14,6 @@ Triển khai cảnh báo đa kênh App/SMS/Email cho SOSConn với cơ chế fal
 - `backend/app/api/v1/routers/notifications.py`
 - `backend/app/infrastructure/notifications/`
 - `frontend/src/api/notifications.ts`
-- `3rd_party/sosconn/notification_service/` (nếu tích hợp)
 
 ## Responsibilities
 

@@ -11,7 +11,6 @@ import { Pagination } from "../../components/ui/pagination"
 import { Skeleton } from "../../components/ui/skeleton"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import { useAuthStore } from "../../stores/authStore"
-import type { UserRole, UserStatus } from "../../types/user"
 
 const UserList: React.FC = () => {
   const navigate = useNavigate()

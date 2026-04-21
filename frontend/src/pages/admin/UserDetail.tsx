@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useParams, useNavigate } from "@tanstack/react-router"
 import { usersApi } from "../../api/users"
@@ -34,29 +34,25 @@ const UserDetail: React.FC = () => {
   const [formData, setFormData] = useState<Partial<UserUpdateRequest>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        email: user.email,
-        full_name: user.full_name,
-        phone: user.phone,
-        role: user.role,
-        status: user.status,
-        department: user.department,
-      })
-    }
-  }, [user])
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
 
-    if (!formData.email?.trim()) {
+    const payload: UserUpdateRequest = {
+      email: formData.email ?? user?.email,
+      full_name: formData.full_name ?? user?.full_name,
+      phone: formData.phone ?? user?.phone,
+      role: formData.role ?? user?.role,
+      status: formData.status ?? user?.status,
+      department: formData.department ?? user?.department,
+    }
+
+    if (!payload.email?.trim()) {
       setErrors({ email: "Email là bắt buộc" })
       return
     }
 
-    updateMutation.mutate(formData as UserUpdateRequest)
+    updateMutation.mutate(payload)
   }
 
   if (currentUser?.role !== "admin") {
@@ -105,7 +101,7 @@ const UserDetail: React.FC = () => {
               <FormLabel required>Email</FormLabel>
               <Input
                 type="email"
-                value={formData.email || ""}
+                value={formData.email ?? user.email ?? ""}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
               {errors.email && <FormError>{errors.email}</FormError>}
@@ -114,7 +110,7 @@ const UserDetail: React.FC = () => {
             <FormField>
               <FormLabel required>Họ tên</FormLabel>
               <Input
-                value={formData.full_name || ""}
+                value={formData.full_name ?? user.full_name ?? ""}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               />
             </FormField>
@@ -122,7 +118,7 @@ const UserDetail: React.FC = () => {
             <FormField>
               <FormLabel>Số điện thoại</FormLabel>
               <Input
-                value={formData.phone || ""}
+                value={formData.phone ?? user.phone ?? ""}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </FormField>
@@ -130,7 +126,7 @@ const UserDetail: React.FC = () => {
             <FormField>
               <FormLabel required>Vai trò</FormLabel>
               <Select
-                value={formData.role || "citizen"}
+                value={formData.role ?? user.role ?? "citizen"}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
               >
                 <option value="admin">Quản trị</option>
@@ -143,7 +139,7 @@ const UserDetail: React.FC = () => {
             <FormField>
               <FormLabel required>Trạng thái</FormLabel>
               <Select
-                value={formData.status || "active"}
+                value={formData.status ?? user.status ?? "active"}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as UserStatus })}
               >
                 <option value="active">Đang hoạt động</option>
@@ -155,7 +151,7 @@ const UserDetail: React.FC = () => {
             <FormField>
               <FormLabel>Phòng ban</FormLabel>
               <Input
-                value={formData.department || ""}
+                value={formData.department ?? user.department ?? ""}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
               />
             </FormField>

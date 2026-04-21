@@ -2,9 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { assetsApi } from "../../api/assets";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Skeleton } from "../ui/skeleton";
-import { Download, FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, FileSpreadsheet } from "lucide-react";
 import { ReportGenerator } from "./ReportGenerator";
 
 interface AssetReportsTabProps {

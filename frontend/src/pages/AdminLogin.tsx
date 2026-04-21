@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { loginAdmin } from "../api";
 import logo from "../assets/map.png"; // reuse existing asset as placeholder logo
@@ -24,11 +24,11 @@ const AdminLogin = () => {
             const data = await loginAdmin(username, password);
             if (data?.token) {
                 localStorage.setItem("access-token", data.token);
-                navigate("/admin", { replace: true });
+                navigate({ to: "/admin", replace: true });
             } else {
                 setAlert(true);
             }
-        } catch (e) {
+        } catch {
             setAlert(true);
         } finally {
             setLoading(false);

@@ -15,7 +15,7 @@ interface AssetDocumentsTabProps {
 
 const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
   const queryClient = useQueryClient();
-  const [showUpload, setShowUpload] = useState(false);
+  const [showUpload, setShowUpload] = useState(true);
   const [selectedDocument, setSelectedDocument] = useState<AssetAttachment | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -52,18 +52,20 @@ const AssetDocumentsTab: React.FC<AssetDocumentsTabProps> = ({ assetId }) => {
       <div className="bg-slate-50 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-900">Tải lên tài liệu</h3>
-          <Button onClick={() => setShowUpload(true)}>
+          <Button onClick={() => setShowUpload((prev) => !prev)}>
             <Upload className="h-4 w-4 mr-2" />
-            Tải tài liệu lên
+            {showUpload ? "Ẩn biểu mẫu" : "Tải tài liệu lên"}
           </Button>
         </div>
-        <DocumentUpload
-          assetId={assetId}
-          onUploadComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ["asset", "documents", assetId] });
-            setShowUpload(false);
-          }}
-        />
+        {showUpload && (
+          <DocumentUpload
+            assetId={assetId}
+            onUploadComplete={() => {
+              queryClient.invalidateQueries({ queryKey: ["asset", "documents", assetId] });
+              setShowUpload(false);
+            }}
+          />
+        )}
       </div>
 
       {/* Document List */}

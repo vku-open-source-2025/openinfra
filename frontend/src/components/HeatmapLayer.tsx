@@ -7,11 +7,24 @@ interface HeatmapLayerProps {
     points: [number, number, number][]; // lat, lng, intensity
 }
 
+type LeafletWithHeat = typeof L & {
+    heatLayer: (
+        points: [number, number, number][],
+        options: {
+            radius: number;
+            blur: number;
+            maxZoom: number;
+        }
+    ) => L.Layer;
+};
+
 const HeatmapLayer = ({ map, points }: HeatmapLayerProps) => {
     useEffect(() => {
         if (!points.length) return;
 
-        const heat = (L as any).heatLayer(points, {
+        const leafletWithHeat = L as LeafletWithHeat;
+
+        const heat = leafletWithHeat.heatLayer(points, {
             radius: 25,
             blur: 15,
             maxZoom: 10,

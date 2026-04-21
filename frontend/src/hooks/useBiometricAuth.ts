@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import type { User } from '../types/user';
 
 // Storage keys
 const BIOMETRIC_ENABLED_KEY = 'biometric_enabled';
@@ -23,8 +24,27 @@ interface StoredCredential {
   username: string;
   accessToken: string;
   refreshToken: string;
-  user: any;
+  user: User;
 }
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+};
+
+const getErrorName = (error: unknown): string | null => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    typeof (error as { name?: unknown }).name === 'string'
+  ) {
+    return (error as { name: string }).name;
+  }
+  return null;
+};
 
 export function useBiometricAuth() {
   const { login } = useAuthStore();
@@ -94,7 +114,7 @@ export function useBiometricAuth() {
     username: string,
     accessToken: string,
     refreshToken: string,
-    user: any
+    user: User
   ): Promise<boolean> => {
     if (!state.isAvailable) {
       setState(prev => ({ ...prev, error: 'Biometric not available on this device' }));
@@ -154,12 +174,12 @@ export function useBiometricAuth() {
 
       setState(prev => ({ ...prev, isLoading: false, isEnabled: true }));
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Biometric registration error:', error);
       setState(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to register biometric',
+        error: getErrorMessage(error, 'Failed to register biometric'),
       }));
       return false;
     }
@@ -210,11 +230,11 @@ export function useBiometricAuth() {
       
       setState(prev => ({ ...prev, isLoading: false }));
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Biometric authentication error:', error);
       
       // Handle user cancellation
-      if (error.name === 'NotAllowedError') {
+      if (getErrorName(error) === 'NotAllowedError') {
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -224,7 +244,7 @@ export function useBiometricAuth() {
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: error.message || 'Biometric authentication failed',
+          error: getErrorMessage(error, 'Biometric authentication failed'),
         }));
       }
       return false;

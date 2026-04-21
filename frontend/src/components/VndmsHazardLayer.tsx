@@ -1,27 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import L from 'leaflet';
-import { httpClient } from '../lib/httpClient';
+import type { VndmsHazard } from '../hooks/useVndmsHazards';
 
 // ── Types ────────────────────────────────────────────────────────────────────
-export interface VndmsHazard {
-  id: string;
-  lat: number;
-  lon: number;
-  label: string;
-  warning_type:
-    | 'water_level'
-    | 'warning_rain'
-    | 'warning_wind'
-    | 'warning_earthquake'
-    | 'warning_flood';
-  warning_level: number;
-  severity: 'low' | 'medium' | 'high';
-  value: string;
-  popupInfo: string;
-  source: string;
-}
-
 const TYPE_COLOR: Record<string, string> = {
   water_level: '#3b82f6',
   warning_rain: '#10b981',
@@ -62,20 +43,6 @@ function buildPopup(h: VndmsHazard): string {
       <div><b>Mức độ:</b> ${SEVERITY_LABEL_VI[h.severity] ?? h.severity}</div>
       ${h.popupInfo ? `<div style="margin-top:4px;color:#555;font-size:11px">${h.popupInfo}</div>` : ''}
     </div>`;
-}
-
-// ── Hook ─────────────────────────────────────────────────────────────────────
-export function useVndmsHazards(enabled = true) {
-  return useQuery({
-    queryKey: ['hazards', 'vndms-live'],
-    queryFn: async () => {
-      const resp = await httpClient.get<VndmsHazard[]>('/hazards/vndms-live');
-      return resp.data ?? [];
-    },
-    enabled,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
-  });
 }
 
 // ── Layer component ──────────────────────────────────────────────────────────

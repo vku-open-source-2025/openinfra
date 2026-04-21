@@ -248,9 +248,6 @@ const iotLinkedDataEndpoints: Endpoint[] = [
     },
 ];
 
-// Combine all endpoints for backward compatibility
-const endpoints: Endpoint[] = [...openDataEndpoints];
-
 const codeExamples = {
     curl: `curl -X GET "${API_BASE_URL}/api/opendata/assets?limit=10" \\
   -H "Accept: application/json"`,

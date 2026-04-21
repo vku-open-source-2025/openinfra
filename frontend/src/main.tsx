@@ -9,6 +9,18 @@ import { queryClient } from './lib/queryClient';
 // Import the generated route tree
 import { routeTree } from './routeTree.gen';
 
+function getRootElement() {
+  const existingRoot = document.getElementById('root');
+  if (existingRoot) {
+    return existingRoot;
+  }
+
+  const root = document.createElement('div');
+  root.id = 'root';
+  document.body.appendChild(root);
+  return root;
+}
+
 // Create a new router instance
 const router = createRouter({
   routeTree,
@@ -26,7 +38,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(getRootElement()).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />

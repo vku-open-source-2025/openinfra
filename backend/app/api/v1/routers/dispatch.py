@@ -5,12 +5,19 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
-from app.api.v1.dependencies import get_dispatch_service
+from app.api.v1.dependencies import get_dispatch_service, get_user_service
 from app.api.v1.middleware import get_current_user
-from app.domain.models.dispatch_order import DispatchOrder, DispatchOrderCreate, DispatchOrderUpdate
+from app.domain.models.dispatch_order import (
+    DispatchAssignment,
+    DispatchOrder,
+    DispatchOrderCreate,
+    DispatchOrderUpdate,
+    DispatchStatus,
+)
 from app.domain.models.user import User, UserRole
 from app.domain.services.dispatch_optimizer import optimize_dispatch_orders
 from app.domain.services.dispatch_service import DispatchService
+from app.domain.services.user_service import UserService
 from app.middleware.request_id import get_or_create_request_id, merge_request_id_metadata
 
 router = APIRouter()
@@ -151,4 +158,66 @@ async def optimize_dispatch_orders_manually(
         triggered_by=f"manual:{current_user.role.value}",
         max_orders=payload.max_orders,
         force_reestimate_eta=payload.force_reestimate_eta,
+    )
+
+
+class DispatchApproveRequest(BaseModel):
+    """Payload for approve-and-assign action."""
+
+    user_id: str = Field(min_length=1)
+    notes: Optional[str] = None
+
+
+@router.post("/{order_id}/approve", response_model=DispatchOrder)
+async def approve_dispatch_order(
+    request: Request,
+    order_id: str,
+    payload: DispatchApproveRequest,
+    current_user: User = Depends(get_current_user),
+    service: DispatchService = Depends(get_dispatch_service),
+    user_service: UserService = Depends(get_user_service),
+):
+    """Approve a pending task by assigning it to a volunteer/technician."""
+    _ensure_operator(current_user)
+    assignee = await user_service.get_user_by_id(payload.user_id)
+    if assignee.role not in {UserRole.VOLUNTEER, UserRole.TECHNICIAN, UserRole.ADMIN}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Assignee must be a volunteer, technician, or admin user",
+        )
+
+    request_id = get_or_create_request_id(request)
+    update_payload = DispatchOrderUpdate(
+        status=DispatchStatus.ASSIGNED,
+        assignments=[
+            DispatchAssignment(
+                assigned_user_id=payload.user_id,
+                role=assignee.role.value,
+                notes=payload.notes,
+            )
+        ],
+    )
+    return await service.update_order(
+        order_id,
+        update_payload,
+        updated_by=str(current_user.id),
+        request_id=request_id,
+    )
+
+
+@router.post("/{order_id}/reject", response_model=DispatchOrder)
+async def reject_dispatch_order(
+    request: Request,
+    order_id: str,
+    current_user: User = Depends(get_current_user),
+    service: DispatchService = Depends(get_dispatch_service),
+):
+    """Reject a pending task — cancels the dispatch order."""
+    _ensure_operator(current_user)
+    request_id = get_or_create_request_id(request)
+    return await service.update_order(
+        order_id,
+        DispatchOrderUpdate(status=DispatchStatus.CANCELED),
+        updated_by=str(current_user.id),
+        request_id=request_id,
     )

@@ -9,7 +9,7 @@ export interface Notification {
   read: boolean;
   read_at?: string;
   created_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface NotificationPreferences {

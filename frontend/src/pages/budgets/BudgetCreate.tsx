@@ -4,7 +4,6 @@ import { useNavigate } from "@tanstack/react-router"
 import { budgetsApi } from "../../api/budgets"
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
-import { Textarea } from "../../components/ui/textarea"
 import { Button } from "../../components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import type { BudgetCreateRequest } from "../../types/budget"
@@ -20,15 +19,20 @@ const BudgetCreate: React.FC = () => {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const getApiErrorDetail = (error: unknown): string | undefined => {
+    return (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+  }
+
   const createMutation = useMutation({
     mutationFn: (data: BudgetCreateRequest) => budgetsApi.create(data),
     onSuccess: (budget) => {
       queryClient.invalidateQueries({ queryKey: ["budgets"] })
       navigate({ to: `/admin/budgets/${budget.id}` })
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
-        setErrors({ submit: error.response.data.detail })
+    onError: (error: unknown) => {
+      const detail = getApiErrorDetail(error)
+      if (detail) {
+        setErrors({ submit: detail })
       }
     },
   })

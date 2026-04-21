@@ -13,9 +13,12 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { fetchTileConfig } from "../lib/tileConfig";
 
+type LeafletIconDefaultWithPrivate = typeof L.Icon.Default.prototype & {
+    _getIconUrl?: unknown;
+};
+
 // Disable default Leaflet marker icons to prevent showing default markers
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as LeafletIconDefaultWithPrivate)._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: undefined,
     iconUrl: undefined,
@@ -189,6 +192,8 @@ const latLngsToBounds = (
     return L.latLngBounds(points);
 };
 
+const DEFAULT_MAP_CENTER: [number, number] = [16.047079, 108.20623];
+
 const MapComponent: React.FC<MapProps> = ({
     assets,
     onAssetSelect,
@@ -199,7 +204,6 @@ const MapComponent: React.FC<MapProps> = ({
     // Not using onFilterByShape/enableGeoSearches yet - keep props for future features
 }) => {
     const [mapMode, setMapMode] = useState<"markers" | "heatmap">("markers");
-    const center: [number, number] = [16.047079, 108.20623];
     const mapRef = useRef<L.Map | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
@@ -209,6 +213,7 @@ const MapComponent: React.FC<MapProps> = ({
     const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
     const [mapZoom, setMapZoom] = useState<number>(16);
     const [filteredAssets, setFilteredAssets] = useState<Asset[]>(assets);
+    const [heatmapMap, setHeatmapMap] = useState<L.Map | null>(null);
 
     // Prepare heatmap data
     const heatmapPoints = assets
@@ -265,7 +270,7 @@ const MapComponent: React.FC<MapProps> = ({
         if (!containerRef.current || mapRef.current) return;
 
         const map = L.map(containerRef.current, {
-            center,
+            center: DEFAULT_MAP_CENTER,
             zoom: 16,
             maxZoom: 20,
             scrollWheelZoom: true,
@@ -273,6 +278,7 @@ const MapComponent: React.FC<MapProps> = ({
 
         // Add tile layer (fetched from backend)
         mapRef.current = map;
+        setHeatmapMap(map);
         fetchTileConfig().then((cfg) => {
             if (!mapRef.current) return;
             const tileLayer = L.tileLayer(cfg.tileUrl, {
@@ -307,8 +313,9 @@ const MapComponent: React.FC<MapProps> = ({
             map.off("resize", updateBounds);
             map.remove();
             mapRef.current = null;
+            setHeatmapMap(null);
         };
-    }, []);
+    }, [onMapReady]);
 
     // Handle selected asset changes - fly to or fit bounds
     useEffect(() => {
@@ -606,8 +613,8 @@ const MapComponent: React.FC<MapProps> = ({
             />
 
             {/* Heatmap Layer */}
-            {mapMode === "heatmap" && mapRef.current && (
-                <HeatmapLayer map={mapRef.current} points={heatmapPoints} />
+            {mapMode === "heatmap" && heatmapMap && (
+                <HeatmapLayer map={heatmapMap} points={heatmapPoints} />
             )}
         </div>
     );

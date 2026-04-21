@@ -87,3 +87,23 @@ export interface EmergencyEventUpdateRequest {
   ended_at?: string;
   metadata?: Record<string, unknown>;
 }
+
+export interface PublicEmergencyEvent {
+  id: string;
+  title: string;
+  event_type: EmergencyEventType;
+  severity: EmergencySeverity;
+  status: EmergencyStatus;
+  location?: {
+    address?: string | null;
+    ward?: string | null;
+    district?: string | null;
+    city?: string | null;
+  } | null;
+  geometry?: {
+    type: string;
+    coordinates: number[] | number[][] | number[][][];
+  } | null;
+  started_at?: string | null;
+  created_at?: string | null;
+}

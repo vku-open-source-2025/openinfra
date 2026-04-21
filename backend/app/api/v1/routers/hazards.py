@@ -84,6 +84,9 @@ class RecentHazardItem(BaseModel):
     published_at: Optional[datetime] = None
     location_summary: Optional[str] = None
     coordinates: Optional[List[float]] = None
+    event_type: Optional[str] = None
+    linked_event_id: Optional[str] = None
+    linked_eop_plan_id: Optional[str] = None
 
 
 def _parse_optional_datetime(value: Any) -> Optional[datetime]:
@@ -174,6 +177,11 @@ def _to_recent_hazard_item(hazard: HazardLayer) -> RecentHazardItem:
 
     severity = hazard.severity.value if hasattr(hazard.severity, "value") else str(hazard.severity)
     source = hazard.source.value if hasattr(hazard.source, "value") else str(hazard.source)
+    event_type = (
+        hazard.event_type.value
+        if hasattr(hazard.event_type, "value")
+        else str(hazard.event_type)
+    )
 
     return RecentHazardItem(
         id=hazard_id,
@@ -186,6 +194,9 @@ def _to_recent_hazard_item(hazard: HazardLayer) -> RecentHazardItem:
         published_at=published_at,
         location_summary=_extract_location_summary(hazard),
         coordinates=_extract_coordinates(hazard.geometry),
+        event_type=event_type,
+        linked_event_id=metadata.get("linked_event_id"),
+        linked_eop_plan_id=metadata.get("linked_eop_plan_id"),
     )
 
 
@@ -499,3 +510,135 @@ async def expire_stale_hazards(
     _ensure_operator(current_user)
     updated = await service.deactivate_expired()
     return ExpireResponse(updated=updated)
+
+
+class DeployHazardRequest(BaseModel):
+    """Payload for deploying a rescue operation from a hazard."""
+
+    title: Optional[str] = Field(default=None, max_length=200)
+    additional_context: Optional[str] = Field(default=None, max_length=4000)
+
+
+class DeployHazardResponse(BaseModel):
+    """Response after spinning up event + EOP draft from a hazard."""
+
+    hazard_id: str
+    event_id: str
+    eop_plan_id: str
+    markdown_body: Optional[str] = None
+
+
+@router.post("/{hazard_db_id}/deploy", response_model=DeployHazardResponse)
+async def deploy_hazard(
+    hazard_db_id: str,
+    payload: DeployHazardRequest = Body(default_factory=DeployHazardRequest),
+    current_user: User = Depends(get_current_user),
+    hazard_service: HazardLayerService = Depends(get_hazard_layer_service),
+):
+    """Turn a crawled hazard into a rescue operation.
+
+    Creates an EmergencyEvent seeded from hazard attributes, generates an AI
+    EOP draft (with markdown body via ``llm-service``), and links both ids back
+    onto the hazard ``metadata`` for idempotency / UI badges.
+    """
+    from app.api.v1.dependencies import (
+        get_emergency_service,
+        get_eop_service,
+    )
+    from app.domain.models.emergency import (
+        EmergencyEventCreate,
+        EmergencyEventType,
+        EmergencyLocation,
+        EmergencySeverity,
+        EmergencySource,
+    )
+    from app.domain.models.eop_plan import EOPGenerateRequest
+    from app.domain.models.hazard_layer import HazardLayerUpdate
+
+    _ensure_operator(current_user)
+
+    hazard = await hazard_service.get_hazard_by_id(hazard_db_id)
+
+    existing_event_id = (hazard.metadata or {}).get("linked_event_id")
+    existing_plan_id = (hazard.metadata or {}).get("linked_eop_plan_id")
+    if existing_event_id and existing_plan_id:
+        eop_service = await get_eop_service()
+        plan = await eop_service.get_plan_by_id(existing_plan_id)
+        return DeployHazardResponse(
+            hazard_id=hazard_db_id,
+            event_id=existing_event_id,
+            eop_plan_id=existing_plan_id,
+            markdown_body=plan.markdown_body,
+        )
+
+    emergency_service = await get_emergency_service()
+    eop_service = await get_eop_service()
+
+    event_type_value = (
+        hazard.event_type.value
+        if hasattr(hazard.event_type, "value")
+        else str(hazard.event_type)
+    )
+    try:
+        event_type = EmergencyEventType(event_type_value)
+    except ValueError:
+        event_type = EmergencyEventType.OTHER
+
+    severity_value = (
+        hazard.severity.value if hasattr(hazard.severity, "value") else str(hazard.severity)
+    )
+    try:
+        severity = EmergencySeverity(severity_value)
+    except ValueError:
+        severity = EmergencySeverity.MEDIUM
+
+    location = EmergencyLocation(
+        geometry=hazard.geometry,
+        address=_extract_location_summary(hazard),
+        ward=hazard.ward,
+        district=hazard.district,
+    )
+
+    title = (payload.title or hazard.title).strip()[:200]
+    if len(title) < 3:
+        title = f"Rescue for {hazard.title}"[:200]
+
+    event = await emergency_service.create_event(
+        EmergencyEventCreate(
+            title=title,
+            description=hazard.description,
+            event_type=event_type,
+            severity=severity,
+            source=EmergencySource.SOSCONN,
+            location=location,
+            metadata={
+                "origin_hazard_id": hazard_db_id,
+                "origin_hazard_title": hazard.title,
+            },
+            started_at=datetime.utcnow(),
+        ),
+        created_by=str(current_user.id),
+    )
+
+    plan = await eop_service.generate_draft(
+        emergency_event_id=event.id,
+        generated_by=str(current_user.id),
+        additional_context=payload.additional_context,
+        force_new_version=True,
+    )
+
+    updated_metadata = dict(hazard.metadata or {})
+    updated_metadata["linked_event_id"] = event.id
+    updated_metadata["linked_eop_plan_id"] = plan.id
+    updated_metadata["deployed_at"] = datetime.utcnow().isoformat()
+    updated_metadata["deployed_by"] = str(current_user.id)
+    await hazard_service.update_hazard(
+        hazard_db_id, HazardLayerUpdate(metadata=updated_metadata)
+    )
+
+    return DeployHazardResponse(
+        hazard_id=hazard_db_id,
+        event_id=event.id,
+        eop_plan_id=plan.id,
+        markdown_body=plan.markdown_body,
+    )

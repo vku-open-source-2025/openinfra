@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { notificationsApi } from "../../api/notifications"
 import { NotificationItem } from "./NotificationItem"
 import { NotificationBadge } from "./NotificationBadge"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "../ui/dropdown-menu"
 import { Button } from "../ui/button"
 import { Skeleton } from "../ui/skeleton"
-import { Bell, Check, CheckCheck } from "lucide-react"
+import { Bell, CheckCheck } from "lucide-react"
 
 export const NotificationCenter: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -45,12 +45,10 @@ export const NotificationCenter: React.FC = () => {
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative">
+      <DropdownMenuTrigger className="relative inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
           <NotificationBadge count={unreadCount?.unread_count || 0} />
-        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 max-h-[500px] overflow-y-auto">
+      <DropdownMenuContent className="right-0 w-80 max-h-[500px] overflow-y-auto">
         <div className="p-2 border-b">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-sm">Thông báo</h3>

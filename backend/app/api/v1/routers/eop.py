@@ -5,10 +5,18 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
-from app.api.v1.dependencies import get_eop_service
+from app.api.v1.dependencies import get_dispatch_service, get_eop_service
 from app.api.v1.middleware import get_current_user
-from app.domain.models.eop_plan import EOPGenerateRequest, EOPPlan, EOPPlanCreate, EOPPlanUpdate
+from app.domain.models.dispatch_order import DispatchOrder
+from app.domain.models.eop_plan import (
+    EOPGenerateRequest,
+    EOPMarkdownUpdate,
+    EOPPlan,
+    EOPPlanCreate,
+    EOPPlanUpdate,
+)
 from app.domain.models.user import User, UserRole
+from app.domain.services.dispatch_service import DispatchService
 from app.domain.services.eop_service import EOPService
 from app.middleware.request_id import get_or_create_request_id, merge_request_id_metadata
 
@@ -146,3 +154,48 @@ async def publish_eop_plan(
     """Publish an approved EOP plan."""
     _ensure_operator(current_user)
     return await service.publish_plan(plan_id, published_by=str(current_user.id))
+
+
+@router.patch("/{plan_id}/markdown", response_model=EOPPlan)
+async def update_eop_markdown(
+    plan_id: str,
+    payload: EOPMarkdownUpdate,
+    current_user: User = Depends(get_current_user),
+    service: EOPService = Depends(get_eop_service),
+):
+    """Update the free-form markdown body of an EOP plan (coordinator edits)."""
+    _ensure_operator(current_user)
+    return await service.update_markdown(
+        plan_id,
+        markdown_body=payload.markdown_body,
+        review_notes=payload.review_notes,
+        updated_by=str(current_user.id),
+    )
+
+
+class EOPSubmitResponse(BaseModel):
+    """Response of the submit-for-tasks action."""
+
+    plan_id: str
+    task_source: str
+    orders: List[DispatchOrder]
+
+
+@router.post("/{plan_id}/submit", response_model=EOPSubmitResponse)
+async def submit_eop_for_tasks(
+    request: Request,
+    plan_id: str,
+    current_user: User = Depends(get_current_user),
+    service: EOPService = Depends(get_eop_service),
+    dispatch_service: DispatchService = Depends(get_dispatch_service),
+):
+    """Submit edited EOP markdown, generate tasks via LLM, and create dispatch orders."""
+    _ensure_operator(current_user)
+    request_id = get_or_create_request_id(request)
+    result = await service.submit_for_tasks(
+        plan_id,
+        dispatch_service=dispatch_service,
+        submitted_by=str(current_user.id),
+        request_id=request_id,
+    )
+    return EOPSubmitResponse(**result)

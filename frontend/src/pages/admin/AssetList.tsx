@@ -129,9 +129,7 @@ const AssetList: React.FC = () => {
                             key={asset.id}
                             onClick={() =>
                                 navigate({
-                                    to: `/admin/assets/${
-                                        asset._id || asset.id
-                                    }`,
+                                    to: `/admin/assets/${asset.id}`,
                                 })
                             }
                             className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"

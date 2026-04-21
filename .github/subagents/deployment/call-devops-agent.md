@@ -11,7 +11,7 @@ File này quy định cách gọi DevOps subagent trước và trong khi triển
 
 1. Trước khi chạy `infra/deploy.sh` trên production.
 2. Sau khi thay đổi `infra/nginx/nginx.conf` hoặc `infra/cloudflared/config-openinfra.example.yml`.
-3. Sau khi thêm service mới từ `3rd_party/sosconn/` vào `infra/docker-compose.yml`.
+3. Sau khi thêm service mới vào `infra/docker-compose.yml`.
 
 ## Prompt mẫu cho runSubagent
 

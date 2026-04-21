@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
+import { isAxiosError } from "axios"
 import { iotApi } from "../../api/iot"
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
@@ -8,6 +9,15 @@ import { Select } from "../../components/ui/select"
 import { Button } from "../../components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import type { SensorCreateRequest, SensorType } from "../../types/iot"
+
+type ValidationErrorItem = {
+  loc?: Array<string | number>
+  msg?: string
+}
+
+type SensorCreateErrorResponse = {
+  detail?: string | ValidationErrorItem[]
+}
 
 const SensorCreate: React.FC = () => {
   const navigate = useNavigate()
@@ -30,14 +40,14 @@ const SensorCreate: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["sensors"] })
       navigate({ to: `/admin/iot/${sensor.id}` })
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
+    onError: (error: unknown) => {
+      if (isAxiosError<SensorCreateErrorResponse>(error) && error.response?.data?.detail) {
         const detail = error.response.data.detail
         // Handle FastAPI validation errors (array of objects)
         if (Array.isArray(detail)) {
-          const errorMessages = detail.map((err: any) => {
+          const errorMessages = detail.map((err) => {
             const field = err.loc?.slice(1).join('.') || 'unknown'
-            return `${field}: ${err.msg}`
+            return `${field}: ${err.msg ?? 'Invalid value'}`
           }).join('; ')
           setErrors({ submit: errorMessages })
         } else if (typeof detail === 'string') {
@@ -45,8 +55,10 @@ const SensorCreate: React.FC = () => {
         } else {
           setErrors({ submit: 'An error occurred while creating the sensor' })
         }
-      } else {
+      } else if (error instanceof Error) {
         setErrors({ submit: error.message || 'An error occurred' })
+      } else {
+        setErrors({ submit: 'An error occurred' })
       }
     },
   })

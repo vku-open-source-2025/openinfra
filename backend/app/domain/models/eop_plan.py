@@ -58,6 +58,7 @@ class EOPPlan(BaseModel):
     evacuation_plan: List[str] = Field(default_factory=list)
     fallback_plan: List[str] = Field(default_factory=list)
     communications_plan: List[str] = Field(default_factory=list)
+    markdown_body: Optional[str] = None
     status: EOPPlanStatus = EOPPlanStatus.DRAFT
     review_notes: Optional[str] = None
     approved_by: Optional[str] = None
@@ -124,3 +125,10 @@ class EOPGenerateRequest(BaseModel):
     emergency_event_id: str
     additional_context: Optional[str] = Field(default=None, max_length=4000)
     force_new_version: bool = True
+
+
+class EOPMarkdownUpdate(BaseModel):
+    """Payload for updating the free-form markdown body of an EOP plan."""
+
+    markdown_body: str = Field(min_length=1, max_length=20000)
+    review_notes: Optional[str] = None

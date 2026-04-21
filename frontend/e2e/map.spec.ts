@@ -71,8 +71,6 @@ describe('Public Map Page', () => {
       await waitFor(() => {}, { timeout: 1000 });
 
       // Check if suggestions appear or geocoding happens
-      const suggestions = document.querySelector('[role="listbox"]') ||
-                         document.querySelector('ul');
       // Suggestions may or may not appear depending on API response
     }
   });
@@ -97,8 +95,6 @@ describe('Public Map Page', () => {
 
       // Check if asset details panel appears
       await waitFor(() => {}, { timeout: 500 });
-      const detailsPanel = screen.queryByText(/feature code|feature type/i) ||
-                          document.querySelector('[class*="detail"]');
       // Details may appear in a panel or popup
     }
   });

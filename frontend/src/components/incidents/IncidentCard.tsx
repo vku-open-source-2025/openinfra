@@ -1,7 +1,6 @@
 import { IncidentStatusBadge } from "./IncidentStatusBadge"
 import type { Incident, IncidentLocation } from "../../types/incident"
 import { MapPin, Clock, User, Box, CheckCircle, AlertTriangle, Clock as ClockIcon, XCircle } from "lucide-react"
-import { format } from "date-fns"
 
 // Helper function to get display string for incident location
 const getLocationDisplay = (location?: IncidentLocation): string => {

@@ -23,6 +23,17 @@ type AssetWithStatus = Asset & {
     lastPing?: string;
 };
 
+const getPointLatitude = (asset: Asset): number | null => {
+    if (
+        asset.geometry.type !== "Point" ||
+        !Array.isArray(asset.geometry.coordinates) ||
+        typeof asset.geometry.coordinates[1] !== "number"
+    ) {
+        return null;
+    }
+    return asset.geometry.coordinates[1];
+};
+
 const AdminMap: React.FC = () => {
     const navigate = useNavigate();
     const searchParams = useSearch({ from: "/admin/map" }) as {
@@ -82,10 +93,12 @@ const AdminMap: React.FC = () => {
         if (!displayAssets.length) return;
 
         const points = [...displayAssets]
-            .filter((a) => a.geometry.type === "Point")
+            .filter((a) => getPointLatitude(a) !== null)
             .slice(0, 5)
             .sort(
-                (a, b) => b.geometry.coordinates[1] - a.geometry.coordinates[1]
+                (a, b) =>
+                    (getPointLatitude(b) ?? Number.NEGATIVE_INFINITY) -
+                    (getPointLatitude(a) ?? Number.NEGATIVE_INFINITY)
             );
 
         setRoutePoints(points);

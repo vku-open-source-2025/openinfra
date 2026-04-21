@@ -38,8 +38,8 @@ export function calculateHealthScore(factors: HealthScoreFactors): number {
     iot_sensor_alerts: 0.15,
   };
 
-  let totalWeight = weights.incident_frequency + weights.incident_severity +
-                    weights.maintenance_recency + weights.maintenance_cost_trend;
+  const totalWeight = weights.incident_frequency + weights.incident_severity +
+                      weights.maintenance_recency + weights.maintenance_cost_trend;
 
   let score =
     factors.incident_frequency * weights.incident_frequency +

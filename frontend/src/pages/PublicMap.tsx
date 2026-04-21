@@ -22,7 +22,8 @@ import IoTSensorChart from "../components/IoTSensorChart";
 import { Button } from "@/components/ui/button";
 import AIChatWidget from "../components/AIChatWidget";
 import HazardMarkersLayer from "../components/HazardMarkersLayer";
-import VndmsHazardLayer, { useVndmsHazards, VndmsLegend } from "../components/VndmsHazardLayer";
+import VndmsHazardLayer, { VndmsLegend } from "../components/VndmsHazardLayer";
+import { useVndmsHazards } from "../hooks/useVndmsHazards";
 import { hazardsApi } from "../api/hazards";
 import type { Hazard } from "../types/hazard";
 import { getHazardTimestampMs } from "../lib/recentHazards";
@@ -133,8 +134,8 @@ const PublicMap: React.FC = () => {
     const [openChatbot, setOpenChatbot] = useState(false);
     const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(null);
 
-    // Hazard layer state
-    const [showHazardLayer, setShowHazardLayer] = useState(false);
+    // Hazard layer state — default on so citizens see alerts immediately
+    const [showHazardLayer, setShowHazardLayer] = useState(true);
     const [leafletMap, setLeafletMap] = useState<L.Map | null>(null);
     const [focusedHazardId, setFocusedHazardId] = useState<string | null>(null);
     const [hazardFocusNonce, setHazardFocusNonce] = useState(0);
@@ -143,7 +144,6 @@ const PublicMap: React.FC = () => {
         queryKey: ["hazards", "active"],
         queryFn: () => hazardsApi.list({ is_active: true }),
         staleTime: 60 * 1000,
-        enabled: showHazardLayer,
     });
     const {
         data: recentHazards = [],
@@ -159,7 +159,7 @@ const PublicMap: React.FC = () => {
         refetchInterval: 2 * 60 * 1000,
     });
     // Live VNDMS national-scale hazards (realtime weather + disaster)
-    const { data: vndmsHazards = [] } = useVndmsHazards(showHazardLayer);
+    const { data: vndmsHazards = [] } = useVndmsHazards(true);
 
     // Use filtered assets if available, otherwise use live IoT assets
     const displayAssets = useMemo(() => {
@@ -284,26 +284,33 @@ const PublicMap: React.FC = () => {
                     {showHazardLayer && leafletMap && vndmsHazards.length > 0 && (
                         <VndmsHazardLayer map={leafletMap} hazards={vndmsHazards} />
                     )}
-                    {/* Hazard legend */}
+                    {/* Hazard legend — top-right stack */}
                     {showHazardLayer && (
-                        <div className="absolute bottom-44 left-4 z-[1000] sm:bottom-36">
+                        <div className="absolute top-24 right-4 z-[1000]">
                             <VndmsLegend />
                         </div>
                     )}
-                    {/* Hazard layer toggle button */}
+                    {/* Hazard layer toggle button — top-right, prominent */}
                     <button
                         onClick={() => setShowHazardLayer((v) => !v)}
                         title={showHazardLayer ? "Ẩn lớp thiên tai" : "Hiện lớp thiên tai"}
-                        className={`absolute bottom-44 left-4 z-[1000] flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg border text-sm font-medium transition-colors sm:bottom-36 ${
+                        className={`absolute top-24 right-4 z-[1001] flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg border text-sm font-medium transition-colors ${
                             showHazardLayer
                                 ? "bg-red-600 border-red-700 text-white hover:bg-red-700"
                                 : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                         }`}
+                        style={{ transform: showHazardLayer ? "translateY(-44px)" : undefined }}
                     >
                         <Layers size={16} />
-                        <span>Thiên tai</span>
-                        {showHazardLayer && (hazards.length + vndmsHazards.length) > 0 && (
-                            <span className="bg-white text-red-600 text-xs font-bold rounded-full px-1.5 py-0.5 leading-none">
+                        <span>Thiên tai (24h)</span>
+                        {(hazards.length + vndmsHazards.length) > 0 && (
+                            <span
+                                className={`text-xs font-bold rounded-full px-1.5 py-0.5 leading-none ${
+                                    showHazardLayer
+                                        ? "bg-white text-red-600"
+                                        : "bg-red-600 text-white"
+                                }`}
+                            >
                                 {hazards.length + vndmsHazards.length}
                             </span>
                         )}

@@ -24,7 +24,7 @@ Chuẩn hóa kiến trúc tích hợp SOSConn vào OpenInfra, chốt ADR, depend
 - `backend/app/api/v1/routers/`
 - `frontend/src/routes/`
 - `infra/docker-compose.yml`
-- `3rd_party/sosconn/`
+- `llm-service/`
 
 ## Output Contract
 

@@ -55,17 +55,23 @@ const IncidentReportForm: React.FC<Props> = ({
     // on the map), sync them into the form.
     useEffect(() => {
         if (!defaultCoordinates) return;
-        setFormData((prev) => ({
-            ...prev,
-            location: {
-                ...prev.location!,
-                coordinates: {
-                    latitude: defaultCoordinates.latitude,
-                    longitude: defaultCoordinates.longitude,
+        const timeoutId = window.setTimeout(() => {
+            setFormData((prev) => ({
+                ...prev,
+                location: {
+                    ...prev.location!,
+                    coordinates: {
+                        latitude: defaultCoordinates.latitude,
+                        longitude: defaultCoordinates.longitude,
+                    },
                 },
-            },
-        }));
-    }, [defaultCoordinates?.latitude, defaultCoordinates?.longitude]);
+            }));
+        }, 0);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [defaultCoordinates]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [turnstileToken, setTurnstileToken] = useState("");
     const [submitted, setSubmitted] = useState<{

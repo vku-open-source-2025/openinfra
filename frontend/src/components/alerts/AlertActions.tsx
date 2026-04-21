@@ -1,6 +1,6 @@
 import { Button } from "../ui/button";
 import type { Alert } from "../../types/alert";
-import { CheckCircle, X, Check } from "lucide-react";
+import { CheckCircle, X } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { useState } from "react";
 
@@ -20,7 +20,6 @@ export const AlertActions: React.FC<AlertActionsProps> = ({
     onResolve,
     onDismiss,
     canAcknowledge = false,
-    canResolve = false,
     canDismiss = false,
 }) => {
     const [resolutionNotes, setResolutionNotes] = useState("");

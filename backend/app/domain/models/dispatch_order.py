@@ -32,7 +32,8 @@ class DispatchStatus(str, Enum):
 class DispatchAssignment(BaseModel):
     """Resource assignment for dispatch execution."""
 
-    resource_unit_id: str
+    resource_unit_id: Optional[str] = None
+    assigned_user_id: Optional[str] = None
     role: Optional[str] = None
     quantity: float = 1.0
     notes: Optional[str] = None
@@ -52,6 +53,7 @@ class DispatchOrder(BaseModel):
     priority: DispatchPriority = DispatchPriority.MEDIUM
     status: DispatchStatus = DispatchStatus.PENDING
     assignments: List[DispatchAssignment] = Field(default_factory=list)
+    assigned_user_id: Optional[str] = None
     eta_minutes: Optional[int] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None

@@ -1,10 +1,11 @@
 import React, { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { incidentsApi } from "../../api/incidents"
+import type { MergeSuggestion } from "../../api/incidents"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { Skeleton } from "../ui/skeleton"
-import { CheckCircle, AlertTriangle, GitMerge, RefreshCw, XCircle, Clock, Shield, Users } from "lucide-react"
+import { CheckCircle, AlertTriangle, GitMerge, RefreshCw, XCircle, Shield, Users } from "lucide-react"
 import type { Incident } from "../../types/incident"
 
 interface IncidentVerificationPanelProps {
@@ -55,7 +56,7 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
   })
 
   // AI Verification Status
-  const verificationStatus = incident.ai_verification_status || 'pending'
+  const verificationStatus = incident.ai_verification_status
   const confidenceScore = incident.ai_confidence_score
   const scorePercent = confidenceScore !== null && confidenceScore !== undefined 
     ? Math.round(confidenceScore * 100) 
@@ -63,9 +64,12 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
   const isLowTrust = scorePercent !== null && scorePercent < 50
 
   // Merge Suggestions
-  const pendingSuggestions = suggestions?.filter((s: any) => s.status === "pending") || []
+  const pendingSuggestions = suggestions?.filter((s: MergeSuggestion) => s.status === "pending") ?? []
   const hasDuplicates = pendingSuggestions.length > 0
-  const hasVerification = verificationStatus !== 'pending'
+  const hasVerification =
+    verificationStatus === "verified" ||
+    verificationStatus === "to_be_verified" ||
+    verificationStatus === "failed"
 
   // Don't show if nothing to display
   if (!hasVerification && !hasDuplicates && !canManage) {
@@ -102,8 +106,6 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
             ? isLowTrust
               ? "bg-red-50 border-red-200"
               : "bg-amber-50 border-amber-200"
-            : verificationStatus === "pending"
-            ? "bg-blue-50 border-blue-200"
             : "bg-red-50 border-red-200"
         }`}>
           <div className="flex items-start justify-between">
@@ -115,16 +117,12 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
                 {verificationStatus === "to_be_verified" && (
                   <AlertTriangle className={`h-5 w-5 ${isLowTrust ? "text-red-600" : "text-amber-600"}`} />
                 )}
-                {verificationStatus === "pending" && (
-                  <Clock className="h-5 w-5 text-blue-600" />
-                )}
                 {verificationStatus === "failed" && (
                   <XCircle className="h-5 w-5 text-red-600" />
                 )}
                 <span className="font-semibold">
                   {verificationStatus === "verified" && "Báo cáo đã được xác minh"}
                   {verificationStatus === "to_be_verified" && (isLowTrust ? "Điểm tin cậy thấp" : "Cần kiểm tra")}
-                  {verificationStatus === "pending" && "Đang chờ xác minh"}
                   {verificationStatus === "failed" && "Xác minh thất bại"}
                 </span>
               </div>
@@ -149,7 +147,7 @@ export const IncidentVerificationPanel: React.FC<IncidentVerificationPanelProps>
               <Badge>{pendingSuggestions.length} {'trùng khớp'}</Badge>
           </div>
           
-          {pendingSuggestions.map((suggestion: any) => {
+          {pendingSuggestions.map((suggestion) => {
             const similarity = Math.round(suggestion.similarity_score * 100)
             const isRecurrence = suggestion.match_reasons?.includes("possible_recurrence")
             

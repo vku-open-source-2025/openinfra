@@ -67,7 +67,7 @@ const AssetDetailPage: React.FC = () => {
                         created_at: "",
                         updated_at: "",
                     } as Asset;
-                } catch (publicErr) {
+                } catch {
                     throw err; // Throw original error
                 }
             }
@@ -108,8 +108,13 @@ const AssetDetailPage: React.FC = () => {
                             available.
                         </p>
                         <div className="flex gap-3 justify-center">
-                                <Button
-                                onClick={() => navigate({ to: "/map" })}
+                            <Button
+                                onClick={() =>
+                                    navigate({
+                                        to: "/map",
+                                        search: { assetId: undefined },
+                                    })
+                                }
                                 variant="outline"
                             >
                                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -152,6 +157,15 @@ const AssetDetailPage: React.FC = () => {
         return "text-red-600";
     };
 
+    const locationCoordinates = (
+        asset.location as {
+            coordinates?: {
+                longitude?: number;
+                latitude?: number;
+            };
+        }
+    )?.coordinates;
+
     const coordinates =
         asset.geometry?.coordinates &&
         Array.isArray(asset.geometry.coordinates) &&
@@ -162,10 +176,11 @@ const AssetDetailPage: React.FC = () => {
                   lng: asset.geometry.coordinates[0],
                   lat: asset.geometry.coordinates[1],
               }
-            : asset.location?.coordinates
+                        : typeof locationCoordinates?.longitude === "number" &&
+                            typeof locationCoordinates?.latitude === "number"
             ? {
-                  lng: asset.location.coordinates.longitude,
-                  lat: asset.location.coordinates.latitude,
+                                    lng: locationCoordinates.longitude,
+                                    lat: locationCoordinates.latitude,
               }
             : null;
 
@@ -176,7 +191,12 @@ const AssetDetailPage: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Back Button */}
                     <Button
-                        onClick={() => navigate({ to: "/map" })}
+                        onClick={() =>
+                            navigate({
+                                to: "/map",
+                                search: { assetId: undefined },
+                            })
+                        }
                         variant="ghost"
                         className="mb-6"
                     >
@@ -319,6 +339,7 @@ const AssetDetailPage: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 h-96">
                             <MapComponent
                                 assets={[asset]}
+                                onAssetSelect={() => undefined}
                                 selectedAsset={asset}
                                 className="h-full w-full"
                             />

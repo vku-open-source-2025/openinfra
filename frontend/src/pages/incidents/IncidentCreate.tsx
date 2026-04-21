@@ -31,7 +31,7 @@ const IncidentCreate: React.FC = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
 
   // Fetch assets for dropdown
-  const { data: assets, isLoading: assetsLoading } = useQuery({
+  const { data: assets } = useQuery({
     queryKey: ["assets", "list"],
     queryFn: () => assetsApi.list({ limit: 500 }),
   })
@@ -55,10 +55,18 @@ const IncidentCreate: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["incidents"] })
       navigate({ to: `/admin/incidents/${incident.id}` })
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
-        setErrors({ submit: error.response.data.detail })
-      }
+    onError: (error: unknown) => {
+      const detail =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { detail?: unknown } } }).response?.data?.detail === "string"
+          ? (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : undefined
+
+      setErrors({
+        submit: detail || "Không thể tạo sự cố. Vui lòng thử lại.",
+      })
     },
   })
 

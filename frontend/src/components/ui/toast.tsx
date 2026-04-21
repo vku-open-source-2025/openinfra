@@ -17,7 +17,6 @@ export interface ToastProps extends Toast {
 }
 
 const ToastComponent: React.FC<ToastProps> = ({
-  id,
   title,
   description,
   type = "info",
@@ -79,8 +78,13 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
 }
 
 // Toast hook for managing toasts
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = () => {
   const [toasts, setToasts] = React.useState<Toast[]>([])
+
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+  }, [])
 
   const addToast = React.useCallback(
     (toast: Omit<Toast, "id">) => {
@@ -94,12 +98,8 @@ export const useToast = () => {
         }, newToast.duration)
       }
     },
-    []
+    [removeToast]
   )
-
-  const removeToast = React.useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id))
-  }, [])
 
   return {
     toasts,

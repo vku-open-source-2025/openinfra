@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { maintenanceApi } from "../../api/maintenance";
 import { format } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Select } from "../ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Clock, CheckCircle, AlertCircle, Calendar, X, Download, User, DollarSign } from "lucide-react";
+import { Clock, CheckCircle, AlertCircle, Calendar, Download, User, DollarSign } from "lucide-react";
 import type { Maintenance, MaintenanceFilterParams } from "../../types/maintenance";
 import { MaintenanceApproval } from "../maintenance/MaintenanceApproval";
 

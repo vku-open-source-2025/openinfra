@@ -44,7 +44,7 @@ export function ProtectedRoute({
         try {
           const response = await authApi.refreshToken(refreshToken);
           setTokens(response.access_token, response.refresh_token);
-        } catch (error) {
+        } catch {
           // Token refresh failed, will be handled by httpClient interceptor
         }
       }

@@ -44,7 +44,6 @@ function MaintenanceDetailPage() {
     const [beforePhotos, setBeforePhotos] = useState<File[]>([]);
     const [afterPhotos, setAfterPhotos] = useState<File[]>([]);
     const [uploadingPhotos, setUploadingPhotos] = useState(false);
-    const [photoType, setPhotoType] = useState<"before" | "after">("after");
 
     const { data: maintenance, isLoading } = useQuery({
         queryKey: ["maintenance", id],
@@ -373,12 +372,12 @@ function MaintenanceDetailPage() {
                                         <Badge variant="secondary">
                                             {incidents.status}
                                         </Badge>
-                                        {incidents.reported_at && (
+                                        {incidents.created_at && (
                                             <span className="text-blue-600">
                                                 Reported:{" "}
                                                 {format(
                                                     new Date(
-                                                        incidents.reported_at
+                                                        incidents.created_at
                                                     ),
                                                     "MMM d, yyyy HH:mm"
                                                 )}

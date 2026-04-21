@@ -97,7 +97,7 @@ export const Turnstile: React.FC<TurnstileProps> = ({
       if (widgetIdRef.current && window.turnstile) {
         try {
           window.turnstile.remove(widgetIdRef.current);
-        } catch (e) {
+        } catch {
           // Ignore cleanup errors
         }
         widgetIdRef.current = null;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { usersApi } from "@/api/users";
@@ -29,7 +29,9 @@ const ProfileSettings: React.FC = () => {
         registerBiometric,
         disableBiometric,
     } = useBiometricAuth();
-    const [formData, setFormData] = useState<Partial<ProfileUpdateRequest>>({});
+    const [formData, setFormData] = useState<
+        Partial<ProfileUpdateRequest> | null
+    >(null);
     const [passwordData, setPasswordData] = useState({
         current_password: "",
         new_password: "",
@@ -43,15 +45,20 @@ const ProfileSettings: React.FC = () => {
         enabled: !!user,
     });
 
-    useEffect(() => {
-        if (currentUser) {
-            setFormData({
-                email: currentUser.email,
-                full_name: currentUser.full_name,
-                phone: currentUser.phone,
-            });
-        }
-    }, [currentUser]);
+    const effectiveFormData: Partial<ProfileUpdateRequest> =
+        formData ??
+        (currentUser
+            ? {
+                  email: currentUser.email,
+                  full_name: currentUser.full_name,
+                  phone: currentUser.phone,
+              }
+            : {});
+
+    const getApiErrorDetail = (error: unknown): string | undefined => {
+        return (error as { response?: { data?: { detail?: string } } })
+            .response?.data?.detail;
+    };
 
     const updateMutation = useMutation({
         mutationFn: (data: ProfileUpdateRequest) =>
@@ -60,10 +67,16 @@ const ProfileSettings: React.FC = () => {
             setUser(updatedUser);
             queryClient.invalidateQueries({ queryKey: ["current-user"] });
             setErrors({});
+            setFormData({
+                email: updatedUser.email,
+                full_name: updatedUser.full_name,
+                phone: updatedUser.phone,
+            });
         },
-        onError: (error: any) => {
-            if (error.response?.data?.detail) {
-                setErrors({ submit: error.response.data.detail });
+        onError: (error: unknown) => {
+            const detail = getApiErrorDetail(error);
+            if (detail) {
+                setErrors({ submit: detail });
             }
         },
     });
@@ -88,9 +101,10 @@ const ProfileSettings: React.FC = () => {
             });
             setErrors({});
         },
-        onError: (error: any) => {
-            if (error.response?.data?.detail) {
-                setErrors({ password: error.response.data.detail });
+        onError: (error: unknown) => {
+            const detail = getApiErrorDetail(error);
+            if (detail) {
+                setErrors({ password: detail });
             }
         },
     });
@@ -99,12 +113,12 @@ const ProfileSettings: React.FC = () => {
         e.preventDefault();
         setErrors({});
 
-        if (!formData.email?.trim()) {
+        if (!effectiveFormData.email?.trim()) {
             setErrors({ email: "Email là bắt buộc" });
             return;
         }
 
-        updateMutation.mutate(formData as ProfileUpdateRequest);
+        updateMutation.mutate(effectiveFormData as ProfileUpdateRequest);
     };
 
     const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -180,12 +194,12 @@ const ProfileSettings: React.FC = () => {
                             <FormLabel required>Email</FormLabel>
                             <Input
                                 type="email"
-                                value={formData.email || ""}
+                                value={effectiveFormData.email || ""}
                                 onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
+                                    setFormData((prev) => ({
+                                        ...(prev ?? effectiveFormData),
                                         email: e.target.value,
-                                    })
+                                    }))
                                 }
                             />
                             {errors.email && (
@@ -196,12 +210,12 @@ const ProfileSettings: React.FC = () => {
                         <FormField>
                             <FormLabel required>Họ và tên</FormLabel>
                             <Input
-                                value={formData.full_name || ""}
+                                value={effectiveFormData.full_name || ""}
                                 onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
+                                    setFormData((prev) => ({
+                                        ...(prev ?? effectiveFormData),
                                         full_name: e.target.value,
-                                    })
+                                    }))
                                 }
                             />
                         </FormField>
@@ -209,12 +223,12 @@ const ProfileSettings: React.FC = () => {
                         <FormField>
                             <FormLabel>Số điện thoại</FormLabel>
                             <Input
-                                value={formData.phone || ""}
+                                value={effectiveFormData.phone || ""}
                                 onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
+                                    setFormData((prev) => ({
+                                        ...(prev ?? effectiveFormData),
                                         phone: e.target.value,
-                                    })
+                                    }))
                                 }
                             />
                         </FormField>

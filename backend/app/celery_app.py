@@ -20,7 +20,6 @@ app = Celery(
         "app.tasks.event_monitoring",
         "app.tasks.dispatch_optimization",
         "app.tasks.vector_corpus_ingest",
-        # "app.tasks.dns_refresh",  # Not needed with Cloudflare Tunnel (tunnel handles IP changes)
     ],
 )
 
@@ -78,8 +77,6 @@ app.conf.beat_schedule = {
         "task": "app.tasks.vector_corpus_ingest.ingest_vector_corpus",
         "schedule": crontab(minute=20, hour="*/1"),  # Every hour at minute 20
     },
-    # "auto-refresh-dns" removed — not needed with Cloudflare Tunnel
-    # (tunnel maintains outbound connection regardless of IP changes)
 }
 
 if __name__ == "__main__":

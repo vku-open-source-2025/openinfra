@@ -23,8 +23,7 @@ Chuẩn hóa cách build, compose, migrate, verify khi tích hợp SOSConn servi
 - `backend/Dockerfile`
 - `frontend/Dockerfile`
 - `infra/DEPLOYMENT.md`
-- `3rd_party/sosconn/llm-service/`
-- `3rd_party/sosconn/notification_service/`
+- `llm-service/`
 
 ## Output Contract
 

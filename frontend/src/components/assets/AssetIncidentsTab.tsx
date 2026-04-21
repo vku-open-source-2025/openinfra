@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { AlertTriangle, Plus, CheckCircle, Clock, XCircle } from "lucide-react";
+import { AlertTriangle, Plus, CheckCircle, Clock } from "lucide-react";
 import type { Incident } from "../../types/incident";
 
 interface AssetIncidentsTabProps {
@@ -98,7 +98,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
             <label className="text-xs text-slate-500 mb-1 block">Trạng thái</label>
             <Select
               value={statusFilter}
-              onValueChange={setStatusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">Tất cả trạng thái</option>
               <option value="reported">Đã báo cáo</option>
@@ -113,7 +113,7 @@ const AssetIncidentsTab: React.FC<AssetIncidentsTabProps> = ({ assetId }) => {
             <label className="text-xs text-slate-500 mb-1 block">Mức độ</label>
             <Select
               value={severityFilter}
-              onValueChange={setSeverityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
             >
               <option value="">Tất cả mức độ</option>
               <option value="low">Thấp</option>

@@ -15,12 +15,19 @@ from app.domain.models.eop_plan import (
     EOPPlanStatus,
     EOPPlanUpdate,
 )
+from app.domain.models.dispatch_order import (
+    DispatchAssignment,
+    DispatchOrderCreate,
+    DispatchPriority,
+)
 from app.domain.repositories.emergency_repository import EmergencyRepository
 from app.domain.repositories.eop_plan_repository import EOPPlanRepository
+from app.infrastructure.external import llm_service_client
 
 if TYPE_CHECKING:
     from app.infrastructure.external.ag05_context_service import AG05ContextService
     from app.infrastructure.external.gemini_service import GeminiService
+    from app.domain.services.dispatch_service import DispatchService
 
 
 logger = logging.getLogger(__name__)
@@ -331,6 +338,37 @@ class EOPService:
         if request_id:
             plan_metadata["request_id"] = request_id
 
+        # Build markdown body via llm-service with deterministic fallback.
+        location_text = (
+            event.location.address
+            if event.location and event.location.address
+            else (event.location.district if event.location else "unknown")
+        )
+        flood_summary = (
+            f"{event.event_type.value} — severity {event.severity.value}. "
+            f"Title: {event.title}. Instructions: {event.instructions or 'none'}."
+        )
+        resource_summary = additional_context or "Nguồn lực mặc định tại địa phương."
+        markdown_body: Optional[str] = None
+        try:
+            markdown_body = await llm_service_client.generate_eop_markdown(
+                flood_data=flood_summary,
+                resource_data=resource_summary,
+                location=location_text or "unknown",
+            )
+            plan_metadata["markdown_source"] = "llm-service"
+        except llm_service_client.LLMServiceError as exc:
+            logger.info("Falling back to deterministic EOP markdown: %s", exc)
+            plan_metadata["markdown_source"] = "fallback"
+            markdown_body = llm_service_client.deterministic_eop_markdown(
+                event_title=event.title,
+                hazard_type=event.event_type.value,
+                severity=event.severity.value,
+                location=location_text or "",
+                objectives=normalized_payload.get("objectives"),
+                actions=[a.title for a in normalized_payload.get("actions", [])],
+            )
+
         plan_create = EOPPlanCreate(
             emergency_event_id=emergency_event_id,
             title=normalized_payload["title"],
@@ -345,11 +383,18 @@ class EOPService:
             metadata=plan_metadata,
         )
 
-        return await self.create_plan(
+        plan = await self.create_plan(
             plan_create,
             created_by=generated_by,
             request_id=request_id,
         )
+        if markdown_body:
+            updated = await self.repository.update(
+                plan.id, {"markdown_body": markdown_body}
+            )
+            if updated:
+                plan = updated
+        return plan
 
     async def create_plan(
         self,
@@ -478,3 +523,126 @@ class EOPService:
         if not updated:
             raise NotFoundError("EOPPlan", plan_id)
         return updated
+
+    async def update_markdown(
+        self,
+        plan_id: str,
+        markdown_body: str,
+        review_notes: Optional[str] = None,
+        updated_by: Optional[str] = None,
+    ) -> EOPPlan:
+        """Update the free-form markdown body of an EOP plan."""
+        current = await self.get_plan_by_id(plan_id)
+        if current.status in {EOPPlanStatus.PUBLISHED, EOPPlanStatus.ARCHIVED}:
+            raise ValidationError(
+                f"Cannot edit EOP markdown in status '{current.status.value}'"
+            )
+        update_payload: Dict[str, Any] = {"markdown_body": markdown_body}
+        if review_notes is not None:
+            update_payload["review_notes"] = review_notes
+        if updated_by:
+            metadata = dict(current.metadata or {})
+            metadata["markdown_edited_by"] = updated_by
+            metadata["markdown_edited_at"] = datetime.utcnow().isoformat()
+            update_payload["metadata"] = metadata
+        updated = await self.repository.update(plan_id, update_payload)
+        if not updated:
+            raise NotFoundError("EOPPlan", plan_id)
+        return updated
+
+    async def submit_for_tasks(
+        self,
+        plan_id: str,
+        dispatch_service: "DispatchService",
+        submitted_by: Optional[str] = None,
+        request_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Mark plan approved, generate tasks via llm-service, and create dispatch orders."""
+        plan = await self.get_plan_by_id(plan_id)
+        if not plan.markdown_body:
+            raise ValidationError("EOP plan has no markdown body to submit")
+
+        event = None
+        if self.emergency_repository is not None:
+            event = await self.emergency_repository.find_by_id(plan.emergency_event_id)
+
+        flood_summary = (
+            f"{event.event_type.value} severity {event.severity.value} at "
+            f"{event.location.address if event and event.location and event.location.address else 'unknown'}"
+            if event
+            else plan.title
+        )
+        try:
+            tasks = await llm_service_client.generate_tasks(
+                emergency_operations_plan=plan.markdown_body,
+                flood_data=flood_summary,
+                resource_data="Đội cứu hộ địa phương + tình nguyện viên",
+            )
+            task_source = "llm-service"
+        except llm_service_client.LLMServiceError as exc:
+            logger.info("Falling back to deterministic tasks: %s", exc)
+            tasks = llm_service_client.deterministic_tasks(
+                event.title if event else plan.title,
+                event.severity.value if event else "medium",
+            )
+            task_source = "fallback"
+
+        prio_map = {
+            "high": DispatchPriority.HIGH,
+            "critical": DispatchPriority.CRITICAL,
+            "medium": DispatchPriority.MEDIUM,
+            "low": DispatchPriority.LOW,
+        }
+
+        created_orders = []
+        for task in tasks:
+            title = str(task.get("description") or task.get("title") or "Task").strip()[:200]
+            if len(title) < 3:
+                title = (title + "  task").strip()[:200]
+            priority_raw = str(task.get("priority") or "medium").lower()
+            priority = prio_map.get(priority_raw, DispatchPriority.MEDIUM)
+            payload = DispatchOrderCreate(
+                emergency_event_id=plan.emergency_event_id,
+                eop_plan_id=plan.id,
+                task_title=title,
+                task_description=(
+                    f"{task.get('description', '')}\nLocation: {task.get('location', '')}\n"
+                    f"Resources: {task.get('resource_needed', '')}"
+                ).strip(),
+                target_location=(
+                    {"address": task.get("location")} if task.get("location") else None
+                ),
+                priority=priority,
+                metadata={
+                    "generated_by": "eop_submit",
+                    "task_source": task_source,
+                    "raw": task,
+                },
+            )
+            created = await dispatch_service.create_order(
+                payload,
+                assigned_by=submitted_by,
+                request_id=request_id,
+            )
+            created_orders.append(created)
+
+        # Move plan to APPROVED so coordinator UI sees it as deployed.
+        if plan.status in {EOPPlanStatus.DRAFT, EOPPlanStatus.REVIEW_PENDING}:
+            metadata = dict(plan.metadata or {})
+            metadata["task_source"] = task_source
+            metadata["tasks_generated_at"] = datetime.utcnow().isoformat()
+            await self.repository.update(
+                plan.id,
+                {
+                    "status": EOPPlanStatus.APPROVED.value,
+                    "approved_by": submitted_by,
+                    "approved_at": datetime.utcnow(),
+                    "metadata": metadata,
+                },
+            )
+
+        return {
+            "plan_id": plan.id,
+            "task_source": task_source,
+            "orders": created_orders,
+        }

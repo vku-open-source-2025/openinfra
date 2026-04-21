@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
+import { isAxiosError } from "axios"
 import { publicApi } from "../../api/public"
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
@@ -9,6 +10,10 @@ import { Select } from "../../components/ui/select"
 import { Button } from "../../components/ui/button"
 import { Turnstile } from "../../components/Turnstile"
 import type { IncidentCategory, IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
+
+type PublicIncidentErrorResponse = {
+  detail?: string
+}
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || ""
 
@@ -40,8 +45,8 @@ const PublicIncidentReport: React.FC = () => {
         params: { incidentId: incident.incident_number || incident.id },
       })
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
+    onError: (error: unknown) => {
+      if (isAxiosError<PublicIncidentErrorResponse>(error) && error.response?.data?.detail) {
         setErrors({ submit: error.response.data.detail })
       }
     },

@@ -37,36 +37,6 @@ const IncidentDetail: React.FC = () => {
         enabled: true, // Always fetch for technician selection
     });
 
-    const acknowledgeMutation = useMutation({
-        mutationFn: () => incidentsApi.acknowledge(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["incident", id] });
-            queryClient.invalidateQueries({ queryKey: ["incidents"] });
-        },
-    });
-
-    const assignMutation = useMutation({
-        mutationFn: (userId: string) => incidentsApi.assign(id, userId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["incident", id] });
-            queryClient.invalidateQueries({ queryKey: ["incidents"] });
-        },
-    });
-
-    const resolveMutation = useMutation({
-        mutationFn: ({
-            notes,
-            type,
-        }: {
-            notes: string;
-            type: "fixed" | "duplicate" | "invalid" | "deferred";
-        }) => incidentsApi.resolve(id, notes, type),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["incident", id] });
-            queryClient.invalidateQueries({ queryKey: ["incidents"] });
-        },
-    });
-
     const commentMutation = useMutation({
         mutationFn: ({
             comment,
@@ -98,24 +68,8 @@ const IncidentDetail: React.FC = () => {
         },
     });
 
-    const closeMutation = useMutation({
-        mutationFn: (notes?: string) => incidentsApi.close(id, notes),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["incident", id] });
-            queryClient.invalidateQueries({ queryKey: ["incidents"] });
-        },
-    });
-
     const rejectMutation = useMutation({
         mutationFn: (reason: string) => incidentsApi.reject(id, reason),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["incident", id] });
-            queryClient.invalidateQueries({ queryKey: ["incidents"] });
-        },
-    });
-
-    const verifyMutation = useMutation({
-        mutationFn: () => incidentsApi.verify(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["incident", id] });
             queryClient.invalidateQueries({ queryKey: ["incidents"] });
@@ -140,31 +94,13 @@ const IncidentDetail: React.FC = () => {
     }
 
     // Permission checks based on API documentation workflow
-    const canAcknowledge =
-        (user?.role === "admin" || user?.role === "manager") &&
-        incident.status === "reported";
-    const canAssign =
-        (user?.role === "admin" || user?.role === "manager") &&
-        incident.status === "acknowledged";
-    const canResolve =
-        (user?.role === "admin" ||
-            user?.role === "manager" ||
-            user?.role === "technician") &&
-        incident.status === "investigating";
     const canAddInternal =
         user?.role === "admin" ||
         user?.role === "manager" ||
         user?.role === "technician";
-    const canClose =
-        (user?.role === "admin" || user?.role === "manager") &&
-        incident.status === "resolved";
     const canReject =
         (user?.role === "admin" || user?.role === "manager") &&
         (incident.status === "reported" || incident.status === "acknowledged");
-    const canVerify =
-        (user?.role === "admin" || user?.role === "manager") &&
-        (incident.ai_verification_status === "to_be_verified" ||
-            incident.ai_verification_status === "pending");
     const canApproveCost =
         (user?.role === "admin" || user?.role === "manager") &&
         (incident.status === "resolved" ||

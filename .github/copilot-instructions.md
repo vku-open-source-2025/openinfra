@@ -114,8 +114,7 @@ openinfra/
 │   │   │   ├── contribution_etl.py   # Sync contributions → main DB
 │   │   │   ├── sensor_monitoring.py  # Offline detection, aggregation, risk AI
 │   │   │   ├── report_generation.py  # Scheduled report gen
-│   │   │   ├── content_filter.py     # Inappropriate content filter
-│   │   │   └── dns_refresh.py        # DDNS (disabled, tunnel used)
+│   │   │   └── content_filter.py     # Inappropriate content filter
 │   │   └── middleware/                # Error handler, logging middleware
 │   ├── scripts/                       # Admin utilities
 │   │   ├── create_superuser.py
@@ -168,7 +167,7 @@ openinfra/
 │   ├── producer/                      # HTTP/MQTT → Kafka bridge
 │   └── esp8266/                       # ESP8266 firmware (drainage sensor)
 ├── mcp-server/                        # MCP Server (FastMCP, read-only)
-├── 3rd_party/autoip/                  # Router IP detection (Viettel H646GM)
+├── llm-service/                       # LLM service (FastAPI, GitHub Copilot)
 └── .notes/accounts.md                 # Admin credentials (gitignored)
 ```
 
@@ -456,13 +455,11 @@ tunnel: f3de2209-ef7e-4f10-abbf-39a817f2c472
 ```
 
 - No port forwarding needed — tunnel maintains outbound connection
-- DNS refresh task disabled (tunnel handles IP changes)
 
-### 6.3 Cloudflare DNS (Auto-DDNS)
+### 6.3 Cloudflare DNS
 
 ```bash
-# Celery task (disabled but code exists): dns_refresh.py
-# Uses 3rd_party/autoip to detect WAN IP from router (Viettel H646GM)
+# Manual DNS update via infra/cloudflare-dns-setup.sh
 # Updates Cloudflare DNS A records via CF_API_TOKEN
 # Records: @ api mcp (CF_RECORDS env var)
 ```

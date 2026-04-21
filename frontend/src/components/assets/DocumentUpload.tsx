@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { assetsApi } from "../../api/assets";
 import { Button } from "../ui/button";
@@ -15,6 +15,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
   const [documentType, setDocumentType] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -85,15 +86,18 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({ assetId, onUploa
         <input
           type="file"
           multiple
+          ref={fileInputRef}
           onChange={handleFileSelect}
           className="hidden"
           id="file-upload"
         />
-        <label htmlFor="file-upload">
-          <Button variant="outline" as="span">
-            Chọn tập tin
-          </Button>
-        </label>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          Chọn tập tin
+        </Button>
       </div>
 
       {/* Selected Files */}

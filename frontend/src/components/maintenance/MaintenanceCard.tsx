@@ -1,8 +1,6 @@
 import type { Maintenance } from "../../types/maintenance";
 import {
-    MapPin,
     Clock,
-    User,
     Wrench,
     CheckCircle,
     AlertCircle,

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Layers, X, Check } from "lucide-react";
+import { Layers, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { geoApi } from "../../api/geo";
 import type { Asset } from "../../types";
@@ -61,56 +61,57 @@ export const PolygonDraw: React.FC<PolygonDrawProps> = ({
             }
         };
 
-        const handleDrawCreated = async (e: L.DrawEvents.Created) => {
-            const layer = e.layer;
+        const handleDrawCreated: L.LeafletEventHandlerFn = (event) => {
+            const drawEvent = event as L.DrawEvents.Created;
+            const layer = drawEvent.layer as L.Polygon;
             const geoJson = layer.toGeoJSON();
 
-            if (
-                geoJson.type === "Feature" &&
-                geoJson.geometry.type === "Polygon"
-            ) {
-                const coordinates = (
-                    geoJson.geometry.coordinates[0] as number[][]
-                ).map((coord) => [coord[0], coord[1]]);
+            void (async () => {
+                if (
+                    geoJson.type === "Feature" &&
+                    geoJson.geometry.type === "Polygon"
+                ) {
+                    const coordinates = (
+                        geoJson.geometry.coordinates[0] as number[][]
+                    ).map((coord) => [coord[0], coord[1]]);
 
-                // Add polygon to map with custom styling
-                const polygon = L.polygon(
-                    coordinates.map(
-                        ([lng, lat]) => [lat, lng] as [number, number]
-                    ),
-                    {
-                        color: "#3b82f6",
-                        fillColor: "#3b82f6",
-                        fillOpacity: 0.2,
-                        weight: 2,
+                    // Add polygon to map with custom styling
+                    const polygon = L.polygon(
+                        coordinates.map(
+                            ([lng, lat]) => [lat, lng] as L.LatLngTuple
+                        ),
+                        {
+                            color: "#3b82f6",
+                            fillColor: "#3b82f6",
+                            fillOpacity: 0.2,
+                            weight: 2,
+                        }
+                    ).addTo(map);
+
+                    setDrawnPolygon(polygon);
+
+                    // Search for assets within polygon
+                    setIsSearching(true);
+                    try {
+                        const results = await geoApi.findAssetsInPolygon({
+                            coordinates: coordinates,
+                        });
+                        onResults(results);
+
+                        // Fit bounds to polygon
+                        map.fitBounds(polygon.getBounds().pad(0.1));
+                    } catch (error) {
+                        console.error("Polygon search failed:", error);
+                    } finally {
+                        setIsSearching(false);
                     }
-                ).addTo(map);
-
-                setDrawnPolygon(polygon);
-
-                // Search for assets within polygon
-                setIsSearching(true);
-                try {
-                    const results = await geoApi.findAssetsInPolygon({
-                        coordinates: coordinates,
-                    });
-                    onResults(results);
-
-                    // Fit bounds to polygon
-                    map.fitBounds(polygon.getBounds().pad(0.1));
-                } catch (error) {
-                    console.error("Polygon search failed:", error);
-                } finally {
-                    setIsSearching(false);
                 }
-            }
 
-            // Remove draw control after drawing
-            if (drawControlInstance) {
+                // Remove draw control after drawing
                 map.removeControl(drawControlInstance);
                 setDrawControl(null);
                 setIsDrawing(false);
-            }
+            })();
         };
 
         map.on(L.Draw.Event.DRAWSTART, handleDrawStart);

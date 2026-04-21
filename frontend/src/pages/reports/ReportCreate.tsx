@@ -19,15 +19,20 @@ const ReportCreate: React.FC = () => {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const getApiErrorDetail = (error: unknown): string | undefined => {
+    return (error as { response?: { data?: { detail?: string } } }).response?.data?.detail
+  }
+
   const createMutation = useMutation({
     mutationFn: (data: ReportCreateRequest) => reportsApi.create(data),
-    onSuccess: (report) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reports"] })
       navigate({ to: "/admin/reports" })
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
-        setErrors({ submit: error.response.data.detail })
+    onError: (error: unknown) => {
+      const detail = getApiErrorDetail(error)
+      if (detail) {
+        setErrors({ submit: detail })
       }
     },
   })
@@ -85,7 +90,9 @@ const ReportCreate: React.FC = () => {
             <h3 className="font-semibold mb-4">Tham số báo cáo</h3>
             <ReportParameters
               reportType={formData.type as ReportType}
-              parameters={formData.parameters || {}}
+              parameters={
+                (formData.parameters as Record<string, string | number | null | undefined>) || {}
+              }
               onParametersChange={(parameters) =>
                 setFormData({ ...formData, parameters })
               }

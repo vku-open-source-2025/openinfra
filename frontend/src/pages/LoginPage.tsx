@@ -1,13 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from '@tanstack/react-router';
+import { isAxiosError } from 'axios';
 import { useAuthStore } from '../stores/authStore';
-import { authApi } from '../api/auth';
+import { authApi, type AuthResponse } from '../api/auth';
 import { useBiometricAuth } from '../hooks/useBiometricAuth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Fingerprint, Loader2 } from 'lucide-react';
+
+type PendingCredentials = {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthResponse['user'];
+};
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -28,25 +35,21 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showBiometricSetup, setShowBiometricSetup] = useState(false);
-  const [pendingCredentials, setPendingCredentials] = useState<{
-    accessToken: string;
-    refreshToken: string;
-    user: any;
-  } | null>(null);
+  const [pendingCredentials, setPendingCredentials] = useState<PendingCredentials | null>(null);
+
+  const handleBiometricLogin = useCallback(async () => {
+    const authenticated = await authenticateWithBiometric();
+    if (authenticated) {
+      navigate({ to: '/admin' });
+    }
+  }, [authenticateWithBiometric, navigate]);
 
   // Auto-trigger biometric if enabled
   useEffect(() => {
     if (biometricEnabled && !biometricLoading) {
       handleBiometricLogin();
     }
-  }, [biometricEnabled]);
-
-  const handleBiometricLogin = async () => {
-    const success = await authenticateWithBiometric();
-    if (success) {
-      navigate({ to: '/admin' });
-    }
-  };
+  }, [biometricEnabled, biometricLoading, handleBiometricLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +73,12 @@ export function LoginPage() {
 
       login(response.access_token, response.refresh_token, response.user);
       navigate({ to: '/admin' });
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin.');
+    } catch (err: unknown) {
+      if (isAxiosError<{ detail?: string }>(err)) {
+        setError(err.response?.data?.detail || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin.');
+      } else {
+        setError('Đăng nhập thất bại. Vui lòng kiểm tra thông tin.');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +87,7 @@ export function LoginPage() {
   const handleSetupBiometric = async () => {
     if (!pendingCredentials) return;
     
-    const success = await registerBiometric(
+    await registerBiometric(
       formData.username,
       pendingCredentials.accessToken,
       pendingCredentials.refreshToken,

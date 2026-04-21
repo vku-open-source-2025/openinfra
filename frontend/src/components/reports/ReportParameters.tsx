@@ -4,10 +4,13 @@ import { Select } from "../ui/select"
 import { DatePicker } from "../ui/date-picker"
 import type { ReportType } from "../../types/report"
 
+type ReportParameterValue = string | number | null | undefined
+type ReportParameterMap = Record<string, ReportParameterValue>
+
 interface ReportParametersProps {
   reportType: ReportType
-  parameters: Record<string, any>
-  onParametersChange: (parameters: Record<string, any>) => void
+  parameters: ReportParameterMap
+  onParametersChange: (parameters: ReportParameterMap) => void
 }
 
 export const ReportParameters: React.FC<ReportParametersProps> = ({
@@ -15,7 +18,7 @@ export const ReportParameters: React.FC<ReportParametersProps> = ({
   parameters,
   onParametersChange,
 }) => {
-  const updateParameter = (key: string, value: any) => {
+  const updateParameter = (key: string, value: ReportParameterValue) => {
     onParametersChange({ ...parameters, [key]: value })
   }
 

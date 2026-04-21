@@ -14,7 +14,7 @@ Trước khi chạy deploy production, bắt buộc gọi DevOps subagent để 
 - Deploy production theo `infra/deploy.sh`
 - Có thay đổi ở `infra/nginx/nginx.conf`
 - Có thay đổi ở `infra/cloudflared/config-openinfra.example.yml`
-- Thêm service mới vào `infra/docker-compose.yml` (đặc biệt từ `3rd_party/sosconn/`)
+- Thêm service mới vào `infra/docker-compose.yml`
 
 ## Kiến trúc triển khai
 
@@ -461,6 +461,61 @@ sudo ss -tlnp | grep -E ':80|:443'
 sudo systemctl stop nginx
 sudo systemctl disable nginx
 ```
+
+## Outage Rollback and Smoke Playbook
+
+### Khi nào chạy playbook này
+
+- Sau khi thay đổi `infra/docker-compose.yml`, `infra/nginx/nginx.conf`, hoặc tunnel config.
+- Ngay khi public probe trả về 5xx kéo dài trên `openinfra.space` hoặc `api.openinfra.space`.
+
+### Bước 1: Preflight cấu hình
+
+```bash
+cd infra
+docker compose config -q
+```
+
+### Bước 2: Triển khai và xác nhận health nội bộ
+
+```bash
+cd infra
+docker compose up -d --build
+docker compose ps
+docker compose logs nginx --tail 100
+```
+
+### Bước 3: Smoke test local qua nginx
+
+```bash
+cd infra
+curl -k -sS -o /dev/null -w 'openinfra_map=%{http_code}\n' -H 'Host: openinfra.space' https://127.0.0.1/map
+curl -k -sS -o /dev/null -w 'api_health=%{http_code}\n' -H 'Host: api.openinfra.space' https://127.0.0.1/health
+```
+
+### Bước 4: Smoke test public
+
+```bash
+curl -sS -o /dev/null -w 'openinfra_map=%{http_code}\n' https://openinfra.space/map
+curl -sS -o /dev/null -w 'api_health=%{http_code}\n' https://api.openinfra.space/health
+```
+
+### Bước 5: Rollback nhanh về cấu hình đã biết tốt
+
+```bash
+# Ví dụ rollback theo commit/tag đã xác nhận ổn định
+git checkout <known-good-ref> -- infra/docker-compose.yml infra/nginx/nginx.conf
+
+cd infra
+docker compose up -d --build
+docker compose ps
+```
+
+### Bước 6: Xác nhận sau rollback
+
+- Lặp lại Bước 3 và Bước 4.
+- Kiểm tra tunnel ổn định: `systemctl --user status cloudflared-openinfra`.
+- Nếu còn lỗi 5xx: thu thập logs `nginx`, `backend`, `frontend`, `cloudflared` trước khi thay đổi tiếp.
 
 ## Redeploy
 

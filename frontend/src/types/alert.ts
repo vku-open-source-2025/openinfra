@@ -9,7 +9,7 @@ export interface Alert {
   asset_id?: string;
   sensor_id?: string;
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   acknowledged_at?: string;
   resolved_at?: string;
   created_at: string;

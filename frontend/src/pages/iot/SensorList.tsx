@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { iotApi } from "../../api/iot"
@@ -17,11 +17,6 @@ const SensorList: React.FC = () => {
   const [status, setStatus] = useState<string>("")
   const [search, setSearch] = useState<string>("")
   const itemsPerPage = 20
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1)
-  }, [sensorType, status, search])
 
   // Fetch all sensors (with high limit) for client-side pagination
   const { data: allSensors, isLoading } = useQuery({
@@ -73,12 +68,18 @@ const SensorList: React.FC = () => {
           <Input
             placeholder="Tìm kiếm cảm biến..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
           />
         </div>
         <Select
           value={sensorType}
-          onChange={(e) => setSensorType(e.target.value)}
+          onChange={(e) => {
+            setSensorType(e.target.value)
+            setPage(1)
+          }}
           placeholder="Tất cả loại"
         >
           <option value="">All Types</option>
@@ -91,7 +92,10 @@ const SensorList: React.FC = () => {
         </Select>
         <Select
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(e) => {
+            setStatus(e.target.value)
+            setPage(1)
+          }}
           placeholder="Tất cả trạng thái"
         >
           <option value="">All Statuses</option>

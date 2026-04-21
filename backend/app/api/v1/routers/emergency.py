@@ -13,7 +13,12 @@ from app.api.v1.dependencies import get_after_action_report_service, get_emergen
 from app.core.config import settings
 from app.domain.models.after_action_report import AfterActionGenerateRequest
 from app.api.v1.middleware import get_current_user
-from app.domain.models.emergency import EmergencyEvent, EmergencyEventCreate, EmergencyEventUpdate
+from app.domain.models.emergency import (
+    EmergencyEvent,
+    EmergencyEventCreate,
+    EmergencyEventUpdate,
+    EmergencyStatus,
+)
 from app.domain.models.user import User, UserRole
 from app.domain.services.after_action_report_service import AfterActionReportService
 from app.domain.services.emergency_service import EmergencyService
@@ -207,6 +212,64 @@ async def get_sos_timeline(
         )
 
     return timeline_items
+
+
+class PublicEmergencyEvent(BaseModel):
+    """Safe subset of an emergency event for public/citizen consumption."""
+
+    id: str
+    title: str
+    event_type: str
+    severity: str
+    status: str
+    location: Optional[Dict[str, Optional[str]]] = None
+    geometry: Optional[Dict[str, object]] = None
+    started_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+
+@router.get("/public", response_model=List[PublicEmergencyEvent])
+async def list_public_emergency_events(
+    limit: int = Query(50, ge=1, le=200),
+    emergency_service: EmergencyService = Depends(get_emergency_service),
+):
+    """Citizen-facing list of active emergency events — no auth required.
+
+    Returns a safe subset (title, type, severity, location, geometry, timestamps).
+    Internal fields (created_by, tags, estimated_impact, metadata) are hidden.
+    """
+    events = await emergency_service.list_events(
+        skip=0,
+        limit=limit,
+        status=EmergencyStatus.ACTIVE.value,
+    )
+    items: List[PublicEmergencyEvent] = []
+    for event in events:
+        loc_payload: Optional[Dict[str, Optional[str]]] = None
+        geometry: Optional[Dict[str, object]] = None
+        if event.location is not None:
+            loc_payload = {
+                "address": event.location.address,
+                "ward": event.location.ward,
+                "district": event.location.district,
+                "city": event.location.city,
+            }
+            if event.location.geometry:
+                geometry = dict(event.location.geometry)
+        items.append(
+            PublicEmergencyEvent(
+                id=str(event.id),
+                title=event.title,
+                event_type=event.event_type.value,
+                severity=event.severity.value,
+                status=event.status.value,
+                location=loc_payload,
+                geometry=geometry,
+                started_at=event.started_at,
+                created_at=event.created_at,
+            )
+        )
+    return items
 
 
 @router.get("", response_model=List[EmergencyEvent])

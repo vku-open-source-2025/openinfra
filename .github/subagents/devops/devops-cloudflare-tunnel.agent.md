@@ -15,7 +15,6 @@ Triển khai và vận hành SOSConn x OpenInfra production qua Cloudflare Tunne
 - `infra/nginx/nginx.conf`
 - `infra/cloudflared/config-openinfra.example.yml`
 - `infra/certbot/`
-- `3rd_party/sosconn/`
 
 ## Responsibilities
 

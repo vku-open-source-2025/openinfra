@@ -2,16 +2,25 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
 
+type AssetReportType =
+  | "maintenance_summary"
+  | "incident_summary"
+  | "lifecycle_overview"
+  | "end_of_life_forecast"
+  | "custom";
+
+type AssetReportFormat = "pdf" | "excel";
+
 interface ReportGeneratorProps {
-  reportType: "maintenance_summary" | "incident_summary" | "lifecycle_overview" | "end_of_life_forecast" | "custom";
-  format: "pdf" | "excel";
+  reportType: AssetReportType;
+  format: AssetReportFormat;
   dateFrom: string;
   dateTo: string;
   severityFilter: string;
   costMin: string;
   costMax: string;
-  onReportTypeChange: (type: typeof reportType) => void;
-  onFormatChange: (format: typeof format) => void;
+  onReportTypeChange: (type: AssetReportType) => void;
+  onFormatChange: (format: AssetReportFormat) => void;
   onDateFromChange: (date: string) => void;
   onDateToChange: (date: string) => void;
   onSeverityFilterChange: (severity: string) => void;
@@ -128,7 +137,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({
               <label className="text-xs text-slate-500 mb-1 block">Mức độ sự cố</label>
               <Select
                 value={severityFilter}
-                onValueChange={onSeverityFilterChange}
+                onChange={(e) => onSeverityFilterChange(e.target.value)}
               >
                 <option value="">Tất cả mức độ</option>
                 <option value="low">Thấp</option>

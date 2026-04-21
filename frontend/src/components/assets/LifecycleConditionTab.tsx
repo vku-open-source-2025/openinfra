@@ -4,9 +4,8 @@ import { Skeleton } from "../ui/skeleton";
 import { HealthScoreGauge } from "./HealthScoreGauge";
 import { getHealthScoreColor, getHealthScoreLabel } from "../../utils/healthScore";
 import { calculateRemainingLifespan } from "../../utils/healthScore";
-import { format } from "date-fns";
 import type { Asset } from "../../types/asset";
-import { AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface LifecycleConditionTabProps {
   assetId: string;

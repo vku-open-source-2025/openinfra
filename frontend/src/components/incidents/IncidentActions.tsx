@@ -1,16 +1,21 @@
 import { Button } from "../ui/button";
 import { Select } from "../ui/select";
-import type { Incident, IncidentStatus } from "../../types/incident";
+import type { Incident } from "../../types/incident";
 import {
     CheckCircle,
     User,
     Wrench,
-    X,
     XCircle,
     Archive,
     ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
+
+type ResolutionType = "fixed" | "duplicate" | "invalid" | "deferred";
+
+const isResolutionType = (value: string): value is ResolutionType => {
+    return ["fixed", "duplicate", "invalid", "deferred"].includes(value);
+};
 
 interface IncidentActionsProps {
     incident: Incident;
@@ -18,7 +23,7 @@ interface IncidentActionsProps {
     onAssign: (userId: string) => Promise<void>;
     onResolve: (
         notes: string,
-        type: "fixed" | "duplicate" | "invalid" | "deferred"
+        type: ResolutionType
     ) => Promise<void>;
     onClose?: (notes?: string) => Promise<void>;
     onReject?: (reason: string) => Promise<void>;
@@ -50,9 +55,8 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
 }) => {
     const [selectedUserId, setSelectedUserId] = useState("");
     const [resolutionNotes, setResolutionNotes] = useState("");
-    const [resolutionType, setResolutionType] = useState<
-        "fixed" | "duplicate" | "invalid" | "deferred"
-    >("fixed");
+    const [resolutionType, setResolutionType] =
+        useState<ResolutionType>("fixed");
     const [rejectReason, setRejectReason] = useState("");
     const [closeNotes, setCloseNotes] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -177,9 +181,12 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                 <div className="space-y-2">
                     <Select
                         value={resolutionType}
-                        onChange={(e) =>
-                            setResolutionType(e.target.value as any)
-                        }
+                        onChange={(e) => {
+                            const nextType = e.target.value;
+                            if (isResolutionType(nextType)) {
+                                setResolutionType(nextType);
+                            }
+                        }}
                     >
                         <option value="fixed">Đã sửa</option>
                         <option value="duplicate">Trùng lặp</option>

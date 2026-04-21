@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
+import { isAxiosError } from "axios"
 import { usersApi } from "../../api/users"
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form"
 import { Input } from "../../components/ui/input"
@@ -9,6 +10,10 @@ import { Button } from "../../components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { useAuthStore } from "../../stores/authStore"
 import type { UserCreateRequest, UserRole } from "../../types/user"
+
+type UserCreateErrorResponse = {
+  detail?: string
+}
 
 const UserCreate: React.FC = () => {
   const navigate = useNavigate()
@@ -30,8 +35,8 @@ const UserCreate: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
       navigate({ to: `/admin/users/${user.id}` })
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
+    onError: (error: unknown) => {
+      if (isAxiosError<UserCreateErrorResponse>(error) && error.response?.data?.detail) {
         setErrors({ submit: error.response.data.detail })
       }
     },

@@ -1,5 +1,5 @@
 import { httpClient } from '../lib/httpClient';
-import type { User } from '../stores/authStore';
+import type { User } from '../types/user';
 
 export interface LoginRequest {
   username: string;

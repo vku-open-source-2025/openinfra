@@ -5,8 +5,6 @@ import {
     BarChart3,
     Droplet,
     MapPin,
-    Award,
-    Activity,
     Download,
     Siren,
     ShieldAlert,
@@ -56,19 +54,13 @@ const dashboardImage =
 const HomePage = () => {
     const { canShowInstallButton, promptInstall } = usePWA();
     const [assetCount, setAssetCount] = useState<number | null>(null);
-    const [contributorCount, setContributorCount] = useState<number | null>(
-        null
-    );
-    const [totalContributions, setTotalContributions] = useState<number | null>(
-        null
-    );
-    const [loadingAssets, setLoadingAssets] = useState(false);
-    const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+    const [, setContributorCount] = useState<number | null>(null);
+    const [, setTotalContributions] = useState<number | null>(null);
+    const [loadingAssets, setLoadingAssets] = useState(true);
+    const [, setLoadingLeaderboard] = useState(true);
 
     useEffect(() => {
         let cancelled = false;
-        setLoadingAssets(true);
-        setLoadingLeaderboard(true);
 
         Promise.allSettled([getAssets(), getLeaderboard()]).then((results) => {
             if (cancelled) return;
@@ -112,62 +104,6 @@ const HomePage = () => {
             ? "Đang tải số điểm giám sát..."
             : "200+ điểm giám sát đang hoạt động";
 
-    const statCards = [
-        {
-            icon: Activity,
-            label: "Điểm giám sát đang hoạt động",
-            value:
-                assetCount !== null
-                    ? new Intl.NumberFormat("vi-VN", {
-                          notation: "compact",
-                          maximumFractionDigits: 1,
-                      }).format(assetCount)
-                    : "—",
-            hint: loadingAssets ? "Đang tải..." : "Cập nhật dữ liệu mới nhất",
-            color: "from-cyan-500 to-blue-500",
-            bgColor: "from-cyan-50 to-blue-50",
-            iconColor: "text-cyan-500",
-        },
-        {
-            icon: Award,
-            label: "Người đóng góp dữ liệu",
-            value:
-                contributorCount !== null
-                    ? new Intl.NumberFormat("vi-VN").format(contributorCount)
-                    : "—",
-            hint: loadingLeaderboard
-                ? "Đang tải..."
-                : "Từ bảng xếp hạng đóng góp",
-            color: "from-amber-500 to-orange-500",
-            bgColor: "from-amber-50 to-orange-50",
-            iconColor: "text-amber-500",
-        },
-        {
-            icon: BarChart3,
-            label: "Lượt đóng góp dữ liệu",
-            value:
-                totalContributions !== null
-                    ? new Intl.NumberFormat("vi-VN", {
-                          notation: "compact",
-                          maximumFractionDigits: 1,
-                      }).format(totalContributions)
-                    : "—",
-            hint: loadingLeaderboard ? "Đang tải..." : "Tổng lượt gửi dữ liệu",
-            color: "from-emerald-500 to-teal-500",
-            bgColor: "from-emerald-50 to-teal-50",
-            iconColor: "text-emerald-500",
-        },
-        {
-            icon: MapPin,
-            label: "Hệ thống đang sử dụng",
-            value: "7",
-            hint: "7 hệ thống đang dùng dịch vụ",
-            color: "from-purple-500 to-pink-500",
-            bgColor: "from-purple-50 to-pink-50",
-            iconColor: "text-purple-500",
-        },
-    ];
-
     return (
         <div className="min-h-screen bg-white text-gray-heading">
             <Header />
@@ -196,6 +132,7 @@ const HomePage = () => {
                             <div className="flex flex-col sm:flex-row gap-4 pt-2">
                                 <Link
                                     to="/map"
+                                    search={{ assetId: undefined }}
                                     className="inline-flex items-center justify-center px-6 py-3 text-white font-semibold rounded-full bg-gradient-to-r from-[#00F2FE] from-21% to-[#4FACFE] shadow-lg hover:shadow-xl transition-shadow"
                                 >
                                     Trải nghiệm ngay{" "}
@@ -229,6 +166,7 @@ const HomePage = () => {
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20">
                                         <Link
                                             to="/map"
+                                            search={{ assetId: undefined }}
                                             className="px-8 py-3 bg-white/90 text-blue font-semibold rounded-full shadow-lg hover:bg-white transition-colors backdrop-blur-sm"
                                         >
                                             Trải nghiệm ngay
@@ -467,6 +405,7 @@ const HomePage = () => {
                         <div className="flex flex-col sm:flex-row gap-6 justify-center pt-6">
                             <Link
                                 to="/map"
+                                search={{ assetId: undefined }}
                                 className="inline-flex items-center justify-center px-10 py-4 text-white font-bold text-lg rounded-full bg-gradient-to-r from-[#00F2FE] from-21% to-[#4FACFE] shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                             >
                                 Khám phá bản đồ →

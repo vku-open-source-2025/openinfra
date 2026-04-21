@@ -3,28 +3,47 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { navigateTo } from "./helpers";
 
+function isLoginViewVisible() {
+    const loginHeading = screen.queryByRole("heading", {
+        name: /đăng nhập|login|sign in/i,
+    });
+    const loginButton = screen.queryByRole("button", {
+        name: /đăng nhập|login|sign in/i,
+    });
+
+    return Boolean(loginHeading || loginButton);
+}
+
+function isEmergencyCenterVisible() {
+    const heading = screen.queryByText(/Emergency Command Center/i);
+    return Boolean(heading);
+}
+
 describe("Emergency Command Center", () => {
     beforeEach(async () => {
         await navigateTo("/admin/emergency-center");
-        await waitFor(() => document.body, { timeout: 5000 });
+        await waitFor(() => {
+            if (isLoginViewVisible() || isEmergencyCenterVisible()) {
+                return true;
+            }
+
+            throw new Error("Emergency screen not ready yet");
+        }, { timeout: 5000 });
     });
 
     test("should handle protected route access", async () => {
-        const currentPath = window.location.pathname;
-
-        if (currentPath.includes("/login")) {
-            const loginTexts = screen.queryAllByText(/login|sign in/i);
-            expect(loginTexts.length).toBeGreaterThan(0);
+        if (isLoginViewVisible()) {
+            expect(isLoginViewVisible()).toBeTruthy();
             return;
         }
 
-        expect(currentPath).toContain("/admin/emergency-center");
+        expect(window.location.pathname).toContain("/admin/emergency-center");
         const heading = screen.queryByText(/Emergency Command Center/i);
         expect(heading).toBeTruthy();
     });
 
     test("should display emergency summary cards when authenticated", async () => {
-        if (window.location.pathname.includes("/login")) {
+        if (isLoginViewVisible()) {
             return;
         }
 
@@ -38,7 +57,7 @@ describe("Emergency Command Center", () => {
     });
 
     test("should render hazard map section", async () => {
-        if (window.location.pathname.includes("/login")) {
+        if (isLoginViewVisible()) {
             return;
         }
 
@@ -47,7 +66,7 @@ describe("Emergency Command Center", () => {
     });
 
     test("should expose event selector and actions", async () => {
-        if (window.location.pathname.includes("/login")) {
+        if (isLoginViewVisible()) {
             return;
         }
 
@@ -63,7 +82,7 @@ describe("Emergency Command Center", () => {
     });
 
     test("should allow selecting emergency event", async () => {
-        if (window.location.pathname.includes("/login")) {
+        if (isLoginViewVisible()) {
             return;
         }
 

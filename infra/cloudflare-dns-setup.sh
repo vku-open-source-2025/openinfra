@@ -92,10 +92,7 @@ IP="${1:-}"
 if [[ -z "$IP" ]]; then
     echo "Usage: $0 <IP_ADDRESS>"
     echo ""
-    echo "Detect IP automatically from router:"
-    echo "  cd 3rd_party/autoip && python -m autoip"
-    echo ""
-    echo "Or detect from internet:"
+    echo "Detect from internet:"
     echo "  $0 \$(curl -s https://api.ipify.org)"
     exit 1
 fi

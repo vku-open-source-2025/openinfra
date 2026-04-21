@@ -8,6 +8,12 @@ services:
       - mongo_data:/data/db
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\" | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
   mongo-express:
@@ -51,6 +57,12 @@ services:
     volumes:
       - zookeeper_data:/var/lib/zookeeper/data
       - zookeeper_log:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD-SHELL", "cub zk-ready localhost:2181 20 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   kafka:
@@ -71,6 +83,12 @@ services:
       - app_network
     volumes:
       - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "cub kafka-ready -b localhost:9092 1 20 >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   # IoT Producer - receives HTTP from ESP8266, publishes to Kafka
@@ -94,6 +112,12 @@ services:
       - kafka
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=3)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   # IoT Consumer - consumes from Kafka, stores in MongoDB
@@ -144,10 +168,15 @@ services:
       - llm-service
     volumes:
       - ../backend:/app
-      - ../3rd_party:/app/3rd_party
       - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   celery-worker:
@@ -160,10 +189,6 @@ services:
       - REDIS_URL=${REDIS_URL}
       - CSV_IMPORT_URL=${CSV_IMPORT_URL}
       - CONTRIB_MONGO_URL=${CONTRIB_MONGO_URL}
-      - AUTOIP_HOST=${AUTOIP_HOST:-192.168.1.1}
-      - AUTOIP_PORT=${AUTOIP_PORT:-1443}
-      - AUTOIP_USERNAME=${AUTOIP_USERNAME:-admin}
-      - AUTOIP_PASSWORD=${AUTOIP_PASSWORD:-user@123456}
       - CF_API_TOKEN=${CF_API_TOKEN}
       - CF_ZONE_ID=${CF_ZONE_ID}
       - CF_DOMAIN=${CF_DOMAIN:-openinfra.space}
@@ -175,7 +200,6 @@ services:
       - backend
     volumes:
       - ../backend:/app
-      - ../3rd_party:/app/3rd_party
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -197,7 +221,6 @@ services:
       - backend
     volumes:
       - ../backend:/app
-      - ../3rd_party:/app/3rd_party
     networks:
       - app_network
     restart: unless-stopped
@@ -216,13 +239,19 @@ services:
     depends_on:
       - backend
     command: npm run dev -- --host 0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:5173').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
     restart: always
     networks:
       - app_network
 
   llm-service:
     env_file: .env
-    build: ../3rd_party/sosconn/llm-service
+    build: ../llm-service
     ports:
       - "${LLM_SERVICE_PORT:-8014}:8000"
     environment:
@@ -233,9 +262,34 @@ services:
       - GITHUB_COPILOT_CHAT_MODEL=${GITHUB_COPILOT_CHAT_MODEL:-gpt-4.1}
       - GITHUB_COPILOT_EMBEDDING_MODEL=${GITHUB_COPILOT_EMBEDDING_MODEL:-text-embedding-3-small}
     volumes:
-      - ../3rd_party/sosconn/llm-service/app:/app/app
+      - ../llm-service/app:/app/app
       - llm_vector_data:/app/data/vector_dbs
       - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/utils/health-check/', timeout=3)\""]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    restart: unless-stopped
+
+  llm-chatbot-scheduler:
+    env_file: .env
+    build: ../llm-service
+    environment:
+      - LLM_SERVICE_INTERNAL_URL=${LLM_SERVICE_INTERNAL_URL:-http://llm-service:8000}
+      - CHATBOT_SCHEDULER_TIMEZONE=${CHATBOT_SCHEDULER_TIMEZONE:-Asia/Ho_Chi_Minh}
+      - CHATBOT_SCHEDULER_DAILY_HOUR=${CHATBOT_SCHEDULER_DAILY_HOUR:-0}
+      - CHATBOT_SCHEDULER_DAILY_MINUTE=${CHATBOT_SCHEDULER_DAILY_MINUTE:-5}
+      - CHATBOT_SCHEDULER_RUN_ON_STARTUP=${CHATBOT_SCHEDULER_RUN_ON_STARTUP:-true}
+      - CHATBOT_SCHEDULER_STARTUP_RETRIES=${CHATBOT_SCHEDULER_STARTUP_RETRIES:-20}
+      - CHATBOT_SCHEDULER_STARTUP_RETRY_SECONDS=${CHATBOT_SCHEDULER_STARTUP_RETRY_SECONDS:-15}
+    command: ["python", "scripts/chatbot_daily_scheduler.py"]
+    depends_on:
+      llm-service:
+        condition: service_healthy
     networks:
       - app_network
     restart: unless-stopped
@@ -281,6 +335,7 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --dns-cloudflare --dns-cloudflare-credentials /cloudflare/credentials.ini; sleep 12h & wait $${!}; done;'"
     networks:
       - app_network
+    restart: unless-stopped
 
 volumes:
   mongo_data:

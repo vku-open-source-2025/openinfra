@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { IncidentCard } from "./IncidentCard";
-import { incidentsApi } from "../../api/incidents";
 import type { Incident } from "../../types/incident";
-import { ChevronDown, ChevronRight, Copy, Link as LinkIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 interface DuplicateGroupCardProps {

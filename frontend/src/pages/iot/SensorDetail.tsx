@@ -36,7 +36,7 @@ const SensorDetail: React.FC = () => {
     enabled: !!sensor,
   })
 
-  const { data: statistics } = useQuery({
+  useQuery({
     queryKey: ["sensor-statistics", id, dateRange.from, dateRange.to],
     queryFn: () =>
       iotApi.getSensorStatistics(id, {
@@ -111,7 +111,8 @@ const SensorDetail: React.FC = () => {
           <div className="border-t border-slate-200 pt-4 mt-4">
             <h3 className="text-sm font-medium text-slate-500 mb-2">Tài sản liên kết</h3>
             <Link
-              to={`/admin/assets/${linkedAsset.id}`}
+              to="/admin/assets/$id"
+              params={{ id: linkedAsset.id }}
               className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
             >
               <div className="flex items-center gap-3">

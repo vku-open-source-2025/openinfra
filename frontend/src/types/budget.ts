@@ -10,7 +10,7 @@ export interface Budget {
   allocated_amount: number;
   spent_amount: number;
   status: BudgetStatus;
-  breakdown: Record<string, any>;
+  breakdown: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -30,13 +30,13 @@ export interface BudgetCreateRequest {
   fiscal_year: number;
   category: string;
   total_amount: number;
-  breakdown?: Record<string, any>;
+  breakdown?: Record<string, unknown>;
 }
 
 export interface BudgetUpdateRequest {
   category?: string;
   total_amount?: number;
-  breakdown?: Record<string, any>;
+  breakdown?: Record<string, unknown>;
 }
 
 export interface BudgetTransactionCreateRequest {

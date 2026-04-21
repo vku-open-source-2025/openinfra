@@ -6,7 +6,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Edit, Calendar, AlertTriangle, CheckCircle } from "lucide-react";
+import { Edit, Calendar, AlertTriangle } from "lucide-react";
 import CalendarView from "../CalendarView";
 import { isMaintenanceOverdue, isMaintenanceDueSoon } from "../../utils/healthScore";
 import type { PreventiveMaintenancePlanUpdateRequest } from "../../types/preventive-maintenance";
@@ -221,10 +221,12 @@ const PreventiveMaintenanceTab: React.FC<PreventiveMaintenanceTabProps> = ({ ass
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Maintenance Calendar</h3>
           <CalendarView logs={upcomingTasks?.map(task => ({
             _id: task.id,
+            asset_id: assetId,
             scheduled_date: task.scheduled_date,
             description: `Preventive maintenance`,
             status: task.status === "overdue" ? "Pending" : "Scheduled",
             technician: plan.responsible_team || "Team",
+            created_at: task.scheduled_date,
           })) || []} />
         </div>
       )}

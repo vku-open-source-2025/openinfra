@@ -1,0 +1,58 @@
+name: frontend-gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-gate.yml"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-gate.yml"
+
+concurrency:
+  group: frontend-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint frontend
+        run: pnpm lint
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run emergency e2e drill
+        run: CI=1 pnpm exec vitest --config=vitest.browser.config.ts --run --browser.headless=true --reporter=verbose e2e/emergency.spec.ts

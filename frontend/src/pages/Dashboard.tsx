@@ -27,6 +27,22 @@ import {
 
 type TabType = "overview" | "calendar";
 
+const pseudoRandom = (seed: number): number => {
+    const value = Math.sin(seed) * 10000;
+    return value - Math.floor(value);
+};
+
+const getPointLatitude = (asset: Asset): number | null => {
+    if (
+        asset.geometry.type !== "Point" ||
+        !Array.isArray(asset.geometry.coordinates) ||
+        typeof asset.geometry.coordinates[1] !== "number"
+    ) {
+        return null;
+    }
+    return asset.geometry.coordinates[1];
+};
+
 const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>("overview");
     const {
@@ -69,9 +85,13 @@ const Dashboard: React.FC = () => {
     const handleRouteOptimization = () => {
         if (!displayAssets.length) return;
         const points = [...displayAssets]
-            .filter((a) => a.geometry.type === "Point")
+            .filter((a) => getPointLatitude(a) !== null)
             .slice(0, 5)
-            .sort((a, b) => b.geometry.coordinates[1] - a.geometry.coordinates[1]);
+            .sort(
+                (a, b) =>
+                    (getPointLatitude(b) ?? Number.NEGATIVE_INFINITY) -
+                    (getPointLatitude(a) ?? Number.NEGATIVE_INFINITY)
+            );
         setRoutePoints(points);
         alert(`Tối ưu tuyến cho ${points.length} điểm dừng!`);
     };
@@ -83,12 +103,19 @@ const Dashboard: React.FC = () => {
         const now = new Date();
         for (let i = 0; i < 50; i++) {
             const date = new Date(now);
-            date.setDate(date.getDate() + Math.floor(Math.random() * 60) - 30);
+            date.setDate(date.getDate() + Math.floor(pseudoRandom(i + 1) * 60) - 30);
+            const sourceAsset =
+                initialAssets.length > 0
+                    ? initialAssets[i % initialAssets.length]
+                    : undefined;
             logs.push({
                 _id: `log-${i}`,
+                asset_id: sourceAsset ? getAssetId(sourceAsset) : `asset-${i}`,
                 scheduled_date: date.toISOString(),
-                description: `Maintenance for ${initialAssets[i % initialAssets.length]?.feature_code || "Asset"}`,
-                status: statuses[Math.floor(Math.random() * statuses.length)],
+                description: `Maintenance for ${sourceAsset?.feature_code || "Asset"}`,
+                status: statuses[Math.floor(pseudoRandom((i + 1) * 17) * statuses.length)],
+                technician: "System",
+                created_at: now.toISOString(),
             });
         }
         return logs;

@@ -1,7 +1,6 @@
 import type { Budget } from "../../types/budget"
 import { Badge } from "../ui/badge"
 import { DollarSign, Calendar } from "lucide-react"
-import { format } from "date-fns"
 
 interface BudgetCardProps {
   budget: Budget

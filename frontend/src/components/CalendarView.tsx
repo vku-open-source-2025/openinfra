@@ -1,9 +1,10 @@
 import React from 'react';
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { MaintenanceLog } from '../api';
 
 interface CalendarViewProps {
-    logs: any[]; // Maintenance logs
+    logs: MaintenanceLog[];
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ logs }) => {
@@ -45,7 +46,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ logs }) => {
                         {day}
                     </div>
                 ))}
-                {days.map((day, _idx) => {
+                {days.map((day) => {
                     const dayLogs = getLogsForDay(day);
                     return (
                         <div
@@ -54,7 +55,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ logs }) => {
                         >
                             <div className="text-right text-sm mb-1">{format(day, 'd')}</div>
                             <div className="space-y-1">
-                                {dayLogs.map((log: any) => (
+                                {dayLogs.map((log) => (
                                     <div key={log._id} className={`text-[10px] px-1 py-0.5 rounded truncate ${log.status === 'Completed' ? 'bg-green-100 text-green-700' :
                                         log.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
                                             'bg-amber-100 text-amber-700'

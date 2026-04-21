@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { ingestApi } from "../../api/ingest";
 import { Button } from "../../components/ui/button";
 import { Form, FormField, FormLabel, FormError } from "../../components/ui/form";
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+
+type IngestErrorResponse = {
+  detail?: string;
+};
 
 const DataIngest: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -17,8 +22,8 @@ const DataIngest: React.FC = () => {
       // Show success message
       alert(data.message || "Tải lên CSV thành công!");
     },
-    onError: (error: any) => {
-      if (error.response?.data?.detail) {
+    onError: (error: unknown) => {
+      if (isAxiosError<IngestErrorResponse>(error) && error.response?.data?.detail) {
         setErrors({ submit: error.response.data.detail });
       } else {
         setErrors({ submit: "Tải CSV thất bại. Vui lòng thử lại." });

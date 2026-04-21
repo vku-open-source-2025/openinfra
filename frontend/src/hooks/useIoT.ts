@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Asset } from '../api';
 import { api } from '../api';
 
@@ -83,6 +83,26 @@ export interface AssetIoTData {
     };
 }
 
+type AssetWithIoTStatus = Omit<Asset, 'status'> & {
+    status: 'Online' | 'Offline';
+    lastPing: string;
+};
+
+const createInitialAssetStatuses = (assets: Asset[]): AssetWithIoTStatus[] => {
+    return assets.map(asset => ({
+        ...asset,
+        status: Math.random() > 0.05 ? 'Online' : 'Offline',
+        lastPing: new Date().toISOString()
+    }));
+};
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+    return fallback;
+};
+
 // API functions
 export const iotApi = {
     async getSensors(assetId?: string): Promise<Sensor[]> {
@@ -114,28 +134,56 @@ export const iotApi = {
 
 // Hook for legacy asset status simulation
 export const useIoT = (initialAssets: Asset[] | undefined) => {
-    const [assetsWithStatus, setAssetsWithStatus] = useState<any[]>([]);
+    const [assetsWithStatus, setAssetsWithStatus] = useState<AssetWithIoTStatus[]>([]);
     const [alerts, setAlerts] = useState<string[]>([]);
 
-    useEffect(() => {
-        if (!initialAssets) return;
-
-        // Initialize with random status
-        const initialized = initialAssets.map(a => ({
-            ...a,
-            status: Math.random() > 0.05 ? 'Online' : 'Offline',
-            lastPing: new Date().toISOString()
-        }));
-        setAssetsWithStatus(initialized);
+    const seededAssets = useMemo<AssetWithIoTStatus[]>(() => {
+        if (!initialAssets || initialAssets.length === 0) {
+            return [];
+        }
+        return createInitialAssetStatuses(initialAssets);
     }, [initialAssets]);
 
+    const assetsInSync = useMemo(() => {
+        if (!initialAssets) {
+            return assetsWithStatus.length === 0;
+        }
+        if (assetsWithStatus.length !== initialAssets.length) {
+            return false;
+        }
+        const currentIds = new Set(assetsWithStatus.map(asset => asset.id));
+        return initialAssets.every(asset => currentIds.has(asset.id));
+    }, [assetsWithStatus, initialAssets]);
+
     useEffect(() => {
-        if (assetsWithStatus.length === 0) return;
+        if (!initialAssets || initialAssets.length === 0) return;
+
+        const seededById = new Map(seededAssets.map(asset => [asset.id, asset]));
 
         const interval = setInterval(() => {
             setAssetsWithStatus(current => {
-                const next = [...current];
-                const numUpdates = Math.floor(Math.random() * 3) + 1;
+                const currentById = new Map(current.map(asset => [asset.id, asset]));
+                const next: AssetWithIoTStatus[] = initialAssets.map(asset => {
+                    const existing = currentById.get(asset.id) ?? seededById.get(asset.id);
+                    if (existing) {
+                        return {
+                            ...asset,
+                            status: existing.status,
+                            lastPing: existing.lastPing
+                        };
+                    }
+                    return {
+                        ...asset,
+                        status: Math.random() > 0.05 ? 'Online' : 'Offline',
+                        lastPing: new Date().toISOString()
+                    };
+                });
+
+                if (next.length === 0) {
+                    return [];
+                }
+
+                const numUpdates = Math.floor(Math.random() * Math.min(3, next.length)) + 1;
 
                 for (let i = 0; i < numUpdates; i++) {
                     const idx = Math.floor(Math.random() * next.length);
@@ -154,9 +202,11 @@ export const useIoT = (initialAssets: Asset[] | undefined) => {
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [assetsWithStatus.length]);
+    }, [initialAssets, seededAssets]);
 
-    return { assetsWithStatus, alerts };
+    const stableAssetsWithStatus = assetsInSync ? assetsWithStatus : seededAssets;
+
+    return { assetsWithStatus: stableAssetsWithStatus, alerts };
 };
 
 // Hook for real IoT sensor data
@@ -177,8 +227,8 @@ export const useSensorData = (assetId: string | null, refreshInterval: number = 
         try {
             const iotData = await iotApi.getAssetIoTData(assetId, 24);
             setData(iotData);
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch IoT data');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Failed to fetch IoT data'));
             setData(null);
         } finally {
             setLoading(false);

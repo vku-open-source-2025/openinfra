@@ -30,9 +30,6 @@ infra/certbot/
 infra/nginx/nginx-active.conf
 infra/nginx/*.bak
 
-# 3rd party submodules
-3rd_party/
-
 # Uploaded files
 backend/uploads/
 backend/celerybeat-schedule

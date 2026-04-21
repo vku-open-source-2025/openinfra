@@ -8,7 +8,7 @@ export interface Report {
   type: ReportType;
   format: ReportFormat;
   status: ReportStatus;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   file_url?: string;
   created_at: string;
   completed_at?: string;
@@ -17,5 +17,5 @@ export interface Report {
 export interface ReportCreateRequest {
   type: ReportType;
   format: ReportFormat;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
 }

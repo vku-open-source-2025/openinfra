@@ -221,6 +221,7 @@ export const mockIncidents = (assetId: string): Incident[] => [
                 comment: "Inspected and confirmed crack location",
                 user_name: "John Doe",
                 is_internal: true,
+                posted_at: "2024-01-10T10:00:00Z",
                 created_at: "2024-01-10T10:00:00Z",
             },
         ],

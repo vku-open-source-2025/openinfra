@@ -93,8 +93,6 @@ describe('Geospatial Features', () => {
       await waitFor(() => {}, { timeout: 1000 }); // Wait for debounce
 
       // Check if suggestions appear (may or may not depending on API)
-      const suggestions = document.querySelector('[role="listbox"]') ||
-                         document.querySelector('ul li');
       // Suggestions are optional - API may not return results in test environment
     }
   });

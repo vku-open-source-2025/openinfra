@@ -74,7 +74,7 @@ export interface MaintenanceCompleteRequest {
     work_performed: string; // Required: Description of work performed
     completion_notes?: string; // Optional: Additional completion notes
     actual_cost?: number;
-    quality_checks?: any[];
+    quality_checks?: unknown[];
 }
 
 export interface MaintenanceApprovalRequest {

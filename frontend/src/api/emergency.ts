@@ -3,6 +3,7 @@ import type {
   EmergencyEvent,
   EmergencyEventCreateRequest,
   EmergencyEventUpdateRequest,
+  PublicEmergencyEvent,
 } from '../types/emergency';
 
 export interface EmergencyListParams {
@@ -71,6 +72,13 @@ export const emergencyApi = {
 
   getSosTimeline: async (params?: { limit?: number }): Promise<SosTimelineItem[]> => {
     const response = await httpClient.get<SosTimelineItem[]>('/emergency/sos/timeline', {
+      params,
+    });
+    return response.data;
+  },
+
+  listPublic: async (params?: { limit?: number }): Promise<PublicEmergencyEvent[]> => {
+    const response = await httpClient.get<PublicEmergencyEvent[]>('/emergency/public', {
       params,
     });
     return response.data;

@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { incidentsApi } from "../../api/incidents";
 import { maintenanceApi } from "../../api/maintenance";
-import type { Incident } from "../../types/incident";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { Label } from "../../components/ui/label";
+import { useAuthStore } from "../../stores/authStore";
 import {
     Loader2,
     ArrowLeft,
@@ -23,15 +23,28 @@ export const Route = createFileRoute("/technician/tasks/$taskId")({
     component: TaskExecutionPage,
 });
 
+type ResolutionType = "fixed" | "duplicate" | "invalid" | "deferred";
+
+const RESOLUTION_TYPES: ResolutionType[] = [
+    "fixed",
+    "duplicate",
+    "invalid",
+    "deferred",
+];
+
+const isResolutionType = (value: string): value is ResolutionType => {
+    return RESOLUTION_TYPES.includes(value as ResolutionType);
+};
+
 function TaskExecutionPage() {
     const { taskId } = Route.useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { user } = useAuthStore();
     const [cost, setCost] = useState<string>("");
     const [notes, setNotes] = useState("");
-    const [resolutionType, setResolutionType] = useState<
-        "fixed" | "duplicate" | "invalid" | "deferred"
-    >("fixed");
+    const [resolutionType, setResolutionType] =
+        useState<ResolutionType>("fixed");
     const [showCompleteForm, setShowCompleteForm] = useState(false);
     const [showResolveForm, setShowResolveForm] = useState(false);
 
@@ -60,7 +73,7 @@ function TaskExecutionPage() {
             type,
         }: {
             notes: string;
-            type: "fixed" | "duplicate" | "invalid" | "deferred";
+            type: ResolutionType;
         }) => incidentsApi.resolve(taskId, notes, type),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["incident", taskId] });
@@ -300,9 +313,12 @@ function TaskExecutionPage() {
                             <select
                                 id="resolution-type"
                                 value={resolutionType}
-                                onChange={(e) =>
-                                    setResolutionType(e.target.value as any)
-                                }
+                                onChange={(e) => {
+                                    const nextType = e.target.value;
+                                    if (isResolutionType(nextType)) {
+                                        setResolutionType(nextType);
+                                    }
+                                }}
                                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                             >
                                 <option value="fixed">Đã sửa</option>

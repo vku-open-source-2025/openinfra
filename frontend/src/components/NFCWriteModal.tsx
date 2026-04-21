@@ -1,8 +1,25 @@
 import { AlertCircle, CheckCircle, Loader2, Smartphone, X } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { type Asset, getAssetId } from "../api";
 
-type NDEFReadingEvent = any;
+interface NDEFReaderLike {
+    scan: (options?: { signal?: AbortSignal }) => Promise<void>;
+    write: (message: {
+        records: Array<{ recordType: string; data: string }>;
+    }) => Promise<void>;
+    onreading: ((event: Event) => void) | null;
+    onreadingerror: (() => void) | null;
+}
+
+interface NDEFReaderConstructor {
+    new (): NDEFReaderLike;
+}
+
+declare global {
+    interface Window {
+        NDEFReader?: NDEFReaderConstructor;
+    }
+}
 
 interface NFCWriteModalProps {
     isOpen: boolean;
@@ -21,26 +38,16 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
     const [message, setMessage] = useState<string>("");
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    useEffect(() => {
-        if (isOpen && asset) {
-            startScanning();
-        } else {
-            stopScanning();
-        }
-
-        return () => stopScanning();
-    }, [isOpen, asset]);
-
-    const stopScanning = () => {
+    const stopScanning = useCallback(() => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
         setStatus("idle");
-    };
+    }, []);
 
-    const startScanning = async () => {
-        if (!("NDEFReader" in window)) {
+    const startScanning = useCallback(async () => {
+        if (!window.NDEFReader) {
             setStatus("error");
             setMessage("Thiết bị/trình duyệt này không hỗ trợ Web NFC.");
             return;
@@ -52,12 +59,11 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
         abortControllerRef.current = new AbortController();
 
         try {
-            // @ts-expect-error - NDEFReader is experimental
-            const ndef = new NDEFReader();
+            const ndef = new window.NDEFReader();
             await ndef.scan({ signal: abortControllerRef.current.signal });
 
-            ndef.onreading = async (_event: NDEFReadingEvent) => {
-                    setStatus("writing");
+            ndef.onreading = async () => {
+                setStatus("writing");
                 setMessage("Phát hiện thẻ. Đang ghi dữ liệu...");
 
                 try {
@@ -93,7 +99,28 @@ const NFCWriteModal: React.FC<NFCWriteModalProps> = ({
             setStatus("error");
             setMessage("Không thể bắt đầu quét NFC. Vui lòng đảm bảo NFC đã được bật.");
         }
-    };
+    }, [asset, onClose]);
+
+    useEffect(() => {
+        let timeoutId: number | undefined;
+
+        if (isOpen && asset) {
+            timeoutId = window.setTimeout(() => {
+                void startScanning();
+            }, 0);
+        } else {
+            timeoutId = window.setTimeout(() => {
+                stopScanning();
+            }, 0);
+        }
+
+        return () => {
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+            stopScanning();
+        };
+    }, [isOpen, asset, startScanning, stopScanning]);
 
     if (!isOpen || !asset) return null;
 

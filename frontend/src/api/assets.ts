@@ -51,8 +51,11 @@ export const assetsApi = {
     getHistory: async (
         id: string,
         limit?: number
-    ): Promise<{ data: any[]; count: number }> => {
-        const response = await httpClient.get<{ data: any[]; count: number }>(
+    ): Promise<{ data: unknown[]; count: number }> => {
+        const response = await httpClient.get<{
+            data: unknown[];
+            count: number;
+        }>(
             `/assets/${id}`,
             {
                 params: limit ? { limit } : undefined,

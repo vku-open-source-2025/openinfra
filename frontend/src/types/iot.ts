@@ -1,4 +1,10 @@
-export type SensorStatus = 'active' | 'inactive' | 'maintenance';
+export type SensorStatus =
+  | 'active'
+  | 'inactive'
+  | 'maintenance'
+  | 'online'
+  | 'offline'
+  | 'error';
 export type SensorType = 'temperature' | 'humidity' | 'pressure' | 'vibration' | 'noise' | 'air_quality' | 'other';
 
 export interface SensorLocation {
@@ -31,7 +37,7 @@ export interface SensorReading {
   sensor_id: string;
   timestamp: string;
   value: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SensorStatistics {
@@ -66,5 +72,5 @@ export interface SensorUpdateRequest {
 export interface SensorReadingIngestRequest {
   timestamp?: string;
   value: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }

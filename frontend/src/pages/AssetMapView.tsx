@@ -8,6 +8,7 @@ import React, {
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import L from "leaflet";
+import type { Asset as LegacyAsset } from "../api";
 import { assetsApi } from "../api/assets";
 import type { Asset } from "../types/asset";
 import { getIconForAsset, getColorForFeatureCode } from "../utils/mapIcons";
@@ -16,9 +17,22 @@ import AssetInfoPanel from "../components/AssetInfoModal";
 import AIChatWidget from "../components/AIChatWidget";
 import "leaflet/dist/leaflet.css";
 
+type AssetWithLegacyId = Asset & {
+    id?: string;
+    _id?: string;
+};
+
+type LeafletDefaultIconPrototype = typeof L.Icon.Default.prototype & {
+    _getIconUrl?: unknown;
+};
+
+const getAssetId = (asset: Asset | null | undefined): string | null => {
+    const assetWithLegacyId = asset as AssetWithLegacyId | null | undefined;
+    return assetWithLegacyId?.id ?? assetWithLegacyId?._id ?? null;
+};
+
 // Disable default Leaflet marker icons
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as LeafletDefaultIconPrototype)._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: undefined,
     iconUrl: undefined,
@@ -111,6 +125,7 @@ const AssetMapView: React.FC = () => {
     const [assetToAddToChat, setAssetToAddToChat] = useState<Asset | null>(
         null
     );
+    const selectedAssetId = getAssetId(selectedAsset);
     const mapRef = useRef<L.Map | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const markerRefs = useRef<{ [key: string]: L.Marker | null }>({});
@@ -122,18 +137,14 @@ const AssetMapView: React.FC = () => {
     // Fetch full asset details when selected
     const { data: fullAssetDetails, isLoading: isLoadingAssetDetails } =
         useQuery({
-            queryKey: [
-                "asset",
-                selectedAsset
-                    ? (selectedAsset as any).id || (selectedAsset as any)._id
-                    : null,
-            ],
+            queryKey: ["asset", selectedAssetId],
             queryFn: () => {
-                const assetId =
-                    (selectedAsset as any)?.id || (selectedAsset as any)?._id;
-                return assetsApi.getById(assetId);
+                if (!selectedAssetId) {
+                    throw new Error("Asset ID is required");
+                }
+                return assetsApi.getById(selectedAssetId);
             },
-            enabled: !!selectedAsset && isModalOpen,
+            enabled: !!selectedAssetId && isModalOpen,
         });
 
     // Initialize filtered assets with all assets
@@ -155,15 +166,11 @@ const AssetMapView: React.FC = () => {
         }
 
         const assetId = searchParams?.assetId;
-        const currentAssetId = selectedAsset
-            ? (selectedAsset as any).id || (selectedAsset as any)._id
-            : null;
+        const currentAssetId = getAssetId(selectedAsset);
 
         if (assetId && assets && assets.length > 0) {
             if (currentAssetId !== assetId) {
-                const asset = assets.find(
-                    (a) => ((a as any).id || (a as any)._id) === assetId
-                );
+                const asset = assets.find((a) => getAssetId(a) === assetId);
                 if (asset) {
                     // Use setTimeout to avoid synchronous setState in effect
                     setTimeout(() => {
@@ -200,11 +207,11 @@ const AssetMapView: React.FC = () => {
 
         // Always include selected asset even if currently out of bounds
         if (selectedAsset) {
-            const selectedId =
-                (selectedAsset as any).id || (selectedAsset as any)._id;
+            const selectedId = getAssetId(selectedAsset);
             if (
+                selectedId &&
                 !filtered.find(
-                    (a) => ((a as any).id || (a as any)._id) === selectedId
+                    (a) => getAssetId(a) === selectedId
                 )
             ) {
                 filtered.push(selectedAsset);
@@ -216,7 +223,10 @@ const AssetMapView: React.FC = () => {
 
     const handleAssetClick = useCallback(
         (asset: Asset) => {
-            const assetId = (asset as any).id || (asset as any)._id;
+            const assetId = getAssetId(asset);
+            if (!assetId) {
+                return;
+            }
             isUpdatingFromUrl.current = true;
             setSelectedAsset(asset);
             setIsModalOpen(true);
@@ -256,8 +266,8 @@ const AssetMapView: React.FC = () => {
 
     // Memoize filter change handler to prevent infinite loops
     const handleFilterChange = useCallback(
-        (filtered: import("../api").Asset[]) => {
-            setFilteredAssets(filtered as unknown as Asset[]);
+        (filtered: LegacyAsset[]) => {
+            setFilteredAssets(filtered as Asset[]);
         },
         []
     );
@@ -312,7 +322,7 @@ const AssetMapView: React.FC = () => {
         if (!mapRef.current || !selectedAsset) return;
 
         const map = mapRef.current;
-        const assetId = (selectedAsset as any).id || (selectedAsset as any)._id;
+        const assetId = getAssetId(selectedAsset);
 
         if (selectedAsset.geometry.type === "Point") {
             const [lng, lat] = selectedAsset.geometry.coordinates as number[];
@@ -322,7 +332,7 @@ const AssetMapView: React.FC = () => {
                 duration: 1.5,
             });
 
-            const marker = markerRefs.current[assetId];
+            const marker = assetId ? markerRefs.current[assetId] : null;
             if (marker) {
                 setTimeout(() => {
                     marker.openPopup();
@@ -365,11 +375,13 @@ const AssetMapView: React.FC = () => {
             if (asset.geometry.type === "Point") {
                 const coords = asset.geometry.coordinates as number[];
                 const position: [number, number] = [coords[1], coords[0]];
-                const assetId = (asset as any).id || (asset as any)._id;
+                const assetId = getAssetId(asset);
+                if (!assetId) {
+                    return;
+                }
                 const isSelected =
                     selectedAsset &&
-                    ((selectedAsset as any).id ||
-                        (selectedAsset as any)._id) === assetId;
+                    getAssetId(selectedAsset) === assetId;
 
                 const marker = L.marker(position, {
                     icon: getIconForAsset(asset.feature_code, !!isSelected),
@@ -387,9 +399,12 @@ const AssetMapView: React.FC = () => {
             if (asset.geometry.type === "LineString") {
                 const positions = (
                     asset.geometry.coordinates as number[][]
-                ).map((coord: any) => [coord[1], coord[0]] as [number, number]);
+                ).map((coord) => [coord[1], coord[0]] as [number, number]);
                 const color = getColorForFeatureCode(asset.feature_code);
-                const assetId = (asset as any).id || (asset as any)._id;
+                const assetId = getAssetId(asset);
+                if (!assetId) {
+                    return;
+                }
 
                 const polyline = L.polyline(positions, {
                     color,
@@ -434,7 +449,7 @@ const AssetMapView: React.FC = () => {
             {/* Asset Layer Filter */}
             {assets && assets.length > 0 && (
                 <AssetLayerFilter
-                    assets={assets as unknown as import("../api").Asset[]}
+                    assets={assets}
                     onFilterChange={handleFilterChange}
                 />
             )}

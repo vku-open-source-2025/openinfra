@@ -20,6 +20,30 @@ export interface IncidentListParams {
   verification_status?: string;
 }
 
+export interface DuplicateDetectionResult {
+  incident_id: string;
+  similarity_score: number;
+  match_reasons: string[];
+}
+
+export type MergeSuggestionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface MergeSuggestion {
+  id: string;
+  primary_incident_id: string;
+  duplicate_incident_ids: string[];
+  similarity_score: number;
+  match_reasons: string[];
+  suggested_by: string;
+  created_at: string;
+  updated_at: string;
+  status: MergeSuggestionStatus;
+  approved_by?: string;
+  rejected_by?: string;
+  reviewed_at?: string;
+  review_notes?: string;
+}
+
 export const incidentsApi = {
   list: async (params?: IncidentListParams): Promise<Incident[]> => {
     if (USE_MOCK_DATA && params?.asset_id) {
@@ -116,20 +140,25 @@ export const incidentsApi = {
     return response.data;
   },
 
+  approveCost: async (id: string): Promise<Incident> => {
+    const response = await httpClient.post<Incident>(`/incidents/${id}/approve-cost`);
+    return response.data;
+  },
+
   verify: async (id: string): Promise<Incident> => {
     const response = await httpClient.post<Incident>(`/incidents/${id}/verify`);
     return response.data;
   },
 
-  checkDuplicates: async (id: string): Promise<Array<{ incident_id: string; similarity_score: number; match_reasons: string[] }>> => {
-    const response = await httpClient.post<Array<{ incident_id: string; similarity_score: number; match_reasons: string[] }>>(
+  checkDuplicates: async (id: string): Promise<DuplicateDetectionResult[]> => {
+    const response = await httpClient.post<DuplicateDetectionResult[]>(
       `/incidents/${id}/check-duplicates`
     );
     return response.data;
   },
 
-  getMergeSuggestions: async (id: string, status?: string): Promise<Array<any>> => {
-    const response = await httpClient.get<Array<any>>(`/incidents/${id}/merge-suggestions`, {
+  getMergeSuggestions: async (id: string, status?: string): Promise<MergeSuggestion[]> => {
+    const response = await httpClient.get<MergeSuggestion[]>(`/incidents/${id}/merge-suggestions`, {
       params: status ? { status } : undefined,
     });
     return response.data;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@tanstack/react-router';
 
 import { afterActionApi } from '@/api/after-action-reports';
 import { dispatchApi } from '@/api/dispatch';
@@ -395,6 +396,27 @@ const EmergencyCenter: React.FC = () => {
           >
             Refresh All
           </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            to="/admin/emergency-center/before"
+            className="inline-flex rounded-lg border border-white/35 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+          >
+            Go to Before Board
+          </Link>
+          <Link
+            to="/admin/emergency-center/during"
+            className="inline-flex rounded-lg border border-white/35 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+          >
+            Go to During Board
+          </Link>
+          <Link
+            to="/admin/emergency-center/after"
+            className="inline-flex rounded-lg border border-white/35 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
+          >
+            Go to After Board
+          </Link>
         </div>
       </header>
 

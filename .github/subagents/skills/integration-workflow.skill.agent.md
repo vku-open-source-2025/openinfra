@@ -24,7 +24,7 @@ Thiết kế luồng tích hợp end-to-end giữa data ingest, AI EOP, dispatch
 - `backend/app/infrastructure/messaging/`
 - `backend/app/celery_app.py`
 - `datacollector/backend/main.py`
-- `3rd_party/sosconn/llm-service/`
+- `llm-service/`
 
 ## Output Contract
 

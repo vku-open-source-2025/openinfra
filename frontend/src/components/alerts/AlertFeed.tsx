@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { alertsApi } from "../../api/alerts"
 import { AlertCard } from "./AlertCard"
@@ -18,7 +17,7 @@ export const AlertFeed: React.FC<AlertFeedProps> = ({
   autoRefresh = true,
   refreshInterval = 30000, // 30 seconds
 }) => {
-  const [refetchInterval, setRefetchInterval] = useState<number | false>(autoRefresh ? refreshInterval : false)
+  const refetchInterval = autoRefresh ? refreshInterval : false
 
   const { data: alerts, isLoading } = useQuery({
     queryKey: ["alerts", "feed", severity, limit],

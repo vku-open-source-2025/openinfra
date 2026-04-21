@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2, Bot, User, Code, Database, AlertCircle, Copy, Check, Play, ChevronDown, ChevronUp, ExternalLink, MapPin, Plus } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback, useId } from 'react';
+import { MessageCircle, X, Send, Loader2, Bot, User, Code, Database, AlertCircle, Copy, Check, Play, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { type Asset, getAssetId } from '../api';
 
 interface Message {
@@ -35,12 +35,48 @@ interface ApiParam {
 }
 
 interface StreamChunk {
-  type: 'token' | 'tool_start' | 'tool_end' | 'final' | 'error' | 'done';
+  type: 'token' | 'tool_start' | 'tool_end' | 'final' | 'error' | 'done' | 'pong';
   content?: string;
   tool?: string;
   input?: string;
   output?: string;
 }
+
+interface ApiCardResultPreview {
+  url?: string;
+  status?: number;
+  data_preview?: unknown;
+}
+
+interface ApiCardParamMeta {
+  type?: string;
+  description?: string;
+  default?: string | number | boolean;
+  required?: boolean;
+}
+
+interface ApiCardPayload {
+  endpoint?: string;
+  method?: string;
+  description?: string;
+  params?: Record<string, ApiCardParamMeta>;
+  last_result?: ApiCardResultPreview;
+}
+
+type WebSocketWithPing = WebSocket & { pingInterval?: ReturnType<typeof setInterval> };
+
+const clearWebSocketPingInterval = (socket: WebSocket | null) => {
+  const ws = socket as WebSocketWithPing | null;
+  if (!ws?.pingInterval) return;
+  clearInterval(ws.pingInterval);
+  ws.pingInterval = undefined;
+};
+
+const getFeatureCount = (value: unknown): number | null => {
+  if (!value || typeof value !== 'object') return null;
+  const maybeFeatures = (value as { features?: unknown }).features;
+  return Array.isArray(maybeFeatures) ? maybeFeatures.length : null;
+};
 
 // API definitions for interactive testing
 const API_DEFINITIONS: Record<string, ApiCardData> = {
@@ -102,20 +138,21 @@ const API_BASE_URL = import.meta.env.VITE_BASE_API_URL?.replace('/api/v1', '') |
 function ApiCard({ apiData, onClose, initialResult }: {
   apiData: ApiCardData;
   onClose: () => void;
-  initialResult?: { url?: string; status?: number; data_preview?: any };
+  initialResult?: ApiCardResultPreview;
 }) {
   const [params, setParams] = useState<Record<string, string | number>>(() => {
     const initial: Record<string, string | number> = {};
     apiData.params.forEach(p => {
-      initial[p.name] = p.default ?? '';
+      initial[p.name] = typeof p.default === 'boolean' ? String(p.default) : (p.default ?? '');
     });
     return initial;
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(initialResult?.data_preview || null);
+  const [result, setResult] = useState<unknown>(initialResult?.data_preview || null);
   const [error, setError] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(!!initialResult);
   const [copiedResult, setCopiedResult] = useState(false);
+  const featureCount = getFeatureCount(result);
 
   const buildUrl = () => {
     const queryParams = new URLSearchParams();
@@ -259,7 +296,7 @@ function ApiCard({ apiData, onClose, initialResult }: {
       )}
 
       {/* Result */}
-      {result && (
+      {Boolean(result) && (
         <div className="border-t border-blue-100">
           <button
             onClick={() => setShowResult(!showResult)}
@@ -268,9 +305,9 @@ function ApiCard({ apiData, onClose, initialResult }: {
             <span className="flex items-center gap-2">
               <Database size={14} className="text-green-500" />
               <span>Kết quả</span>
-              {Array.isArray(result.features) && (
+              {featureCount !== null && (
                 <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
-                  {result.features.length} mục
+                  {featureCount} mục
                 </span>
               )}
             </span>
@@ -307,10 +344,11 @@ interface AIChatWidgetProps {
 export default function AIChatWidget({ 
   selectedAsset, 
   onOpenChange,
-  openChat = false,
+  openChat,
   addAssetToContext: externalAddAsset
 }: AIChatWidgetProps = {}) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = openChat ?? internalIsOpen;
   const [assetInContext, setAssetInContext] = useState<Asset | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -326,10 +364,12 @@ export default function AIChatWidget({
   const [currentToolInfo, setCurrentToolInfo] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  const reactClientId = useId();
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const clientIdRef = useRef<string>(`client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const clientIdRef = useRef<string>(`client_${reactClientId.replace(/:/g, '_')}`);
   const streamingMessageRef = useRef<string>('');
+  const connectWebSocketRef = useRef<() => void>(() => {});
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -351,159 +391,65 @@ export default function AIChatWidget({
     }]);
   }, []);
 
-  // Handle external open control (only if openChat prop is provided and different from current state)
-  const prevOpenChatRef = useRef<boolean | undefined>(undefined);
-  useEffect(() => {
-    // Only sync if openChat prop is explicitly provided AND has changed
-    if (openChat !== undefined && prevOpenChatRef.current !== openChat) {
-      console.log('AIChatWidget: External openChat prop changed from', prevOpenChatRef.current, 'to', openChat);
-      console.log('AIChatWidget: Current isOpen:', isOpen);
-      setIsOpen(openChat);
-      prevOpenChatRef.current = openChat;
-    } else if (openChat === undefined) {
-      // If openChat is not provided, use internal state (default behavior)
-      prevOpenChatRef.current = undefined;
-    }
-  }, [openChat]); // Only depend on openChat
-  
-  // Debug: Log isOpen changes
-  useEffect(() => {
-    console.log('AIChatWidget: isOpen state changed to:', isOpen);
-    console.log('AIChatWidget: Will render chat window?', isOpen);
-    console.log('AIChatWidget: openChat prop:', openChat);
-  }, [isOpen, openChat]);
-
   // Handle external asset addition - use ref to track previous value
   const prevAssetRef = useRef<Asset | null>(null);
   useEffect(() => {
+    let timeoutId: number | undefined;
+
     if (externalAddAsset && getAssetId(externalAddAsset) !== (prevAssetRef.current ? getAssetId(prevAssetRef.current) : null)) {
-      addAssetToContext(externalAddAsset);
-      prevAssetRef.current = externalAddAsset;
+      const nextAsset = externalAddAsset;
+      timeoutId = window.setTimeout(() => {
+        addAssetToContext(nextAsset);
+        prevAssetRef.current = nextAsset;
+      }, 0);
     }
+
     // Reset ref when external asset is cleared
     if (!externalAddAsset) {
       prevAssetRef.current = null;
     }
+
+    return () => {
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, [externalAddAsset, addAssetToContext]);
 
   // Reset asset in context when selected asset changes (user needs to re-add it)
   useEffect(() => {
     if (selectedAsset && assetInContext && getAssetId(selectedAsset) !== getAssetId(assetInContext)) {
-      setAssetInContext(null);
+      const timeoutId = window.setTimeout(() => {
+        setAssetInContext(null);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
     }
   }, [selectedAsset, assetInContext]);
 
   const handleOpenChange = (open: boolean) => {
-    console.log('AIChatWidget: handleOpenChange called with', open);
-    console.log('AIChatWidget: Current isOpen state:', isOpen);
-    setIsOpen(open);
-    console.log('AIChatWidget: isOpen state set to:', open);
+    if (openChat === undefined) {
+      setInternalIsOpen(open);
+    }
     onOpenChange?.(open);
   };
 
-  const connectWebSocket = useCallback(() => {
-    // Don't connect if already connected or connecting
-    if (wsRef.current?.readyState === WebSocket.OPEN || 
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
-      console.log('WebSocket already connected or connecting');
-      return;
-    }
-    
-    // Close existing connection if any (but not connecting)
-    if (wsRef.current && wsRef.current.readyState !== WebSocket.CONNECTING) {
-      const oldWs = wsRef.current;
-      if ((oldWs as any).pingInterval) {
-        clearInterval((oldWs as any).pingInterval);
+  const updateStreamingMessage = useCallback((content: string) => {
+    setMessages(prev => {
+      const lastMessage = prev[prev.length - 1];
+      if (lastMessage?.role === 'assistant' && lastMessage.id === 'streaming') {
+        return [
+          ...prev.slice(0, -1),
+          { ...lastMessage, content, timestamp: new Date() }
+        ];
       }
-      if (oldWs.readyState === WebSocket.OPEN) {
-        oldWs.close();
-      }
-      wsRef.current = null;
-    }
+      return prev;
+    });
+  }, []);
 
-    const wsUrl = `${WEBSOCKET_URL}/${clientIdRef.current}`;
-    console.log('Connecting to WebSocket:', wsUrl);
-
-    try {
-      const ws = new WebSocket(wsUrl);
-      
-      // Set connection state immediately
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-        
-        // Send ping to keep connection alive
-        const pingInterval = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'ping' }));
-          } else {
-            clearInterval(pingInterval);
-          }
-        }, 30000); // Ping every 30 seconds
-        
-        // Store interval ID for cleanup
-        (ws as any).pingInterval = pingInterval;
-      };
-
-      ws.onclose = (event) => {
-        console.log('WebSocket disconnected', event.code, event.reason);
-        setIsConnected(false);
-        
-        // Clear ping interval
-        if ((ws as any).pingInterval) {
-          clearInterval((ws as any).pingInterval);
-        }
-        
-        // Don't reconnect if component is unmounting or chat is closed
-        if (!isOpen) {
-          return;
-        }
-        
-        // Try to reconnect after 3 seconds if not a normal closure
-        // Code 1006 = abnormal closure (no close frame)
-        // Code 1000 = normal closure
-        if (event.code !== 1000 && isOpen) {
-          setTimeout(() => {
-            if (isOpen && wsRef.current?.readyState !== WebSocket.OPEN && wsRef.current?.readyState !== WebSocket.CONNECTING) {
-              console.log('Attempting to reconnect WebSocket...');
-              connectWebSocket();
-            }
-          }, 3000);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsConnected(false);
-        // Don't try to reconnect immediately on error, let onclose handle it
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const chunk: StreamChunk = JSON.parse(event.data);
-          
-          // Handle pong response
-          if (chunk.type === 'pong') {
-            return; // Just acknowledge, don't process
-          }
-          
-          handleStreamChunk(chunk);
-        } catch (e) {
-          console.error('Failed to parse message:', e);
-        }
-      };
-
-      // wsRef.current is already set above
-    } catch (error) {
-      console.error('Failed to create WebSocket:', error);
-      setIsConnected(false);
-      wsRef.current = null;
-    }
-  }, [isOpen]);
-
-  const handleStreamChunk = (chunk: StreamChunk) => {
+  const handleStreamChunk = useCallback((chunk: StreamChunk) => {
     switch (chunk.type) {
       case 'token':
         streamingMessageRef.current += chunk.content || '';
@@ -541,20 +487,109 @@ export default function AIChatWidget({
         streamingMessageRef.current = '';
         break;
     }
-  };
+  }, [updateStreamingMessage]);
 
-  const updateStreamingMessage = (content: string) => {
-    setMessages(prev => {
-      const lastMessage = prev[prev.length - 1];
-      if (lastMessage?.role === 'assistant' && lastMessage.id === 'streaming') {
-        return [
-          ...prev.slice(0, -1),
-          { ...lastMessage, content, timestamp: new Date() }
-        ];
+  const connectWebSocket = useCallback(() => {
+    // Don't connect if already connected or connecting
+    if (wsRef.current?.readyState === WebSocket.OPEN || 
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      console.log('WebSocket already connected or connecting');
+      return;
+    }
+    
+    // Close existing connection if any (but not connecting)
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.CONNECTING) {
+      const oldWs = wsRef.current;
+      clearWebSocketPingInterval(oldWs);
+      if (oldWs.readyState === WebSocket.OPEN) {
+        oldWs.close();
       }
-      return prev;
-    });
-  };
+      wsRef.current = null;
+    }
+
+    const wsUrl = `${WEBSOCKET_URL}/${clientIdRef.current}`;
+    console.log('Connecting to WebSocket:', wsUrl);
+
+    try {
+      const ws = new WebSocket(wsUrl);
+      
+      // Set connection state immediately
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        setIsConnected(true);
+        
+        // Send ping to keep connection alive
+        const pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          } else {
+            clearInterval(pingInterval);
+          }
+        }, 30000); // Ping every 30 seconds
+        
+        // Store interval ID for cleanup
+        (ws as WebSocketWithPing).pingInterval = pingInterval;
+      };
+
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected', event.code, event.reason);
+        setIsConnected(false);
+        
+        // Clear ping interval
+        clearWebSocketPingInterval(ws);
+        
+        // Don't reconnect if component is unmounting or chat is closed
+        if (!isOpen) {
+          return;
+        }
+        
+        // Try to reconnect after 3 seconds if not a normal closure
+        // Code 1006 = abnormal closure (no close frame)
+        // Code 1000 = normal closure
+        if (event.code !== 1000 && isOpen) {
+          setTimeout(() => {
+            if (isOpen && wsRef.current?.readyState !== WebSocket.OPEN && wsRef.current?.readyState !== WebSocket.CONNECTING) {
+              console.log('Attempting to reconnect WebSocket...');
+              connectWebSocketRef.current();
+            }
+          }, 3000);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsConnected(false);
+        // Don't try to reconnect immediately on error, let onclose handle it
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const chunk: StreamChunk = JSON.parse(event.data);
+          
+          // Handle pong response
+          if (chunk.type === 'pong') {
+            return; // Just acknowledge, don't process
+          }
+          
+          handleStreamChunk(chunk);
+        } catch (e) {
+          console.error('Failed to parse message:', e);
+        }
+      };
+
+      // wsRef.current is already set above
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+      setIsConnected(false);
+      wsRef.current = null;
+    }
+  }, [handleStreamChunk, isOpen]);
+
+  useEffect(() => {
+    connectWebSocketRef.current = connectWebSocket;
+  }, [connectWebSocket]);
 
   useEffect(() => {
     if (isOpen) {
@@ -571,9 +606,7 @@ export default function AIChatWidget({
       if (wsRef.current) {
         const ws = wsRef.current;
         // Clear ping interval
-        if ((ws as any).pingInterval) {
-          clearInterval((ws as any).pingInterval);
-        }
+        clearWebSocketPingInterval(ws);
         // Only close if connection is open or connecting
         if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
           ws.close(1000, 'Chat closed');
@@ -589,9 +622,7 @@ export default function AIChatWidget({
       if (wsRef.current) {
         const ws = wsRef.current;
         // Clear ping interval
-        if ((ws as any).pingInterval) {
-          clearInterval((ws as any).pingInterval);
-        }
+        clearWebSocketPingInterval(ws);
         // Only close if connection is open
         if (ws.readyState === WebSocket.OPEN) {
           ws.close(1000, 'Component unmounted');
@@ -667,8 +698,8 @@ export default function AIChatWidget({
           }),
         });
 
-        const data = await response.json();
-        updateStreamingMessage(data.response);
+        const data = (await response.json()) as { response?: string };
+        updateStreamingMessage(data.response ?? '✅ Đã nhận phản hồi nhưng không có nội dung phản hồi.');
         setIsLoading(false);
       } catch (error) {
         console.error('Chat error:', error);
@@ -688,7 +719,7 @@ export default function AIChatWidget({
   // Parse code blocks from message content
   const renderMessage = (content: string) => {
     // First, convert <tool_output> and <tool_code> tags to code blocks
-    let processedContent = content
+    const processedContent = content
       .replace(
         /<tool_output>([\s\S]*?)<\/tool_output>/g,
         (_, output) => '```json\n' + output.trim() + '\n```'
@@ -710,9 +741,9 @@ export default function AIChatWidget({
           // Handle api_card special block - parse and show interactive card
           if (lang === 'api_card') {
             try {
-              const apiCardData = JSON.parse(code);
+              const apiCardData = JSON.parse(code) as ApiCardPayload;
               // Extract endpoint from the api_card data
-              const endpoint = apiCardData.endpoint || '';
+              const endpoint = typeof apiCardData.endpoint === 'string' ? apiCardData.endpoint : '';
 
               // Find matching API definition or create from response
               let matchedApi = Object.values(API_DEFINITIONS).find(
@@ -723,10 +754,17 @@ export default function AIChatWidget({
                 // Create dynamic API card from response data
                 const params: ApiParam[] = [];
                 if (apiCardData.params) {
-                  Object.entries(apiCardData.params).forEach(([name, info]: [string, any]) => {
+                  Object.entries(apiCardData.params).forEach(([name, info]) => {
+                    const rawType = info.type;
+                    const normalizedType: ApiParam['type'] =
+                      rawType === 'int' || rawType === 'number'
+                        ? 'number'
+                        : rawType === 'boolean'
+                          ? 'boolean'
+                          : 'string';
                     params.push({
                       name,
-                      type: info.type === 'int' ? 'number' : 'string',
+                      type: normalizedType,
                       description: info.description || '',
                       default: info.default,
                       required: info.required || false
@@ -734,9 +772,16 @@ export default function AIChatWidget({
                   });
                 }
 
+                const method: ApiCardData['method'] =
+                  apiCardData.method === 'POST' ||
+                  apiCardData.method === 'PUT' ||
+                  apiCardData.method === 'DELETE'
+                    ? apiCardData.method
+                    : 'GET';
+
                 matchedApi = {
                   endpoint: endpoint,
-                  method: (apiCardData.method || 'GET') as 'GET' | 'POST' | 'PUT' | 'DELETE',
+                  method,
                   description: apiCardData.description || '',
                   params
                 };

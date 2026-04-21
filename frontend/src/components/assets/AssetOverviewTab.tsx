@@ -4,8 +4,7 @@ import { incidentsApi } from "../../api/incidents";
 import { format } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
-import { Link } from "@tanstack/react-router";
-import { ExternalLink, Calendar, User, DollarSign } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import type { Asset } from "../../types/asset";
 
 interface AssetOverviewTabProps {
