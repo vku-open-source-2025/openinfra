@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AG05ContextService:
     """Retrieve short ranked snippets from AG05 corpus for prompt enrichment."""
 
-    CHAT_ENDPOINT = "/api/v1/chat/ask-latest-chatbot"
+    CHAT_ENDPOINT = "/api/v1/chat/retrieve-latest-chatbot"
 
     def __init__(
         self,
@@ -71,19 +71,6 @@ class AG05ContextService:
             return json.dumps(payload, ensure_ascii=False)
 
         return str(payload)
-
-    @staticmethod
-    def _build_retrieval_prompt(query: str, max_snippets: int) -> str:
-        """Build strict prompt asking for structured retrieval snippets only."""
-        return (
-            "Return only JSON. Use AG05 vector corpus as the only source. "
-            "Find the top relevant snippets for the question below and respond with this exact schema: "
-            '{"snippets":[{"source_id":"AG05-1","text":"..."}]}. '
-            f"Include at most {max_snippets} snippets. "
-            "source_id must be unique per snippet. "
-            "If nothing relevant is found, return {\"snippets\":[]}. "
-            f"Question: {query}"
-        )
 
     @staticmethod
     def _normalize_snippets(raw_payload: Any, max_snippets: int) -> List[Dict[str, str]]:
@@ -142,7 +129,7 @@ class AG05ContextService:
             return []
 
         url = f"{self.base_url}{self.CHAT_ENDPOINT}"
-        payload = {"question": self._build_retrieval_prompt(query, max_snippets=max_snippets)}
+        payload = {"query": query, "max_snippets": max_snippets}
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
@@ -153,13 +140,17 @@ class AG05ContextService:
             logger.warning("AG05 retrieval unavailable (%s): %s", url, exc)
             return []
 
+        snippets = self._normalize_snippets(body, max_snippets=max_snippets)
+        if snippets:
+            return snippets
+
+        # Last-resort fallback for older llm-service responses.
         answer_text = self._extract_answer_text(body)
         parsed = self._extract_first_json_payload(answer_text)
         snippets = self._normalize_snippets(parsed, max_snippets=max_snippets)
         if snippets:
             return snippets
 
-        # Last-resort fallback when answer is plain text but still potentially relevant.
         lowered = answer_text.lower()
         if answer_text.strip() and "khong co du du lieu" not in lowered and "không có đủ dữ liệu" not in lowered:
             return [{"source_id": "AG05-1", "text": answer_text.strip()[:500]}]

@@ -142,10 +142,12 @@ export const maintenanceApi = {
         const response = await httpClient.post<Maintenance>(
             `/maintenance/${id}/complete`,
             {
-                work_performed: data.work_performed,
-                completion_notes: data.completion_notes,
-                actual_cost: data.actual_cost,
-                quality_checks: data.quality_checks || [],
+                work_performed: data.completion_notes
+                    ? `${data.work_performed}\n\n${data.completion_notes}`
+                    : data.work_performed,
+                labor_cost: data.actual_cost,
+                parts_used: [],
+                tools_used: [],
             }
         );
         return response.data;

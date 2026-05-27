@@ -30,12 +30,13 @@ async def list_incidents(
     status: Optional[str] = None,
     severity: Optional[str] = None,
     asset_id: Optional[str] = None,
+    assigned_to: Optional[str] = None,
     verification_status: Optional[str] = Query(None, description="Filter by AI verification status: pending, verified, to_be_verified, failed"),
     incident_service: IncidentService = Depends(get_incident_service)
 ):
     """List incidents with filtering, including asset information."""
     return await incident_service.list_incidents(
-        skip, limit, status, severity, asset_id, None, 
+        skip, limit, status, severity, asset_id, None, assigned_to,
         populate_asset=True, verification_status=verification_status
     )
 
@@ -44,7 +45,7 @@ async def list_incidents(
 async def create_incident(
     request: Request,
     background_tasks: BackgroundTasks,
-    data: str = Form(...),
+    data: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     cf_turnstile_response: Optional[str] = Header(None, alias="CF-Turnstile-Response"),
     current_user: Optional[User] = Depends(get_optional_current_user),
@@ -79,7 +80,13 @@ async def create_incident(
             )
     
     try:
-        incident_dict = json.loads(data)
+        if data is not None:
+            incident_dict = json.loads(data)
+        else:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" not in content_type:
+                raise HTTPException(status_code=400, detail="Incident data is required")
+            incident_dict = await request.json()
         
         # Map contact_info to reporter_contact if provided
         if "contact_info" in incident_dict:
@@ -93,6 +100,8 @@ async def create_incident(
         incident_data = IncidentCreate(**incident_dict)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON data")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid incident data: {str(e)}")
     

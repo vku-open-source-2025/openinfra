@@ -43,6 +43,23 @@ export interface Hazard {
   updated_at: string;
 }
 
+export interface RecentHazardItem {
+  id: string;
+  hazard_id: string;
+  title: string;
+  event_type: HazardEventType;
+  severity: HazardSeverity;
+  source: HazardSource;
+  geometry?: HazardGeometry;
+  district?: string;
+  ward?: string;
+  detected_at?: string;
+  expires_at?: string;
+  /** linked_event_id is populated if this hazard has been deployed as an emergency event */
+  linked_event_id?: string | null;
+  linked_eop_plan_id?: string | null;
+}
+
 export interface HazardListParams {
   skip?: number;
   limit?: number;

@@ -356,12 +356,13 @@ class IncidentService:
                 "updated_at": datetime.utcnow()
             }
             
-            # If technician is assigned, transition incident to assigned status
+            # If technician is assigned, make the ticket immediately actionable
+            # in the technician queue.
             if technician_id:
                 update_data["assigned_to"] = technician_id
                 # Only update status if incident is in acknowledged or reported state
                 if incident.status in [IncidentStatus.ACKNOWLEDGED.value, IncidentStatus.REPORTED.value]:
-                    update_data["status"] = IncidentStatus.ASSIGNED.value
+                    update_data["status"] = IncidentStatus.INVESTIGATING.value
                 
                 # If incident was marked as spam risk but admin assigned technician,
                 # mark it as verified (useful ticket)
@@ -434,13 +435,14 @@ class IncidentService:
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
+        assigned_to: Optional[str] = None,
         populate_asset: bool = True,
         verification_status: Optional[str] = None
     ) -> List[Incident]:
         """List incidents with filtering."""
         return await self.repository.list(
-            skip, limit, status, severity, asset_id, reported_by, 
-            populate_asset, verification_status
+            skip, limit, status, severity, asset_id, reported_by,
+            assigned_to, populate_asset, verification_status
         )
 
     async def update_incident(

@@ -94,7 +94,7 @@ export const incidentsApi = {
   resolve: async (
     id: string,
     resolutionNotes: string,
-    resolutionType: 'fixed' | 'duplicate' | 'invalid' | 'deferred'
+    resolutionType: 'fixed' | 'duplicate' | 'not_an_issue' | 'transferred'
   ): Promise<Incident> => {
     const response = await httpClient.post<Incident>(`/incidents/${id}/resolve`, null, {
       params: {

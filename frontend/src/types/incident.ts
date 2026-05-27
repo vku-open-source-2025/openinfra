@@ -70,6 +70,7 @@ export interface Incident {
   photos?: string[];
   upvotes: number;
   comments: IncidentComment[];
+  reported_at?: string;
   created_at: string;
   updated_at: string;
   // Merge/Related incidents
@@ -81,6 +82,12 @@ export interface Incident {
   ai_verification_reason?: string;
   ai_verified_at?: string;
 }
+
+export type IncidentResolutionType =
+    | "fixed"
+    | "duplicate"
+    | "not_an_issue"
+    | "transferred";
 
 export interface IncidentCreateRequest {
     title: string;

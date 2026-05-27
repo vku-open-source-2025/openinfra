@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vscode
+.env
+.env.*
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+e2e/
+*.log
+*.md

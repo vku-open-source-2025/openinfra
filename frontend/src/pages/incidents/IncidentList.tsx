@@ -28,6 +28,12 @@ const IncidentList: React.FC = () => {
     const fetchLimit = 100;
     const pageSize = 5;
 
+    const getIncidentTime = (incident: Incident) => {
+        const date = incident.reported_at || incident.created_at;
+        const time = date ? new Date(date).getTime() : 0;
+        return Number.isNaN(time) ? 0 : time;
+    };
+
     // Build query params based on selected tabs
     const getQueryParams = () => {
         const params: IncidentListParams = {
@@ -123,7 +129,9 @@ const IncidentList: React.FC = () => {
             );
         }
 
-        return filtered;
+        return [...filtered].sort(
+            (a, b) => getIncidentTime(b) - getIncidentTime(a)
+        );
     };
 
     const filteredIncidents = filterIncidents(incidents);
@@ -258,8 +266,14 @@ const IncidentList: React.FC = () => {
                 search={search}
                 day={day}
                 onStatusChange={() => {}}
-                onSeverityChange={setSeverity}
-                onSearchChange={setSearch}
+                onSeverityChange={(value) => {
+                    setSeverity(value);
+                    setPage(1);
+                }}
+                onSearchChange={(value) => {
+                    setSearch(value);
+                    setPage(1);
+                }}
                 onDayChange={(value) => {
                     setDay(value);
                     setPage(1);

@@ -1,9 +1,11 @@
 export type MaintenanceStatus =
     | "scheduled"
     | "in_progress"
+    | "waiting_approval"
     | "completed"
-    | "cancelled";
-export type MaintenancePriority = "low" | "medium" | "high" | "urgent";
+    | "cancelled"
+    | "on_hold";
+export type MaintenancePriority = "low" | "medium" | "high" | "critical" | "urgent";
 export type MaintenanceType =
     | "preventive"
     | "corrective"
@@ -21,12 +23,20 @@ export interface Maintenance {
     status: MaintenanceStatus;
     type?: MaintenanceType;
     scheduled_date: string;
+    actual_start_time?: string;
+    actual_end_time?: string;
+    actual_duration?: number;
     started_at?: string;
     completed_at?: string;
     assigned_to?: string;
     technician?: string;
     estimated_cost?: number;
     actual_cost?: number;
+    labor_cost?: number;
+    parts_cost?: number;
+    other_costs?: number;
+    total_cost?: number;
+    work_performed?: string;
     approval_status?: MaintenanceApprovalStatus;
     rejection_reason?: string;
     parts_replaced?: string[];
@@ -37,6 +47,8 @@ export interface Maintenance {
         file_type: string;
         uploaded_at: string;
     }>;
+    before_photos?: string[];
+    after_photos?: string[];
     created_at: string;
     updated_at: string;
 }

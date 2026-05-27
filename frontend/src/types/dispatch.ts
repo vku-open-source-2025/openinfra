@@ -10,9 +10,10 @@ export type DispatchStatus =
   | 'canceled';
 
 export interface DispatchAssignment {
-  resource_unit_id: string;
+  resource_unit_id?: string | null;
+  assigned_user_id?: string | null;
   role?: string;
-  quantity: number;
+  quantity?: number;
   notes?: string;
 }
 
@@ -29,6 +30,7 @@ export interface DispatchOrder {
   priority: DispatchPriority;
   status: DispatchStatus;
   assignments: DispatchAssignment[];
+  assigned_user_id?: string | null;
   eta_minutes?: number;
   started_at?: string;
   completed_at?: string;

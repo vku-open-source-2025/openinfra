@@ -125,3 +125,47 @@ async def test_retrieve_snippets_falls_back_to_plain_text_for_non_json_response(
     snippets = await service.retrieve_snippets("Need AG05 context", max_snippets=3)
 
     assert snippets == [{"source_id": "AG05-1", "text": "Useful AG05 plain text context"}]
+
+
+@pytest.mark.asyncio
+async def test_retrieve_snippets_calls_direct_retrieval_endpoint(monkeypatch):
+    """Retrieval should pass the user query directly, not a prompt asking the LLM to emit JSON."""
+    service = AG05ContextService(base_url="https://llm.example")
+    captured = {}
+
+    class StubResponse:
+        content = b'{"snippets":[{"source_id":"AG05-9","text":"Direct context"}]}'
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"snippets": [{"source_id": "AG05-9", "text": "Direct context"}]}
+
+    class StubAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+        async def post(self, url, json):
+            captured["url"] = url
+            captured["json"] = json
+            return StubResponse()
+
+    monkeypatch.setattr(
+        "app.infrastructure.external.ag05_context_service.httpx.AsyncClient",
+        StubAsyncClient,
+    )
+
+    snippets = await service.retrieve_snippets("Need AG05 context", max_snippets=2)
+
+    assert captured == {
+        "url": "https://llm.example/api/v1/chat/retrieve-latest-chatbot",
+        "json": {"query": "Need AG05 context", "max_snippets": 2},
+    }
+    assert snippets == [{"source_id": "AG05-9", "text": "Direct context"}]

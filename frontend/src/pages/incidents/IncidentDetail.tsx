@@ -32,8 +32,8 @@ const IncidentDetail: React.FC = () => {
     });
 
     const { data: users } = useQuery({
-        queryKey: ["users"],
-        queryFn: () => usersApi.list({ role: "technician", status: "active" }),
+        queryKey: ["users", "technicians", "active"],
+        queryFn: () => usersApi.listTechnicians("active"),
         enabled: true, // Always fetch for technician selection
     });
 
@@ -56,7 +56,7 @@ const IncidentDetail: React.FC = () => {
             setSelectedTechnician("");
             queryClient.invalidateQueries({ queryKey: ["incident", id] });
             queryClient.invalidateQueries({ queryKey: ["incidents"] });
-            navigate({ to: `/admin/maintenance/${data.maintenance_id}` });
+            navigate({ to: `/technician/maintenance/${data.maintenance_id}` });
         },
     });
 
@@ -336,8 +336,9 @@ const IncidentDetail: React.FC = () => {
                     {incident.status !== "closed" && !incident.maintenance_record_id && (
                         <Button
                             onClick={() => setShowMaintenanceDialog(true)}
-                            disabled={createMaintenanceMutation.isPending}
+                            disabled={createMaintenanceMutation.isPending || !incident.asset_id}
                             className="w-full"
+                            title={!incident.asset_id ? "Sự cố cần liên kết tài sản trước khi tạo phiếu bảo trì" : undefined}
                         >
                             {createMaintenanceMutation.isPending ? (
                                 <>
@@ -510,7 +511,7 @@ const IncidentDetail: React.FC = () => {
                                         size="sm"
                                         onClick={() =>
                                             navigate({
-                                                to: `/admin/maintenance/${incident.maintenance_record_id}`,
+                                                to: `/technician/maintenance/${incident.maintenance_record_id}`,
                                             })
                                         }
                                     >

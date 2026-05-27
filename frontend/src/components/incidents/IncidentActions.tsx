@@ -1,6 +1,7 @@
 import { Button } from "../ui/button";
 import { Select } from "../ui/select";
 import type { Incident } from "../../types/incident";
+import type { IncidentResolutionType } from "../../types/incident";
 import {
     CheckCircle,
     User,
@@ -11,10 +12,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-type ResolutionType = "fixed" | "duplicate" | "invalid" | "deferred";
+type ResolutionType = IncidentResolutionType;
 
 const isResolutionType = (value: string): value is ResolutionType => {
-    return ["fixed", "duplicate", "invalid", "deferred"].includes(value);
+    return ["fixed", "duplicate", "not_an_issue", "transferred"].includes(value);
 };
 
 interface IncidentActionsProps {
@@ -190,8 +191,8 @@ export const IncidentActions: React.FC<IncidentActionsProps> = ({
                     >
                         <option value="fixed">Đã sửa</option>
                         <option value="duplicate">Trùng lặp</option>
-                        <option value="invalid">Không hợp lệ</option>
-                        <option value="deferred">Hoãn</option>
+                        <option value="not_an_issue">Không phải sự cố</option>
+                        <option value="transferred">Chuyển xử lý</option>
                     </Select>
                     <textarea
                         value={resolutionNotes}

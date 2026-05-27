@@ -38,6 +38,8 @@ export interface EOPPlan {
   fallback_plan: string[];
   communications_plan: string[];
   status: EOPPlanStatus;
+  /** Free-form markdown body edited by coordinators */
+  markdown_body?: string | null;
   review_notes?: string;
   approved_by?: string;
   approved_at?: string;
@@ -46,6 +48,17 @@ export interface EOPPlan {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+}
+
+export interface EOPMarkdownUpdateRequest {
+  markdown_body: string;
+  review_notes?: string;
+}
+
+export interface EOPSubmitResponse {
+  plan_id: string;
+  task_source: string;
+  orders: import('./dispatch').DispatchOrder[];
 }
 
 export interface EOPPlanCreateRequest {

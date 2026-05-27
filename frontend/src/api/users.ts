@@ -15,8 +15,15 @@ export const usersApi = {
   },
 
   listTechnicians: async (status?: string): Promise<User[]> => {
-    const response = await httpClient.get<User[]>('/users/technicians', { 
-      params: status ? { status } : undefined 
+    const response = await httpClient.get<User[]>('/users/technicians', {
+      params: status ? { status } : undefined,
+    });
+    return response.data;
+  },
+
+  listVolunteers: async (status?: string): Promise<User[]> => {
+    const response = await httpClient.get<User[]>('/users/volunteers', {
+      params: status ? { status } : undefined,
     });
     return response.data;
   },

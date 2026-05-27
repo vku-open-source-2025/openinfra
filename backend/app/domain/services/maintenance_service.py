@@ -12,6 +12,7 @@ from app.domain.models.maintenance import (
     MaintenanceType,
     RecurrencePattern,
 )
+from app.domain.models.incident import IncidentStatus
 from app.domain.repositories.maintenance_repository import MaintenanceRepository
 from app.domain.services.budget_service import BudgetService
 from app.domain.services.asset_service import AssetService
@@ -206,6 +207,9 @@ class MaintenanceService:
         if not updated:
             raise NotFoundError("Maintenance", maintenance_id)
 
+        if self.incident_service and new_status == MaintenanceStatus.WAITING_APPROVAL.value:
+            await self._mark_related_incidents_waiting_approval(maintenance_id)
+
         # If no approval needed (cost is 0), proceed to final completion steps
         if new_status == MaintenanceStatus.COMPLETED.value:
             await self._finalize_maintenance_completion(updated, completed_by)
@@ -214,6 +218,22 @@ class MaintenanceService:
             f"Completed maintenance work (Status: {new_status}): {maintenance.work_order_number}"
         )
         return updated
+
+    async def _mark_related_incidents_waiting_approval(self, maintenance_id: str) -> None:
+        """Reflect cost approval state on incident tickets linked to this work order."""
+        try:
+            incident_repo = self.incident_service.repository
+            related_incidents = await incident_repo.find_by_maintenance_record_id(maintenance_id)
+            for incident in related_incidents:
+                await incident_repo.update(
+                    str(incident.id),
+                    {
+                        "status": IncidentStatus.WAITING_APPROVAL.value,
+                        "updated_at": datetime.utcnow(),
+                    },
+                )
+        except Exception as e:
+            logger.warning("Could not mark related incidents waiting approval: %s", e)
 
     async def approve_resolution(
         self, maintenance_id: str, approved_by: str

@@ -8,6 +8,7 @@ import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { Label } from "../../components/ui/label";
 import { useAuthStore } from "../../stores/authStore";
+import type { IncidentResolutionType } from "../../types/incident";
 import {
     Loader2,
     ArrowLeft,
@@ -23,13 +24,13 @@ export const Route = createFileRoute("/technician/tasks/$taskId")({
     component: TaskExecutionPage,
 });
 
-type ResolutionType = "fixed" | "duplicate" | "invalid" | "deferred";
+type ResolutionType = IncidentResolutionType;
 
 const RESOLUTION_TYPES: ResolutionType[] = [
     "fixed",
     "duplicate",
-    "invalid",
-    "deferred",
+    "not_an_issue",
+    "transferred",
 ];
 
 const isResolutionType = (value: string): value is ResolutionType => {
@@ -323,8 +324,8 @@ function TaskExecutionPage() {
                             >
                                 <option value="fixed">Đã sửa</option>
                                 <option value="duplicate">Trùng lặp</option>
-                                <option value="invalid">Không hợp lệ</option>
-                                <option value="deferred">Hoãn</option>
+                                <option value="not_an_issue">Không phải sự cố</option>
+                                <option value="transferred">Chuyển xử lý</option>
                             </select>
                         </div>
                         <div>

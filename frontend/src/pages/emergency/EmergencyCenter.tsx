@@ -5,16 +5,17 @@ import { afterActionApi } from '@/api/after-action-reports';
 import { dispatchApi } from '@/api/dispatch';
 import { emergencyApi, type SosTimelineItem } from '@/api/emergency';
 import { eopApi } from '@/api/eop';
-import { hazardsApi } from '@/api/hazards';
+import { hazardsApi, type DeployHazardResponse } from '@/api/hazards';
 import { resourcesApi } from '@/api/resources';
 import { sitrepApi } from '@/api/sitrep';
 import { useAuthStore } from '@/stores';
 import HazardLiveMap from '@/components/emergency/HazardLiveMap';
+import DeployEopModal from '@/components/emergency/DeployEopModal';
 import type { AfterActionReport } from '@/types/after-action-report';
 import type { DispatchOrder } from '@/types/dispatch';
 import type { EmergencyEvent } from '@/types/emergency';
 import type { EOPPlan } from '@/types/eop';
-import type { Hazard } from '@/types/hazard';
+import type { Hazard, RecentHazardItem } from '@/types/hazard';
 import type { ResourceUnit } from '@/types/resource-unit';
 import type { Sitrep } from '@/types/sitrep';
 import { parseHazardStreamPayload } from './hazardStream';
@@ -97,12 +98,21 @@ const EmergencyCenter: React.FC = () => {
   const [resources, setResources] = React.useState<ResourceUnit[]>([]);
   const [sitreps, setSitreps] = React.useState<Sitrep[]>([]);
   const [hazards, setHazards] = React.useState<Hazard[]>([]);
+  const [recentHazardItems, setRecentHazardItems] = React.useState<RecentHazardItem[]>([]);
   const [sosTimeline, setSosTimeline] = React.useState<SosTimelineItem[]>([]);
   const [afterActionReports, setAfterActionReports] = React.useState<AfterActionReport[]>([]);
 
+  // Deploy modal state
+  const [deployModalData, setDeployModalData] = React.useState<DeployHazardResponse | null>(null);
+  const [deployingHazardId, setDeployingHazardId] = React.useState<string | null>(null);
+
   const refreshHazards = React.useCallback(async () => {
-    const hazardData = await hazardsApi.list({ limit: 200, is_active: true });
+    const [hazardData, recentItems] = await Promise.all([
+      hazardsApi.list({ limit: 200, is_active: true }),
+      hazardsApi.listRecentItems({ hours: 24, limit: 200 }),
+    ]);
     setHazards(hazardData);
+    setRecentHazardItems(recentItems);
     setLastHazardRefresh(new Date());
   }, []);
 
@@ -114,7 +124,7 @@ const EmergencyCenter: React.FC = () => {
       setError(null);
 
       try {
-        const [eventData, eopData, dispatchData, resourceData, sitrepData, hazardData, aarData, timelineData] =
+        const [eventData, eopData, dispatchData, resourceData, sitrepData, hazardData, aarData, timelineData, recentHazardData] =
           await Promise.all([
             emergencyApi.list({ limit: 80 }),
             eopApi.list({ limit: 80 }),
@@ -124,6 +134,7 @@ const EmergencyCenter: React.FC = () => {
             hazardsApi.list({ limit: 200, is_active: true }),
             afterActionApi.list({ limit: 60 }),
             emergencyApi.getSosTimeline({ limit: 30 }),
+            hazardsApi.listRecentItems({ hours: 24, limit: 200 }),
           ]);
 
         setEvents(eventData);
@@ -134,6 +145,7 @@ const EmergencyCenter: React.FC = () => {
         setHazards(hazardData);
         setAfterActionReports(aarData);
         setSosTimeline(timelineData);
+        setRecentHazardItems(recentHazardData);
         setLastHazardRefresh(new Date());
 
         if (!selectedEventId && eventData.length > 0) {
@@ -295,6 +307,22 @@ const EmergencyCenter: React.FC = () => {
     }
   };
 
+  const handleDeployHazard = async (hazardId: string) => {
+    setDeployingHazardId(hazardId);
+    setError(null);
+    try {
+      const result = await hazardsApi.deploy(hazardId);
+      setDeployModalData(result);
+      // Refresh recent hazards to reflect linked_event_id
+      void hazardsApi.listRecentItems({ hours: 24, limit: 200 }).then(setRecentHazardItems);
+    } catch (err) {
+      console.error(err);
+      setError('Triển khai thất bại. Vui lòng thử lại.');
+    } finally {
+      setDeployingHazardId(null);
+    }
+  };
+
   const handleGenerateEopDraft = async () => {
     if (!selectedEventId) {
       setError('Vui lòng chọn một sự kiện để tạo EOP draft.');
@@ -306,22 +334,6 @@ const EmergencyCenter: React.FC = () => {
         force_new_version: true,
       });
       setInfo('Đã tạo EOP draft bằng AI + fallback an toàn.');
-      await loadData(false);
-    });
-  };
-
-  const handleApproveEop = async (planId: string) => {
-    await runAction(async () => {
-      await eopApi.approve(planId, 'Reviewed from emergency center board');
-      setInfo('Đã chuyển trạng thái EOP sang approved.');
-      await loadData(false);
-    });
-  };
-
-  const handlePublishEop = async (planId: string) => {
-    await runAction(async () => {
-      await eopApi.publish(planId);
-      setInfo('Đã publish EOP plan.');
       await loadData(false);
     });
   };
@@ -383,7 +395,7 @@ const EmergencyCenter: React.FC = () => {
       <header className="rounded-xl bg-gradient-to-r from-slate-900 via-red-900 to-orange-700 p-5 text-white shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold md:text-3xl">Emergency Command Center</h1>
+            <h1 className="text-2xl font-bold md:text-3xl">Trung tâm chỉ huy khẩn cấp</h1>
             <p className="mt-2 text-sm text-white/90 md:text-base">
               Bảng điều hành thống nhất cho Event, EOP, Dispatch, Hazard realtime và After-Action KPI.
             </p>
@@ -394,7 +406,7 @@ const EmergencyCenter: React.FC = () => {
             disabled={busy}
             className="rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20 disabled:opacity-60"
           >
-            Refresh All
+            Làm mới
           </button>
         </div>
 
@@ -403,19 +415,19 @@ const EmergencyCenter: React.FC = () => {
             to="/admin/emergency-center/before"
             className="inline-flex rounded-lg border border-white/35 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
           >
-            Go to Before Board
+            Bảng trước thiên tai
           </Link>
           <Link
             to="/admin/emergency-center/during"
             className="inline-flex rounded-lg border border-white/35 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
           >
-            Go to During Board
+            Bảng trong thiên tai
           </Link>
           <Link
             to="/admin/emergency-center/after"
             className="inline-flex rounded-lg border border-white/35 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20"
           >
-            Go to After Board
+            Bảng sau thiên tai
           </Link>
         </div>
       </header>
@@ -432,27 +444,27 @@ const EmergencyCenter: React.FC = () => {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <article className="rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-red-700">Active Events</p>
+          <p className="text-xs uppercase tracking-wide text-red-700">Sự kiện đang xử lý</p>
           <p className="mt-2 text-2xl font-bold text-red-800">{summary.activeEvents}</p>
         </article>
         <article className="rounded-lg border border-rose-200 bg-rose-50 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-rose-700">Critical Hazards</p>
+          <p className="text-xs uppercase tracking-wide text-rose-700">Nguy hiểm nghiêm trọng</p>
           <p className="mt-2 text-2xl font-bold text-rose-800">{summary.criticalHazards}</p>
         </article>
         <article className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-amber-700">Draft EOP</p>
+          <p className="text-xs uppercase tracking-wide text-amber-700">EOP nháp</p>
           <p className="mt-2 text-2xl font-bold text-amber-800">{summary.draftEops}</p>
         </article>
         <article className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-blue-700">Open Dispatch</p>
+          <p className="text-xs uppercase tracking-wide text-blue-700">Điều phối đang mở</p>
           <p className="mt-2 text-2xl font-bold text-blue-800">{summary.openDispatch}</p>
         </article>
         <article className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-emerald-700">Available Resources</p>
+          <p className="text-xs uppercase tracking-wide text-emerald-700">Nguồn lực sẵn sàng</p>
           <p className="mt-2 text-2xl font-bold text-emerald-800">{summary.availableResources}</p>
         </article>
         <article className="rounded-lg border border-slate-200 bg-slate-50 p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-700">Published AAR</p>
+          <p className="text-xs uppercase tracking-wide text-slate-700">Báo cáo đã xuất bản</p>
           <p className="mt-2 text-2xl font-bold text-slate-800">{summary.publishedAfterAction}</p>
         </article>
       </section>
@@ -461,36 +473,60 @@ const EmergencyCenter: React.FC = () => {
         <div className="space-y-6">
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Hazard Realtime Map</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Bản đồ nguy hiểm thời gian thực</h2>
               <span className="text-xs text-slate-500">
                 Last sync: {lastHazardRefresh ? lastHazardRefresh.toLocaleTimeString('vi-VN') : '--'}
               </span>
             </div>
             <HazardLiveMap hazards={hazards} />
             <div className="mt-3 max-h-44 space-y-2 overflow-auto pr-1 text-sm">
-              {hazards.slice(0, 8).map((hazard) => (
-                <div key={hazard.id} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p className="font-medium text-slate-900">{hazard.title}</p>
-                  <p className="text-xs text-slate-500">
-                    {hazard.event_type} • {hazard.severity} • {hazard.district || 'N/A'}
-                  </p>
-                </div>
-              ))}
-              {hazards.length === 0 ? (
-                <p className="text-slate-500">Không có hazard active tại thời điểm hiện tại.</p>
+              {recentHazardItems.length === 0 && !loading ? (
+                <p className="text-slate-500">Không có hazard 24h gần đây.</p>
               ) : null}
+              {recentHazardItems.slice(0, 10).map((hazard) => {
+                const isDeployed = !!hazard.linked_event_id;
+                const isDeploying = deployingHazardId === hazard.id;
+                return (
+                  <div key={hazard.id} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900 truncate">{hazard.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {hazard.event_type} • {hazard.severity} • {hazard.district || 'N/A'}
+                      </p>
+                    </div>
+                    {isDeployed ? (
+                      <Link
+                        to="/admin/emergency-center/operations/$eventId"
+                        params={{ eventId: hazard.linked_event_id! }}
+                        className="shrink-0 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 whitespace-nowrap"
+                      >
+                        Đã triển khai →
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busy || isDeploying}
+                        onClick={() => void handleDeployHazard(hazard.id)}
+                        className="shrink-0 rounded-md border border-red-300 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-60 whitespace-nowrap"
+                      >
+                        {isDeploying ? '...' : '🚀 Tạo kế hoạch'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-slate-900">Emergency Events</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Sự kiện khẩn cấp</h2>
               <select
                 value={selectedEventId}
                 onChange={(event) => setSelectedEventId(event.target.value)}
                 className="rounded-md border border-slate-300 px-2 py-1 text-sm"
               >
-                <option value="">Select event</option>
+                <option value="">Chọn sự kiện</option>
                 {events.map((event) => (
                   <option key={event.id} value={event.id}>
                     {event.event_code || event.id} - {event.title}
@@ -500,7 +536,7 @@ const EmergencyCenter: React.FC = () => {
             </div>
 
             {loading ? (
-              <p className="text-sm text-slate-500">Loading events...</p>
+              <p className="text-sm text-slate-500">Đang tải sự kiện...</p>
             ) : (
               <div className="space-y-2 text-sm">
                 {events.slice(0, 10).map((event) => (
@@ -514,7 +550,7 @@ const EmergencyCenter: React.FC = () => {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {event.event_type} • {event.severity} • updated {formatDate(event.updated_at)}
+                      {event.event_type} • {event.severity} • cập nhật {formatDate(event.updated_at)}
                     </p>
                     {!['resolved', 'canceled'].includes(event.status) ? (
                       <button
@@ -523,7 +559,7 @@ const EmergencyCenter: React.FC = () => {
                         onClick={() => void handleResolveEvent(event.id)}
                         className="mt-2 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
                       >
-                        Resolve Event
+                        Đóng sự kiện
                       </button>
                     ) : null}
                   </article>
@@ -535,21 +571,21 @@ const EmergencyCenter: React.FC = () => {
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-slate-900">SOS Timeline</h2>
-              <span className="text-xs text-slate-500">Latest {sosTimeline.length} SOS-linked events</span>
+              <span className="text-xs text-slate-500">{sosTimeline.length} sự kiện gần nhất</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-xs text-slate-700 md:text-sm">
                 <thead className="border-y border-slate-200 bg-slate-50 text-slate-600">
                   <tr>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">Event</th>
-                    <th className="min-w-56 px-3 py-2 font-medium">Title</th>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">Severity</th>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">Status</th>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">Created</th>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">Source Ref</th>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">SLA Breach</th>
-                    <th className="whitespace-nowrap px-3 py-2 font-medium">Last Update</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Sự kiện</th>
+                    <th className="min-w-56 px-3 py-2 font-medium">Tiêu đề</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Mức độ</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Trạng thái</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Tạo lúc</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Nguồn tham chiếu</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Vi phạm SLA</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-medium">Cập nhật cuối</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -588,7 +624,7 @@ const EmergencyCenter: React.FC = () => {
             </div>
 
             {sosTimeline.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">No SOS-linked events available for timeline.</p>
+              <p className="mt-3 text-sm text-slate-500">Chưa có sự kiện SOS nào trong timeline.</p>
             ) : null}
           </div>
         </div>
@@ -596,20 +632,25 @@ const EmergencyCenter: React.FC = () => {
         <div className="space-y-6">
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">EOP Board</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Khu vực cứu hộ hiện tại</h2>
               <button
                 type="button"
                 onClick={() => void handleGenerateEopDraft()}
                 disabled={busy || !selectedEventId}
                 className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-60"
               >
-                Generate AI Draft
+                Tạo bản nháp AI
               </button>
             </div>
 
             <div className="max-h-72 space-y-2 overflow-auto pr-1 text-sm">
               {selectedEventEops.slice(0, 8).map((plan) => (
-                <article key={plan.id} className="rounded-md border border-slate-200 p-3">
+                <Link
+                  key={plan.id}
+                  to="/admin/emergency-center/operations/$eventId"
+                  params={{ eventId: plan.emergency_event_id }}
+                  className="block rounded-md border border-slate-200 p-3 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-medium text-slate-900">v{plan.version} - {plan.title}</p>
                     <span
@@ -618,45 +659,25 @@ const EmergencyCenter: React.FC = () => {
                       {plan.status}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">Updated {formatDate(plan.updated_at)}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {['draft', 'review_pending'].includes(plan.status) ? (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void handleApproveEop(plan.id)}
-                        className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
-                      >
-                        Approve
-                      </button>
-                    ) : null}
-                    {plan.status === 'approved' ? (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void handlePublishEop(plan.id)}
-                        className="rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
-                      >
-                        Publish
-                      </button>
-                    ) : null}
-                  </div>
-                </article>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Updated {formatDate(plan.updated_at)} · Bấm để quản lý task →
+                  </p>
+                </Link>
               ))}
-              {selectedEventEops.length === 0 ? <p className="text-slate-500">No EOP plan for selected event.</p> : null}
+              {selectedEventEops.length === 0 ? <p className="text-slate-500">Chưa có EOP cho sự kiện đã chọn.</p> : null}
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Dispatch Board</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Bảng điều phối</h2>
               <button
                 type="button"
                 onClick={() => void handleOptimizeDispatch()}
                 disabled={busy}
                 className="rounded-md border border-blue-300 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-60"
               >
-                Run Optimizer v2
+                Tối ưu hóa v2
               </button>
             </div>
 
@@ -665,18 +686,18 @@ const EmergencyCenter: React.FC = () => {
                 <article key={order.id} className="rounded-md border border-slate-200 p-3">
                   <p className="font-medium text-slate-900">{order.task_title}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {order.status} • {order.priority} • ETA {order.eta_minutes ?? '--'} mins
+                    {order.status} • {order.priority} • ETA {order.eta_minutes ?? '--'} phút
                   </p>
                 </article>
               ))}
               {selectedEventDispatch.length === 0 ? (
-                <p className="text-slate-500">No dispatch order for selected event.</p>
+                <p className="text-slate-500">Chưa có lệnh điều phối cho sự kiện đã chọn.</p>
               ) : null}
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-lg font-semibold text-slate-900">After-Action Board</h2>
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">Báo cáo sau sự kiện</h2>
             <div className="mb-3 grid gap-2 sm:grid-cols-2">
               {resolvedEvents.slice(0, 4).map((event) => (
                 <button
@@ -686,7 +707,7 @@ const EmergencyCenter: React.FC = () => {
                   onClick={() => void handleGenerateAfterAction(event.id)}
                   className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-left text-xs text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
                 >
-                  Generate AAR: {event.event_code || event.id}
+                  Tạo báo cáo: {event.event_code || event.id}
                 </button>
               ))}
             </div>
@@ -707,7 +728,7 @@ const EmergencyCenter: React.FC = () => {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    KPI overall: {report.kpi.overall_score.toFixed(2)} • {formatDate(report.updated_at)}
+                    KPI tổng thể: {report.kpi.overall_score.toFixed(2)} • {formatDate(report.updated_at)}
                   </p>
                   {report.status === 'draft' ? (
                     <button
@@ -716,26 +737,37 @@ const EmergencyCenter: React.FC = () => {
                       onClick={() => void handlePublishAfterAction(report.id)}
                       className="mt-2 rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
                     >
-                      Publish AAR
+                      Xuất bản báo cáo
                     </button>
                   ) : null}
                 </article>
               ))}
-              {afterActionReports.length === 0 ? <p className="text-slate-500">No after-action report yet.</p> : null}
+              {afterActionReports.length === 0 ? <p className="text-slate-500">Chưa có báo cáo sau sự kiện.</p> : null}
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-slate-900">Ops Quick Signals</h2>
+            <h2 className="mb-2 text-lg font-semibold text-slate-900">Tín hiệu vận hành nhanh</h2>
             <ul className="space-y-2 text-sm text-slate-700">
-              <li>SITREP published: {sitreps.filter((item) => item.status === 'published').length}</li>
-              <li>Resources deployed: {resources.filter((item) => item.status === 'deployed').length}</li>
-              <li>Resources available: {resources.filter((item) => item.status === 'available').length}</li>
-              <li>Selected event: {selectedEvent ? selectedEvent.title : 'None selected'}</li>
+              <li>Báo cáo đã xuất bản: {sitreps.filter((item) => item.status === 'published').length}</li>
+              <li>Nguồn lực đã triển khai: {resources.filter((item) => item.status === 'deployed').length}</li>
+              <li>Nguồn lực sẵn sàng: {resources.filter((item) => item.status === 'available').length}</li>
+              <li>Sự kiện đã chọn: {selectedEvent ? selectedEvent.title : 'Chưa chọn'}</li>
             </ul>
           </div>
         </div>
       </section>
+
+      {/* Deploy EOP modal */}
+      {deployModalData && (
+        <DeployEopModal
+          deployData={deployModalData}
+          onClose={() => setDeployModalData(null)}
+          onSubmitted={() => {
+            void loadData(false);
+          }}
+        />
+      )}
     </div>
   );
 };

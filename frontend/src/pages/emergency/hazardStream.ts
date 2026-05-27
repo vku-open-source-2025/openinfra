@@ -18,7 +18,9 @@ export function normalizeHazardRecord(value: unknown): Hazard | null {
     !normalizedId ||
     typeof hazard.hazard_id !== 'string' ||
     typeof hazard.title !== 'string' ||
-    typeof hazard.is_active !== 'boolean'
+    typeof hazard.is_active !== 'boolean' ||
+    !hazard.geometry ||
+    typeof hazard.geometry !== 'object'
   ) {
     return null;
   }

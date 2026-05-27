@@ -138,6 +138,16 @@ class DispatchService:
             if next_status == DispatchStatus.COMPLETED and "completed_at" not in update_payload:
                 update_payload["completed_at"] = datetime.utcnow()
 
+        # Propagate assigned_user_id from first assignment when not explicitly provided
+        if "assignments" in update_payload and "assigned_user_id" not in update_payload:
+            first_assignment = (update_payload["assignments"] or [{}])[0] if update_payload["assignments"] else {}
+            if isinstance(first_assignment, dict):
+                uid = first_assignment.get("assigned_user_id")
+            else:
+                uid = getattr(first_assignment, "assigned_user_id", None)
+            if uid:
+                update_payload["assigned_user_id"] = uid
+
         if (
             current.status in {DispatchStatus.COMPLETED, DispatchStatus.CANCELED}
             and any(

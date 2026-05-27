@@ -194,6 +194,13 @@ function MaintenanceDetailPage() {
                     bgColor: "bg-green-50",
                     label: "Hoàn thành",
                 };
+            case "waiting_approval":
+                return {
+                    icon: Clock,
+                    color: "text-yellow-700",
+                    bgColor: "bg-yellow-50",
+                    label: "Chờ phê duyệt",
+                };
             case "cancelled":
                 return {
                     icon: XCircle,
@@ -285,25 +292,25 @@ function MaintenanceDetailPage() {
                                 )}
                             </span>
                         </div>
-                        {maintenance.started_at && (
+                        {(maintenance.actual_start_time || maintenance.started_at) && (
                             <div className="flex items-center gap-2 text-sm text-slate-600">
                                 <Clock className="h-4 w-4" />
                                 <span>
                                     <strong>Bắt đầu:</strong>{" "}
                                     {format(
-                                        new Date(maintenance.started_at),
+                                        new Date(maintenance.actual_start_time || maintenance.started_at!),
                                         "MMM d, yyyy HH:mm"
                                     )}
                                 </span>
                             </div>
                         )}
-                        {maintenance.completed_at && (
+                        {(maintenance.actual_end_time || maintenance.completed_at) && (
                             <div className="flex items-center gap-2 text-sm text-green-600">
                                 <CheckCircle className="h-4 w-4" />
                                 <span>
                                     <strong>Hoàn thành:</strong>{" "}
                                     {format(
-                                        new Date(maintenance.completed_at),
+                                        new Date(maintenance.actual_end_time || maintenance.completed_at!),
                                         "MMM d, yyyy HH:mm"
                                     )}
                                 </span>
@@ -318,12 +325,12 @@ function MaintenanceDetailPage() {
                                 </span>
                             </div>
                         )}
-                        {maintenance.actual_cost && (
+                        {(maintenance.total_cost || maintenance.actual_cost) && (
                             <div className="flex items-center gap-2 text-sm text-green-600">
                                 <DollarSign className="h-4 w-4" />
                                 <span>
                                     <strong>Chi phí thực tế:</strong> $
-                                    {maintenance.actual_cost.toFixed(2)}
+                                    {(maintenance.total_cost || maintenance.actual_cost || 0).toFixed(2)}
                                 </span>
                             </div>
                         )}

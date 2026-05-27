@@ -26,6 +26,11 @@ class IncidentRepository(ABC):
         pass
 
     @abstractmethod
+    async def find_by_maintenance_record_id(self, maintenance_record_id: str) -> List[Incident]:
+        """Find incidents linked to a maintenance record."""
+        pass
+
+    @abstractmethod
     async def update(self, incident_id: str, updates: dict) -> Optional[Incident]:
         """Update incident."""
         pass
@@ -39,7 +44,9 @@ class IncidentRepository(ABC):
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
+        assigned_to: Optional[str] = None,
         populate_asset: bool = False,
+        verification_status: Optional[str] = None,
     ) -> List[Incident]:
         """List incidents with filtering."""
         pass

@@ -30,6 +30,7 @@ class IncidentStatus(str, Enum):
     ACKNOWLEDGED = "acknowledged"
     ASSIGNED = "assigned"
     INVESTIGATING = "investigating"
+    WAITING_APPROVAL = "waiting_approval"
     RESOLVED = "resolved"
     CLOSED = "closed"
 

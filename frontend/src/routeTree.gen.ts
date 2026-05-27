@@ -52,6 +52,7 @@ import { Route as AdminBudgetsCreateRouteImport } from './routes/admin/budgets/c
 import { Route as AdminBudgetsIdRouteImport } from './routes/admin/budgets/$id'
 import { Route as AdminAssetsIdRouteImport } from './routes/admin/assets/$id'
 import { Route as AdminAlertsListRouteImport } from './routes/admin/alerts/list'
+import { Route as AdminEmergencyCenterOperationsEventIdRouteImport } from './routes/admin/emergency-center/operations.$eventId'
 
 const TechnicianRoute = TechnicianRouteImport.update({
   id: '/technician',
@@ -272,6 +273,12 @@ const AdminAlertsListRoute = AdminAlertsListRouteImport.update({
   path: '/alerts/list',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEmergencyCenterOperationsEventIdRoute =
+  AdminEmergencyCenterOperationsEventIdRouteImport.update({
+    id: '/operations/$eventId',
+    path: '/operations/$eventId',
+    getParentRoute: () => AdminEmergencyCenterRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
   '/technician/settings': typeof TechnicianSettingsIndexRoute
+  '/admin/emergency-center/operations/$eventId': typeof AdminEmergencyCenterOperationsEventIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -360,6 +368,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/admin/users': typeof AdminUsersIndexRoute
   '/technician/settings': typeof TechnicianSettingsIndexRoute
+  '/admin/emergency-center/operations/$eventId': typeof AdminEmergencyCenterOperationsEventIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -406,6 +415,7 @@ export interface FileRoutesById {
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/admin/users/': typeof AdminUsersIndexRoute
   '/technician/settings/': typeof TechnicianSettingsIndexRoute
+  '/admin/emergency-center/operations/$eventId': typeof AdminEmergencyCenterOperationsEventIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -453,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/technician/settings'
+    | '/admin/emergency-center/operations/$eventId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -496,6 +507,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/technician/settings'
+    | '/admin/emergency-center/operations/$eventId'
   id:
     | '__root__'
     | '/'
@@ -541,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/settings/'
     | '/admin/users/'
     | '/technician/settings/'
+    | '/admin/emergency-center/operations/$eventId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -861,6 +874,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAlertsListRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/emergency-center/operations/$eventId': {
+      id: '/admin/emergency-center/operations/$eventId'
+      path: '/operations/$eventId'
+      fullPath: '/admin/emergency-center/operations/$eventId'
+      preLoaderRoute: typeof AdminEmergencyCenterOperationsEventIdRouteImport
+      parentRoute: typeof AdminEmergencyCenterRoute
+    }
   }
 }
 
@@ -868,12 +888,15 @@ interface AdminEmergencyCenterRouteChildren {
   AdminEmergencyCenterAfterRoute: typeof AdminEmergencyCenterAfterRoute
   AdminEmergencyCenterBeforeRoute: typeof AdminEmergencyCenterBeforeRoute
   AdminEmergencyCenterDuringRoute: typeof AdminEmergencyCenterDuringRoute
+  AdminEmergencyCenterOperationsEventIdRoute: typeof AdminEmergencyCenterOperationsEventIdRoute
 }
 
 const AdminEmergencyCenterRouteChildren: AdminEmergencyCenterRouteChildren = {
   AdminEmergencyCenterAfterRoute: AdminEmergencyCenterAfterRoute,
   AdminEmergencyCenterBeforeRoute: AdminEmergencyCenterBeforeRoute,
   AdminEmergencyCenterDuringRoute: AdminEmergencyCenterDuringRoute,
+  AdminEmergencyCenterOperationsEventIdRoute:
+    AdminEmergencyCenterOperationsEventIdRoute,
 }
 
 const AdminEmergencyCenterRouteWithChildren =

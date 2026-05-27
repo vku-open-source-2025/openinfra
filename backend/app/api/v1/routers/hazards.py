@@ -85,6 +85,8 @@ class RecentHazardItem(BaseModel):
     location_summary: Optional[str] = None
     coordinates: Optional[List[float]] = None
     event_type: Optional[str] = None
+    district: Optional[str] = None
+    ward: Optional[str] = None
     linked_event_id: Optional[str] = None
     linked_eop_plan_id: Optional[str] = None
 
@@ -195,6 +197,8 @@ def _to_recent_hazard_item(hazard: HazardLayer) -> RecentHazardItem:
         location_summary=_extract_location_summary(hazard),
         coordinates=_extract_coordinates(hazard.geometry),
         event_type=event_type,
+        district=hazard.district,
+        ward=hazard.ward,
         linked_event_id=metadata.get("linked_event_id"),
         linked_eop_plan_id=metadata.get("linked_eop_plan_id"),
     )

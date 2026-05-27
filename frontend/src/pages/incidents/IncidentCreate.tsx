@@ -9,7 +9,7 @@ import { Textarea } from "../../components/ui/textarea"
 import { Select } from "../../components/ui/select"
 import { Button } from "../../components/ui/button"
 import { ArrowLeft, Search, Box } from "lucide-react"
-import type { IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
+import type { IncidentCategory, IncidentCreateRequest, IncidentSeverity } from "../../types/incident"
 
 const IncidentCreate: React.FC = () => {
   const navigate = useNavigate()
@@ -17,6 +17,7 @@ const IncidentCreate: React.FC = () => {
   const [formData, setFormData] = useState<Partial<IncidentCreateRequest>>({
     title: "",
     description: "",
+    category: "damage",
     severity: "medium",
     location: {
       address: "",
@@ -222,6 +223,20 @@ const IncidentCreate: React.FC = () => {
           </FormField>
 
           <FormField>
+            <FormLabel required>Loại sự cố</FormLabel>
+            <Select
+              value={formData.category || "damage"}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value as IncidentCategory })}
+            >
+              <option value="damage">Hư hỏng</option>
+              <option value="malfunction">Không hoạt động</option>
+              <option value="safety_hazard">Nguy cơ an toàn</option>
+              <option value="vandalism">Phá hoại</option>
+              <option value="other">Khác</option>
+            </Select>
+          </FormField>
+
+          <FormField>
             <FormLabel required>Mức độ nghiêm trọng</FormLabel>
             <Select
               value={formData.severity || "medium"}
@@ -319,4 +334,3 @@ const IncidentCreate: React.FC = () => {
 }
 
 export default IncidentCreate
-

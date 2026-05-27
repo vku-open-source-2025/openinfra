@@ -45,6 +45,24 @@ async def list_technicians(
         )
 
 
+@router.get("/volunteers", response_model=List[UserResponse])
+async def list_volunteers(
+    status: Optional[str] = Query("active", description="Filter by status"),
+    current_user = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service)
+):
+    """List volunteers available for dispatch assignment."""
+    try:
+        users = await user_service.list_users(skip=0, limit=200, role="volunteer", status=status)
+        return [user_service.to_response(user) for user in users]
+    except Exception as e:
+        logger.error(f"Error listing volunteers: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list volunteers: {str(e)}"
+        )
+
+
 @router.put("/me", response_model=UserResponse)
 async def update_current_user_profile(
     updates: UserUpdateRequest,

@@ -19,6 +19,7 @@ services:
   mongo-express:
     image: mongo-express:latest
     env_file: .env
+    profiles: ["ops"]
     ports:
       - "${MONGO_EXPRESS_PORT:-8081}:8081"
     environment:
@@ -49,6 +50,7 @@ services:
   # ==================== Kafka for IoT ====================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    profiles: ["iot"]
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -67,6 +69,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    profiles: ["iot"]
     depends_on:
       - zookeeper
     # ports:
@@ -95,6 +98,8 @@ services:
   # Also bridges MQTT messages to Kafka
   iot-producer:
     build: ../iot_integration/producer
+    image: openinfra-iot-producer
+    profiles: ["iot"]
     ports:
       - "${IOT_PRODUCER_PORT:-8002}:8001"
     environment:
@@ -123,6 +128,8 @@ services:
   # IoT Consumer - consumes from Kafka, stores in MongoDB
   iot-consumer:
     build: ../backend
+    image: openinfra-backend
+    profiles: ["iot"]
     command: python -m app.services.kafka_consumer
     environment:
       - MONGODB_URL=${MONGODB_URL}
@@ -140,6 +147,7 @@ services:
   backend:
     env_file: .env
     build: ../backend
+    image: openinfra-backend
     command:
       - uvicorn
       - app.main:app
@@ -167,7 +175,7 @@ services:
       - redis
       - llm-service
     volumes:
-      - ../backend:/app
+      - backend_uploads:/app/uploads
       - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
     networks:
       - app_network
@@ -182,6 +190,7 @@ services:
   celery-worker:
     env_file: .env
     build: ../backend
+    image: openinfra-backend
     command: celery -A app.celery_app worker --loglevel=info
     environment:
       - MONGODB_URL=${MONGODB_URL}
@@ -198,10 +207,10 @@ services:
       - mongo
       - redis
       - backend
-    volumes:
-      - ../backend:/app
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - backend_uploads:/app/uploads
     networks:
       - app_network
     restart: unless-stopped
@@ -209,6 +218,7 @@ services:
   celery-beat:
     env_file: .env
     build: ../backend
+    image: openinfra-backend
     command: celery -A app.celery_app beat --loglevel=info
     environment:
       - MONGODB_URL=${MONGODB_URL}
@@ -219,28 +229,23 @@ services:
       - mongo
       - redis
       - backend
-    volumes:
-      - ../backend:/app
     networks:
       - app_network
     restart: unless-stopped
 
   frontend:
-    env_file: .env
-    build: ../frontend
+    build:
+      context: ../frontend
+      args:
+        VITE_BASE_API_URL: ${VITE_BASE_API_URL}
+        VITE_LEADERBOARD_URL: ${VITE_LEADERBOARD_URL}
+    image: openinfra-frontend
     ports:
-      - "${FRONTEND_PORT}:5173"
-    environment:
-      - VITE_BASE_API_URL=${VITE_BASE_API_URL}
-      - VITE_LEADERBOARD_URL=${VITE_LEADERBOARD_URL}
-    volumes:
-      - ../frontend:/app
-      - /app/node_modules
+      - "${FRONTEND_PORT}:80"
     depends_on:
       - backend
-    command: npm run dev -- --host 0.0.0.0
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:5173').then((res)=>process.exit(res.ok?0:1)).catch(()=>process.exit(1))\""]
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null 2>&1"]
       interval: 20s
       timeout: 5s
       retries: 5
@@ -252,6 +257,7 @@ services:
   llm-service:
     env_file: .env
     build: ../llm-service
+    image: openinfra-llm-service
     ports:
       - "${LLM_SERVICE_PORT:-8014}:8000"
     environment:
@@ -262,7 +268,6 @@ services:
       - GITHUB_COPILOT_CHAT_MODEL=${GITHUB_COPILOT_CHAT_MODEL:-gpt-4.1}
       - GITHUB_COPILOT_EMBEDDING_MODEL=${GITHUB_COPILOT_EMBEDDING_MODEL:-text-embedding-3-small}
     volumes:
-      - ../llm-service/app:/app/app
       - llm_vector_data:/app/data/vector_dbs
       - ${COPILOT_AUTH_HOST_PATH:-/tmp/copilot-auth}:/root/.config/github-copilot:ro
     networks:
@@ -278,6 +283,8 @@ services:
   llm-chatbot-scheduler:
     env_file: .env
     build: ../llm-service
+    image: openinfra-llm-service
+    profiles: ["llm"]
     environment:
       - LLM_SERVICE_INTERNAL_URL=${LLM_SERVICE_INTERNAL_URL:-http://llm-service:8000}
       - CHATBOT_SCHEDULER_TIMEZONE=${CHATBOT_SCHEDULER_TIMEZONE:-Asia/Ho_Chi_Minh}
@@ -329,6 +336,7 @@ services:
   # Certbot for SSL certificates (DNS challenge via Cloudflare)
   certbot:
     image: certbot/dns-cloudflare
+    profiles: ["ops"]
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/cloudflare:/cloudflare:ro
@@ -343,6 +351,7 @@ volumes:
   zookeeper_log:
   kafka_data:
   llm_vector_data:
+  backend_uploads:
 
 networks:
   app_network:

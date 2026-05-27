@@ -50,4 +50,17 @@ export const dispatchApi = {
     const response = await httpClient.post<DispatchOptimizeResult>('/emergency/dispatch/optimize', payload);
     return response.data;
   },
+
+  approve: async (id: string, userId: string, notes?: string): Promise<DispatchOrder> => {
+    const response = await httpClient.post<DispatchOrder>(`/emergency/dispatch/${id}/approve`, {
+      user_id: userId,
+      notes,
+    });
+    return response.data;
+  },
+
+  reject: async (id: string): Promise<DispatchOrder> => {
+    const response = await httpClient.post<DispatchOrder>(`/emergency/dispatch/${id}/reject`);
+    return response.data;
+  },
 };

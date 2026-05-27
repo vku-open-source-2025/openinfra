@@ -116,8 +116,10 @@ class MongoIncidentRepository(IncidentRepository):
 
     async def create(self, incident_data: dict) -> Incident:
         """Create a new incident."""
-        incident_data["created_at"] = datetime.utcnow()
-        incident_data["updated_at"] = datetime.utcnow()
+        now = datetime.utcnow()
+        incident_data.setdefault("reported_at", now)
+        incident_data["created_at"] = now
+        incident_data["updated_at"] = now
         result = await self.collection.insert_one(incident_data)
         incident_doc = await self.collection.find_one({"_id": result.inserted_id})
         incident_doc = convert_objectid_to_str(incident_doc)
@@ -149,6 +151,16 @@ class MongoIncidentRepository(IncidentRepository):
             return Incident(**incident_doc)
         return None
 
+    async def find_by_maintenance_record_id(self, maintenance_record_id: str) -> List[Incident]:
+        """Find incidents linked to a maintenance record."""
+        cursor = self.collection.find({"maintenance_record_id": maintenance_record_id})
+        incidents = []
+        async for incident_doc in cursor:
+            incident_doc = await self._populate_comment_users(incident_doc)
+            incident_doc = convert_objectid_to_str(incident_doc)
+            incidents.append(Incident(**incident_doc))
+        return incidents
+
     async def update(self, incident_id: str, updates: dict) -> Optional[Incident]:
         """Update incident."""
         if not ObjectId.is_valid(incident_id):
@@ -168,10 +180,11 @@ class MongoIncidentRepository(IncidentRepository):
         severity: Optional[str] = None,
         asset_id: Optional[str] = None,
         reported_by: Optional[str] = None,
+        assigned_to: Optional[str] = None,
         populate_asset: bool = False,
         verification_status: Optional[str] = None,
     ) -> List[Incident]:
-        """List incidents with filtering, sorted by severity (critical > high > medium > low).
+        """List incidents with filtering, newest first.
         Excludes incidents with status 'closed' unless explicitly requested."""
         query = {}
         if status:
@@ -186,32 +199,25 @@ class MongoIncidentRepository(IncidentRepository):
             query["asset_id"] = asset_id
         if reported_by:
             query["reported_by"] = reported_by
+        if assigned_to:
+            query["assigned_to"] = assigned_to
         if verification_status:
             query["ai_verification_status"] = verification_status
 
-        # Use aggregation pipeline to sort by severity order
-        # Map severity to numeric value: critical=0, high=1, medium=2, low=3
+        # Sort by reported_at first and fall back to created_at for legacy rows
+        # that were created before reported_at was persisted.
         pipeline = [
             {"$match": query},
             {
                 "$addFields": {
-                    "severity_order": {
-                        "$switch": {
-                            "branches": [
-                                {"case": {"$eq": ["$severity", "critical"]}, "then": 0},
-                                {"case": {"$eq": ["$severity", "high"]}, "then": 1},
-                                {"case": {"$eq": ["$severity", "medium"]}, "then": 2},
-                                {"case": {"$eq": ["$severity", "low"]}, "then": 3},
-                            ],
-                            "default": 99,
-                        }
-                    }
+                    "reported_at": {"$ifNull": ["$reported_at", "$created_at"]},
+                    "sort_date": {"$ifNull": ["$reported_at", "$created_at"]},
                 }
             },
-            {"$sort": {"severity_order": 1, "reported_at": -1}},
+            {"$sort": {"sort_date": -1, "created_at": -1, "_id": -1}},
             {"$skip": skip},
             {"$limit": limit},
-            {"$project": {"severity_order": 0}},  # Remove temporary field
+            {"$project": {"sort_date": 0}},
         ]
 
         incidents = []

@@ -1,9 +1,11 @@
 import { httpClient } from '../lib/httpClient';
 import type {
   EOPGenerateRequest,
+  EOPMarkdownUpdateRequest,
   EOPPlan,
   EOPPlanCreateRequest,
   EOPPlanUpdateRequest,
+  EOPSubmitResponse,
 } from '../types/eop';
 
 export interface EOPListParams {
@@ -48,6 +50,16 @@ export const eopApi = {
 
   generateDraft: async (payload: EOPGenerateRequest): Promise<EOPPlan> => {
     const response = await httpClient.post<EOPPlan>('/emergency/eop/generate-draft', payload);
+    return response.data;
+  },
+
+  updateMarkdown: async (id: string, data: EOPMarkdownUpdateRequest): Promise<EOPPlan> => {
+    const response = await httpClient.patch<EOPPlan>(`/emergency/eop/${id}/markdown`, data);
+    return response.data;
+  },
+
+  submit: async (id: string): Promise<EOPSubmitResponse> => {
+    const response = await httpClient.post<EOPSubmitResponse>(`/emergency/eop/${id}/submit`);
     return response.data;
   },
 };

@@ -29,7 +29,7 @@ function TechnicianTaskList() {
             const tasks = await incidentsApi.list({ assigned_to: user?.id });
             // Show incidents that are assigned/investigating or resolved (waiting approval)
             return tasks.filter((t) =>
-                ["investigating", "resolved", "waiting_approval"].includes(
+                ["assigned", "investigating", "resolved", "waiting_approval"].includes(
                     t.status
                 )
             );
@@ -205,6 +205,7 @@ function TechnicianTaskList() {
                             placeholder="Tất cả trạng thái"
                         >
                             <option value="investigating">Đang điều tra</option>
+                            <option value="assigned">Đã phân công</option>
                             <option value="resolved">Đã giải quyết</option>
                             <option value="waiting_approval">Chờ phê duyệt</option>
                             <option value="scheduled">Đã lên lịch</option>
