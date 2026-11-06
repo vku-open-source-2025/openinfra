@@ -92,10 +92,10 @@ async def add_security_headers(request: Request, call_next):
 # CORS Configuration - SECURITY: Only allow localhost for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "https://contribution.synapsecity.sbs").split(",") if o.strip()],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
 
 # Helper function to validate ObjectId - SECURITY: Prevent NoSQL injection

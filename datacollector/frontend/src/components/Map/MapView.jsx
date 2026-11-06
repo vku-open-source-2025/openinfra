@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, LayerGroup, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import { INFRASTRUCTURE_TYPES, MAP_STYLE, MAP_CENTER, MAP_ZOOM, ZOOM_THRESHOLD } from '../../constants';
@@ -30,14 +30,31 @@ export const MapView = ({
     return [];
   }, [dbFeatures, showAllFeatures, currentZoom]);
 
-  console.log("MapView visibleDbFeatures:", visibleDbFeatures);
+  // The backend decides the basemap: VietMap proxy when a key is configured,
+  // OpenStreetMap otherwise. Fall back to OSM if the config call fails.
+  const [tile, setTile] = useState({
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  });
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/api/map/config`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        if (!cancelled && cfg?.tileUrl) {
+          setTile({ url: cfg.tileUrl, attribution: cfg.attribution || '' });
+        }
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} style={MAP_STYLE} scrollWheelZoom={true}>
       <TileLayer
-        url={`${API_URL}/api/map/tiles/{z}/{x}/{y}`}
+        url={tile.url}
         maxZoom={20}
-        attribution='&copy; <a href="https://vietmap.vn">VietMap</a> | Hoang Sa and Truong Sa belong to Vietnam 🇻🇳'
+        attribution={tile.attribution}
       />
       <MapClickHandler onMapClick={handleMapClick} onZoomEnd={onZoomChange} />
       <MapFocusHandler flyTo={flyTo} />

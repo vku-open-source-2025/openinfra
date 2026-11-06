@@ -1,44 +1,68 @@
-version: '3.8'
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 VKU.VIC
+# OpenInfra GISTool (data contribution portal) for contribution.synapsecity.sbs.
+# Services join the SynapseOne edge network so the TLS nginx can proxy to them;
+# no host ports are published.
 services:
   mongo:
     image: mongo:latest
-    ports:
-      - "27018:27017"
-    expose:
-      - "27017"
+    restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?set MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?set MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: openinfra_gis
+      MONGO_USERNAME: ${MONGO_USERNAME:?set MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:?set MONGO_PASSWORD}
     volumes:
       - mongo_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ping:1}).ok' | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      default:
+        aliases: [contribution-mongo]
 
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
     environment:
-      - MONGO_URL=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongo:27017/openinfra_gis?authSource=openinfra_gis
-      - VIETMAP_API_KEY=${VIETMAP_API_KEY:-c3fb93ce07177490296477158d6475046fe634dd8ffd494c}
-    env_file:
-      - ./backend/.env
+      MONGO_URL: mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@contribution-mongo:27017/openinfra_gis?authSource=openinfra_gis
+      VIETMAP_API_KEY: ${VIETMAP_API_KEY:-}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?set JWT_SECRET_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://contribution.synapsecity.sbs}
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     volumes:
       - ./backend:/app
-    restart: unless-stopped
+    networks:
+      default:
+        aliases: [contribution-backend]
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "5175:5173"
+      args:
+        VITE_API_URL: ""
+    restart: unless-stopped
     depends_on:
       - backend
-    restart: unless-stopped
+    networks:
+      default:
+        aliases: [contribution-frontend]
 
 volumes:
   mongo_data:
+
+networks:
+  default:
+    external: true
+    name: synapseone_synapseone-net

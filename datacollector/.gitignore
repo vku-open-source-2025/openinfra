@@ -73,3 +73,6 @@ export.csv
 # Debug Scripts
 debug_db.py
 debug_db_clean.py
+
+# Runtime data written by the backend
+backend/sos_reports.json
