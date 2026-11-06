@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator, constr
+from pydantic import BaseModel, root_validator, validator, constr
 from typing import Optional
 
 
@@ -23,12 +23,36 @@ class UserInDB(BaseModel):
 
 
 class ContributionInput(BaseModel):
-    """Contribution model with input validation to prevent XSS and DoS."""
-    contributor_name: constr(min_length=1, max_length=100, strip_whitespace=True)
-    msv: constr(min_length=1, max_length=20, strip_whitespace=True)
+    """Contribution model with input validation to prevent XSS and DoS.
+
+    Identity fields are optional so a contributor can submit anonymously. When
+    both are absent (or ``anonymous`` is true) the record is stored with a
+    non-identifying placeholder and is excluded from the leaderboard.
+    """
+    contributor_name: Optional[constr(min_length=1, max_length=100, strip_whitespace=True)] = None
+    msv: Optional[constr(min_length=1, max_length=20, strip_whitespace=True)] = None
     unit: Optional[str] = "VKU"
+    anonymous: bool = False
     properties: dict
     geometry: dict
+
+    @root_validator(skip_on_failure=True)
+    def normalize_identity(cls, values):
+        anonymous = bool(values.get('anonymous'))
+        name = (values.get('contributor_name') or '').strip()
+        msv = (values.get('msv') or '').strip()
+        if not name and not msv:
+            anonymous = True
+        if anonymous:
+            values['anonymous'] = True
+            values['contributor_name'] = 'Ẩn danh'
+            values['msv'] = 'ANON'
+            values['unit'] = 'Ẩn danh'
+        else:
+            if not name or not msv:
+                raise ValueError('contributor_name and msv are required unless anonymous')
+            values['anonymous'] = False
+        return values
     
     @validator('properties')
     def validate_properties_size(cls, v):
@@ -37,9 +61,17 @@ class ContributionInput(BaseModel):
             raise ValueError('Properties payload too large (max 10KB)')
         return v
     
+    @validator('contributor_name', 'msv', pre=True)
+    def empty_identity_to_none(cls, v):
+        # An empty input means "no identity supplied", not a validation error;
+        # the root validator then marks the contribution anonymous.
+        return v or None
+
     @validator('contributor_name', 'msv')
     def sanitize_html(cls, v):
         # Prevent XSS by removing HTML tags
+        if not v:
+            return v
         import bleach
         return bleach.clean(v, tags=[], strip=True)
 

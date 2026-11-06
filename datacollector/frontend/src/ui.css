@@ -578,6 +578,116 @@ a {
   color: var(--muted);
 }
 
+/* ---------- Saved contributor identity ---------- */
+.identity-card {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc, #eff6ff);
+  text-align: left;
+}
+
+.identity-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.identity-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.identity-copy strong {
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity-copy span {
+  font-size: 11.5px;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identity-copy small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.identity-clear {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.identity-clear:hover {
+  color: var(--bad);
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.identity-hint {
+  margin: auto 0 0;
+  padding: 11px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.form-hint {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.anon-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink-2);
+  border-radius: 11px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.anon-btn:hover {
+  border-color: #93c5fd;
+  color: var(--brand);
+  background: #eff6ff;
+}
+
 /* ---------- Modal ---------- */
 .modal-overlay {
   position: fixed;
