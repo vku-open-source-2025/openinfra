@@ -43,11 +43,38 @@ function forgetIdentity() {
 export function ContributorView() {
     const logic = useMapLogic();
     const [showContribModal, setShowContribModal] = useState(false);
+    const [showIdentityModal, setShowIdentityModal] = useState(false);
     const [savedIdentity, setSavedIdentity] = useState(readSavedIdentity);
     const [form, setForm] = useState(readSavedIdentity);
     const [submitting, setSubmitting] = useState(false);
 
     const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+
+    const openIdentityEditor = () => {
+        setForm(hasSavedIdentity ? { ...savedIdentity } : { ...EMPTY_IDENTITY });
+        setShowIdentityModal(true);
+    };
+
+    const saveIdentity = () => {
+        const name = form.name.trim();
+        const msv = form.msv.trim();
+        if (!name || !msv) {
+            alert('Vui lòng nhập họ tên và MSSV để lưu danh tính.');
+            return;
+        }
+        const identity = { name, msv, unit: form.unit.trim() || 'VKU' };
+        setSavedIdentity(identity);
+        setForm(identity);
+        persistIdentity(identity);
+        setShowIdentityModal(false);
+    };
+
+    const clearSavedIdentity = () => {
+        forgetIdentity();
+        setSavedIdentity({ ...EMPTY_IDENTITY });
+        setForm({ ...EMPTY_IDENTITY });
+        setShowIdentityModal(false);
+    };
 
     const openContribution = () => {
         if (logic.pendingFeatures.length === 0) {
@@ -113,7 +140,20 @@ export function ContributorView() {
                 </SidebarControls>
 
                 {hasSavedIdentity ? (
-                    <div className="identity-card">
+                    <div
+                        className="identity-card"
+                        role="button"
+                        tabIndex={0}
+                        onClick={openIdentityEditor}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                openIdentityEditor();
+                            }
+                        }}
+                        aria-label="Sửa danh tính người đóng góp"
+                        title="Bấm để sửa danh tính"
+                    >
                         <span className="identity-avatar" aria-hidden="true">
                             {(savedIdentity.name || '?').trim().charAt(0).toUpperCase()}
                         </span>
@@ -125,13 +165,13 @@ export function ContributorView() {
                             </span>
                             <small>Tự động điền cho lần đóng góp sau</small>
                         </div>
+                        <span className="identity-edit" aria-hidden="true">Sửa</span>
                         <button
                             type="button"
                             className="identity-clear"
-                            onClick={() => {
-                                forgetIdentity();
-                                setSavedIdentity({ ...EMPTY_IDENTITY });
-                                setForm({ ...EMPTY_IDENTITY });
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                clearSavedIdentity();
                             }}
                             aria-label="Xóa danh tính đã lưu"
                             title="Xóa danh tính đã lưu"
@@ -140,10 +180,13 @@ export function ContributorView() {
                         </button>
                     </div>
                 ) : (
-                    <p className="identity-hint">
-                        Điền họ tên một lần, các lần sau sẽ tự điền. Bạn cũng có thể
-                        gửi đóng góp ẩn danh mà không cần thông tin.
-                    </p>
+                    <button type="button" className="identity-hint" onClick={openIdentityEditor}>
+                        <strong>Thiết lập danh tính</strong>
+                        <span>
+                            Điền họ tên một lần, các lần sau sẽ tự điền. Bạn cũng có
+                            thể gửi đóng góp ẩn danh mà không cần thông tin.
+                        </span>
+                    </button>
                 )}
             </div>
 
@@ -182,6 +225,65 @@ export function ContributorView() {
                 )}
             </div>
             
+            {/* Identity Modal */}
+            {showIdentityModal && (
+                <div className="modal-overlay" role="presentation" onClick={() => setShowIdentityModal(false)}>
+                    <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="identity-title" onClick={(e) => e.stopPropagation()}>
+                        <h3 id="identity-title">Danh tính người đóng góp</h3>
+                        <p>
+                            Thông tin được lưu trên thiết bị này và tự điền vào form
+                            đóng góp. Bạn có thể sửa hoặc xóa bất cứ lúc nào.
+                        </p>
+                        <div className="form-group">
+                            <label htmlFor="identity-name">Họ và tên:</label>
+                            <input
+                                id="identity-name"
+                                type="text"
+                                autoComplete="name"
+                                value={form.name}
+                                onChange={(e) => updateField('name', e.target.value)}
+                                placeholder="Nguyễn Văn A"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="identity-msv">MSSV / Mã cán bộ:</label>
+                            <input
+                                id="identity-msv"
+                                type="text"
+                                autoComplete="username"
+                                value={form.msv}
+                                onChange={(e) => updateField('msv', e.target.value)}
+                                placeholder="2212345"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="identity-unit">Đơn vị:</label>
+                            <input
+                                id="identity-unit"
+                                type="text"
+                                autoComplete="organization"
+                                value={form.unit}
+                                onChange={(e) => updateField('unit', e.target.value)}
+                                placeholder="VKU"
+                            />
+                        </div>
+                        <div className="modal-footer">
+                            {hasSavedIdentity && (
+                                <button type="button" className="cancel-btn" onClick={clearSavedIdentity}>
+                                    Xóa danh tính
+                                </button>
+                            )}
+                            <button type="button" className="cancel-btn" onClick={() => setShowIdentityModal(false)}>
+                                Hủy
+                            </button>
+                            <button type="button" className="confirm-btn" onClick={saveIdentity}>
+                                Lưu danh tính
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Contribution Modal */}
             {showContribModal && (
                 <div className="modal-overlay" role="presentation" onClick={() => !submitting && setShowContribModal(false)}>
