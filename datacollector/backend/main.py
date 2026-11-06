@@ -285,6 +285,7 @@ class MongoStorage(Storage):
             feature.pop("contributor_name")
             feature.pop("msv")
             feature.pop("unit", None)
+            feature.pop("anonymous", None)
             feature.pop("timestamp")
             
             await self.collection.insert_one(feature)
@@ -315,7 +316,7 @@ class MongoStorage(Storage):
 
     async def get_leaderboard(self):
         pipeline = [
-            {"$match": {"status": "approved"}},
+            {"$match": {"status": "approved", "anonymous": {"$ne": True}}},
             {"$group": {
                 "_id": "$msv",
                 "name": {"$last": "$contributor_name"}, # Use the latest name used
@@ -436,7 +437,7 @@ class JsonStorage(Storage):
                 
                 # Add to features
                 feature = c.copy()
-                for k in ["id", "status", "contributor_name", "msv", "unit", "timestamp"]:
+                for k in ["id", "status", "contributor_name", "msv", "unit", "anonymous", "timestamp"]:
                     feature.pop(k, None)
                 await self.add_feature(feature)
                 return True
@@ -454,7 +455,7 @@ class JsonStorage(Storage):
         contribs = await self.get_contributions()
         stats = {}
         for c in contribs:
-            if c.get("status") == "approved":
+            if c.get("status") == "approved" and not c.get("anonymous"):
                 msv = c.get("msv")
                 if msv:
                     if msv not in stats:
