@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
 import { useMapLogic } from '../hooks/useMapLogic';
 import { SidebarControls } from '../components/UI/SidebarControls';
 import { MapView } from '../components/Map/MapView';
 import { API_URL } from '../config';
+import { SiteHeader } from '../components/UI/SiteHeader';
 
 export function ContributorView() {
     const logic = useMapLogic();
@@ -36,13 +36,12 @@ export function ContributorView() {
     };
 
     return (
-        <div className="app-container">
+        <div className="page">
+            <SiteHeader />
+            <div className="app-container">
             <div className="sidebar left-sidebar">
-                <h2>OpenInfra GIS</h2>
                 <SidebarControls logic={logic}>
                     <button onClick={() => logic.pendingFeatures.length > 0 ? setShowContribModal(true) : alert("Nothing to contribute")} className="save-btn">Contribute</button>
-                    <Link to="/leaderboard" className="back-link">🏆 Leaderboard</Link>
-                    <Link to="/admin" className="back-link">Admin Panel</Link>
                 </SidebarControls>
             </div>
 
@@ -105,6 +104,7 @@ export function ContributorView() {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 }

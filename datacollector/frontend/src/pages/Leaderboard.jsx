@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../services/apiClient';
+import { SiteHeader } from '../components/UI/SiteHeader';
 
 export function Leaderboard() {
     const [leaders, setLeaders] = useState([]);
@@ -31,7 +32,9 @@ export function Leaderboard() {
     };
 
     return (
-        <div className="app-container" style={{background: '#f0f2f5'}}>
+        <div className="page">
+            <SiteHeader subtitle="Bảng xếp hạng đóng góp" />
+            <div className="app-container">
             <div className="leaderboard-content">
                 <div className="leaderboard-header">
                     <Link to="/" className="back-btn">← Back to Map</Link>
@@ -84,6 +87,7 @@ export function Leaderboard() {
                         )}
                     </div>
                 )}
+            </div>
             </div>
         </div>
     );

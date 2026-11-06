@@ -8,6 +8,7 @@ import AuthService from '../services/authService';
 import apiClient from '../services/apiClient';
 import { groupContributionsByBatch } from '../utils/mapUtils';
 import { INFRASTRUCTURE_TYPES } from '../constants';
+import { SiteHeader } from '../components/UI/SiteHeader';
 
 export function AdminView() {
     const logic = useMapLogic();
@@ -267,7 +268,9 @@ export function AdminView() {
 
     if (!isAuthenticated) {
         return (
-            <div className="login-container">
+            <div className="page">
+                <SiteHeader subtitle="Quản trị đóng góp" />
+                <div className="login-container">
                 <form onSubmit={handleLogin} className="login-form">
                     <h2>Admin Login</h2>
                     <div className="form-group">
@@ -294,14 +297,16 @@ export function AdminView() {
                         <Link to="/" className="back-link">Back to Map</Link>
                     </div>
                 </form>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="app-container">
+        <div className="page">
+            <SiteHeader subtitle="Quản trị đóng góp" />
+            <div className="app-container">
             <div className="sidebar left-sidebar">
-                <h2>Admin Panel</h2>
                 <div className="admin-controls">
                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                         <button onClick={handleLogout} className="logout-btn" style={{ flex: 1 }}>Logout</button>
@@ -524,6 +529,7 @@ export function AdminView() {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 }
