@@ -187,6 +187,24 @@ const AboutUs: React.FC = () => {
                                 CLB IT VKU
                             </span>
                         </a>
+
+                        <a
+                            href="https://online.vku.udn.vn/organization/32-vku-olp-icpc-team"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col items-center group"
+                        >
+                            <div className="bg-white rounded-xl p-6 border border-slate-100 hover:border-sky-200 transition-colors">
+                                <img
+                                    src="/olp-icpc-logo.svg"
+                                    alt="OLP-ICPC VKU"
+                                    className="h-16 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                                />
+                            </div>
+                            <span className="mt-3 text-sm text-slate-400">
+                                Đội tuyển OLP-ICPC VKU
+                            </span>
+                        </a>
                     </div>
                 </div>
             </section>
